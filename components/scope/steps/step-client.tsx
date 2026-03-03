@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UploadMapper } from "@/components/scope/upload-mapper";
 import { TaxRegime } from "@/lib/catalog/enums";
 
-export function StepClient() {
+function StepClient() {
   const { register, setValue, watch } = useFormContext<Scope>();
   const regime = watch("client.regimeTributario") ?? "";
 
@@ -85,3 +85,5 @@ export function StepClient() {
     </div>
   );
 }
+
+export default StepClient;

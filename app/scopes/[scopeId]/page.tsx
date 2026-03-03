@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getScope, saveDraft } from "@/lib/store/scopeRepo";
-import { Scope } from "@/lib/schema/scope";
-import { validateScopeForPublish } from "@/lib/validators/scopeValidate";
-import { StepCliente, StepServicos } from "@/components/scope";
+
+import { getScope, saveDraft } from "@/lib/scope/store";
+
+import { Scope } from "@/lib/scope/schema";
+
+import StepCliente from "@/components/scope/steps/step-client";
+import StepServicos from "@/components/scope/steps/step-services";
 const etapas = ["Cliente", "Contatos", "Operação", "Serviços"];
 
 export default function ScopePage() {
@@ -15,38 +18,38 @@ export default function ScopePage() {
     const [etapa, setEtapa] = useState(0);
 
     useEffect(() => {
-        const rec = getScope(scopeId);
-        if (!rec) {
-            alert("Escopo não encontrado.");
-            router.push("/dashboard");
-            return;
-        }
-        setScope(rec.draft);
+        // const rec = getScope(scopeId);
+        // if (!rec) {
+        //     alert("Escopo não encontrado.");
+        //     router.push("/dashboard");
+        //     return;
+        // }
+        // setScope(rec.draft);
     }, [scopeId]);
 
     if (!scope) return <div>Carregando...</div>;
 
     function atualizar(draft: Scope) {
         setScope(draft);
-        saveDraft(scopeId, draft);
+        // saveDraft(scopeId, draft);
     }
 
     function validar() {
         if (!scope) return;
-        const resultado = validateScopeForPublish(scope);
-        alert(
-            `Erros: ${resultado.errors.length}\nWarnings: ${resultado.warnings.length}\nCompletude: ${resultado.completeness_score}%`
-        );
+        // const resultado = validateScopeForPublish(scope);
+        // alert(
+        //     `Erros: ${resultado.errors.length}\nWarnings: ${resultado.warnings.length}\nCompletude: ${resultado.completeness_score}%`
+        // );
     }
 
     function publicar() {
         if (!scope) return;
-        const resultado = validateScopeForPublish(scope);
-        if (resultado.errors.length > 0) {
-            alert("Não é possível publicar. Existem erros.");
-            return;
-        }
-        router.push(`/scopes/${scopeId}/publish`);
+        // const resultado = validateScopeForPublish(scope);
+        // if (resultado.errors.length > 0) {
+        //     alert("Não é possível publicar. Existem erros.");
+        //     return;
+        // }
+        // router.push(`/scopes/${scopeId}/publish`);
     }
 
     return (
@@ -68,10 +71,10 @@ export default function ScopePage() {
                 ))}
             </div>
 
-            {etapa === 0 && <StepCliente scope={scope} onChange={atualizar} />}
+            {/* {etapa === 0 && <StepCliente scope={scope} onChange={atualizar} />} */}
             {/* {etapa === 1 && <StepContatos scope={scope} onChange={atualizar} />}
             {etapa === 2 && <StepOperacao scope={scope} onChange={atualizar} />} */}
-            {etapa === 1 && <StepServicos scope={scope} onChange={atualizar} />}
+            {/* {etapa === 1 && <StepServicos scope={scope} onChange={atualizar} />} */}
 
             <div style={{ marginTop: 30 }}>
                 <button onClick={validar}>Validar</button>

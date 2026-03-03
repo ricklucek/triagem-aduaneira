@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-export function StepServices() {
+function StepServices() {
   const { control, watch, setValue } = useFormContext<Scope>();
   const { fields, append, remove } = useFieldArray({ control, name: "services" });
 
@@ -154,3 +154,5 @@ export function StepServices() {
     </div>
   );
 }
+
+export default StepServices;
