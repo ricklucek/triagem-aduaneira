@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { useParams } from "next/navigation";
 
 function formatISO(iso: string) {
   try {
@@ -18,8 +19,11 @@ function formatISO(iso: string) {
   }
 }
 
-export default function ScopesPage({ params }: { params: { cnpj: string } }) {
-  const { records, loading, cloneLatestPublished, remove } = useScopeStore(params.cnpj);
+export default function ScopesPage() {
+
+  const { cnpj } = useParams<{ cnpj: string }>()
+
+  const { records, loading, cloneLatestPublished, remove } = useScopeStore(cnpj);
 
   const drafts = useMemo(() => records.filter((r) => r.status === "draft"), [records]);
   const published = useMemo(() => records.filter((r) => r.status === "published"), [records]);
@@ -29,13 +33,13 @@ export default function ScopesPage({ params }: { params: { cnpj: string } }) {
       <Card className="rounded-2xl p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-lg font-semibold">Escopos • {params.cnpj}</div>
+            <div className="text-lg font-semibold">Escopos • {cnpj}</div>
             <div className="text-sm text-muted-foreground">Drafts e versões publicadas (localStorage)</div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild className="rounded-xl">
-              <Link href={`/clients/${params.cnpj}/scopes/new`}>Novo escopo (wizard)</Link>
+              <Link href={`/clients/${cnpj}/scopes/new`}>Novo escopo</Link>
             </Button>
 
             <Button

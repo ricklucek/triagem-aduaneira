@@ -19,7 +19,7 @@ export const ScopeSchema = z.object({
   contacts: z.array(z.object({
     nome: z.string().nullable().optional(),
     cargoDepartamento: z.string().nullable().optional(),
-    email: z.string().email().nullable().optional(),
+    email: z.email().nullable().optional(),
     telefone: z.string().nullable().optional(),
     observacao: z.string().nullable().optional(),
   })).default([]),

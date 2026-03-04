@@ -16,10 +16,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 
-// import { StepClient } from "./steps/step-client";
+import { StepClient } from "./steps/step-client";
 import { StepContacts } from "./steps/step-contacts";
 import { StepOperation } from "./steps/step-operation";
-// import { StepServices } from "./steps/step-services";
+import { StepServices } from "./steps/step-services";
 import { StepReview } from "./steps/step-review";
 
 const steps = ["Cliente", "Contatos", "Operação", "Serviços", "Revisão"] as const;
@@ -31,7 +31,7 @@ export function ScopeWizard({ cnpj }: { cnpj: string }) {
   const [draftId, setDraftId] = useState<string | null>(null);
 
   const form = useForm<Scope>({
-    // resolver: zodResolver(ScopeSchema),
+    resolver: zodResolver(ScopeSchema) as any,
     defaultValues: {
       ...defaultScope,
       client: { ...defaultScope.client, cnpj },
@@ -137,10 +137,10 @@ export function ScopeWizard({ cnpj }: { cnpj: string }) {
               </Alert>
             )}
 
-            {/* {step === 0 && <StepClient />} */}
+            {step === 0 && <StepClient />}
             {step === 1 && <StepContacts />}
             {step === 2 && <StepOperation />}
-            {/* {step === 3 && <StepServices />} */}
+            {step === 3 && <StepServices />}
             {step === 4 && <StepReview onPublish={publishSnapshot} />}
 
             <div className="flex items-center justify-between pt-2">
