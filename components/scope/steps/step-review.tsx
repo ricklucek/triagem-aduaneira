@@ -2,19 +2,52 @@
 
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
+
 import type { Scope } from "@/lib/scope/schema";
-import { getScopeWarnings } from "@/lib/scope/warnings";
 import { ServiceCatalog } from "@/lib/catalog/services";
-import { EntryLocations, ClearanceLocations } from "@/lib/catalog/locations";
+import { EntryLocations, ReleaseWarehouses, ExportPortsAndBorders } from "@/lib/catalog/locations";
+import { getScopeWarnings } from "@/lib/scope/warnings";
 
 import { Card } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-function findLabel(list: readonly { id: string; label: string }[], id?: string | null) {
-  return list.find((x) => x.id === id)?.label ?? id ?? "-";
+function opLabel(t: "IMPORTACAO" | "EXPORTACAO") {
+  return t === "IMPORTACAO" ? "Importação" : "Exportação";
+}
+
+function modalLabel(m: Scope["importSection"]["modal"] | Scope["exportSection"]["modal"]) {
+  if (!m) return "-";
+  if (m === "MARITIMO") return "Marítimo";
+  if (m === "AEREO") return "Aéreo";
+  return "Rodoviário";
+}
+
+function joinCatalogLabels(
+  catalog: readonly { id: string; label: string; code?: string }[],
+  ids: string[] | undefined
+) {
+  if (!ids?.length) return "-";
+  return ids.map((id) => catalog.find((x) => x.id === id)?.label ?? id).join(", ");
+}
+
+function renderServiceValue(s: Scope["services"][number]) {
+  const cur = s.currency;
+
+  switch (s.pricingModel) {
+    case "FIXED":
+      return `${cur} ${s.amount ?? "-"}`;
+    case "PERCENT":
+      return `${s.percent ?? "-"}%`;
+    case "TEXT":
+      return s.textRule ?? "-";
+    case "SALARY_MINIMUM":
+      return `1 salário mínimo (${cur})`;
+    default:
+      return "-";
+  }
 }
 
 export function StepReview({ onPublish }: { onPublish: () => void }) {
@@ -23,8 +56,9 @@ export function StepReview({ onPublish }: { onPublish: () => void }) {
 
   const warnings = useMemo(() => getScopeWarnings(scope), [scope]);
 
-  const entrada = findLabel(EntryLocations as any, scope.operation.localEntradaId);
-  const liberacao = findLabel(ClearanceLocations as any, scope.operation.localLiberacaoId);
+  const ops = scope.operation.types ?? [];
+  const hasImport = ops.includes("IMPORTACAO");
+  const hasExport = ops.includes("EXPORTACAO");
 
   return (
     <div className="space-y-3">
@@ -32,7 +66,7 @@ export function StepReview({ onPublish }: { onPublish: () => void }) {
         <Alert className="rounded-xl">
           <AlertTitle>Alertas</AlertTitle>
           <AlertDescription>
-            {warnings.length} item(ns) recomendados para completar antes de publicar (o MVP não bloqueia).
+            {warnings.length} item(ns) recomendados para completar antes de publicar (no MVP não bloqueia).
           </AlertDescription>
         </Alert>
       )}
@@ -40,65 +74,110 @@ export function StepReview({ onPublish }: { onPublish: () => void }) {
       <Card className="rounded-2xl p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-sm font-semibold">Resumo</div>
-            <div className="text-xs text-muted-foreground">Snapshot do formulário inteiro ao publicar</div>
+            <div className="text-sm font-semibold">Revisão</div>
+            <div className="text-xs text-muted-foreground">
+              Ao publicar, o escopo vira snapshot (published não edita).
+            </div>
           </div>
+
           <div className="flex items-center gap-2">
             <Badge variant="secondary">status: {scope.meta.status}</Badge>
             <Badge variant="outline">v{scope.meta.version}</Badge>
+            <Badge variant="outline">{scope.meta.source}</Badge>
           </div>
         </div>
 
         <Separator className="my-4" />
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
+          {/* Cliente */}
+          <div className="space-y-1">
             <div className="text-xs text-muted-foreground">Cliente</div>
             <div className="text-sm">
-              <div className="font-medium">{scope.client.razaoSocial || "-"}</div>
-              <div className="text-muted-foreground">{scope.client.cnpj || "-"}</div>
+              <div className="font-medium">{scope.client.razaoSocial ?? "-"}</div>
+              <div className="text-muted-foreground">{scope.client.cnpj ?? "-"}</div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="text-xs text-muted-foreground">Operação</div>
+          {/* Operações */}
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">Operações</div>
             <div className="text-sm">
-              <div className="font-medium">
-                {scope.operation.tipo === "IMPORTACAO" ? "Importação" : "Exportação"} •{" "}
-                {scope.operation.modal ?? "-"}
-              </div>
+              <div className="font-medium">{ops.length ? ops.map(opLabel).join(" + ") : "-"}</div>
               <div className="text-muted-foreground">
-                Entrada: {entrada} • Liberação: {liberacao}
+                Import modal: {hasImport ? modalLabel(scope.importSection.modal) : "-"} • Export modal:{" "}
+                {hasExport ? modalLabel(scope.exportSection.modal) : "-"}
               </div>
             </div>
           </div>
 
-          <div className="space-y-2 md:col-span-2">
+          {/* Importação */}
+          {hasImport && (
+            <div className="space-y-1 md:col-span-2">
+              <div className="text-xs text-muted-foreground">Importação</div>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <div>Locais de entrada: {joinCatalogLabels(EntryLocations as any, scope.importSection.entryLocations)}</div>
+                <div>Armazéns de liberação: {joinCatalogLabels(ReleaseWarehouses as any, scope.importSection.releaseWarehouses)}</div>
+                <div>NCM: {scope.importSection.ncm.length ? scope.importSection.ncm.join(", ") : "-"}</div>
+                <div>CNAE secundário: {scope.importSection.cnaeSecundario.length ? scope.importSection.cnaeSecundario.join(", ") : "-"}</div>
+                <div>LI/LPCO: {scope.importSection.liLpco.enabled ? "Sim" : "Não"}</div>
+                {scope.importSection.liLpco.enabled && (
+                  <div>Anuências: {scope.importSection.liLpco.anuencias.length ? scope.importSection.liLpco.anuencias.join(", ") : "-"}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Exportação */}
+          {hasExport && (
+            <div className="space-y-1 md:col-span-2">
+              <div className="text-xs text-muted-foreground">Exportação</div>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <div>Portos/fronteiras: {joinCatalogLabels(ExportPortsAndBorders as any, scope.exportSection.departureLocations)}</div>
+                <div>NCM: {scope.exportSection.ncm.length ? scope.exportSection.ncm.join(", ") : "-"}</div>
+                <div>CNAE secundário: {scope.exportSection.cnaeSecundario.length ? scope.exportSection.cnaeSecundario.join(", ") : "-"}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Contatos */}
+          <div className="space-y-1 md:col-span-2">
             <div className="text-xs text-muted-foreground">Contatos</div>
             <div className="text-sm text-muted-foreground">
-              {scope.contacts?.length
-                ? scope.contacts.map((c, i) => (
+              {scope.contacts.length ? (
+                <div className="space-y-1">
+                  {scope.contacts.map((c, i) => (
                     <div key={i}>
-                      {c.nome || `Contato #${i + 1}`} — {c.email || "(sem e-mail)"}
+                      {c.nome ?? `Contato #${i + 1}`} — {c.email ?? "(sem e-mail)"}
                     </div>
-                  ))
-                : "Nenhum contato"}
+                  ))}
+                </div>
+              ) : (
+                "Nenhum contato"
+              )}
             </div>
           </div>
 
-          <div className="space-y-2 md:col-span-2">
+          {/* Serviços */}
+          <div className="space-y-1 md:col-span-2">
             <div className="text-xs text-muted-foreground">Serviços</div>
             <div className="text-sm text-muted-foreground">
-              {scope.services?.length
-                ? scope.services.map((s, i) => {
-                    const label = ServiceCatalog.find((x) => x.code === s.codigo)?.label ?? s.codigo;
-                    return (
-                      <div key={i}>
-                        {label} — {s.moeda} {s.valor ?? "-"} {s.regraCalculo ? `• ${s.regraCalculo}` : ""}
-                      </div>
-                    );
-                  })
-                : "Nenhum serviço"}
+              {scope.services.length ? (
+                <div className="space-y-1">
+                  {scope.services
+                    .filter((s) => s.enabled !== false)
+                    .map((s, i) => {
+                      const label = ServiceCatalog.find((x) => x.code === s.code)?.label ?? s.code;
+                      return (
+                        <div key={i}>
+                          {label} • {opLabel(s.operationScope)} — {renderServiceValue(s)}
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                "Nenhum serviço"
+              )}
             </div>
           </div>
         </div>
@@ -110,9 +189,10 @@ export function StepReview({ onPublish }: { onPublish: () => void }) {
         </div>
       </Card>
 
+      {/* Debug */}
       <Card className="rounded-2xl p-4">
-        <div className="mb-2 text-sm font-semibold">JSON (debug do MVP)</div>
-        <pre className="max-h-105 overflow-auto rounded-xl bg-muted p-3 text-xs">
+        <div className="mb-2 text-sm font-semibold">JSON (debug)</div>
+        <pre className="max-h-[420px] overflow-auto rounded-xl bg-muted p-3 text-xs">
           {JSON.stringify(scope, null, 2)}
         </pre>
       </Card>

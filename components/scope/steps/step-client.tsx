@@ -66,10 +66,10 @@ export function StepClient() {
             </Select>
           </div>
 
-          <div className="space-y-1">
+          {/* <div className="space-y-1">
             <div className="text-xs text-muted-foreground">Responsável comercial</div>
             <Input className="rounded-xl" {...register("client.responsavelComercial")} />
-          </div>
+          </div> */}
 
           <div className="space-y-1 md:col-span-2">
             <div className="text-xs text-muted-foreground">Endereço do escritório</div>

@@ -92,19 +92,11 @@ export default function ScopesPage() {
                         <TableCell className="text-xs text-muted-foreground">{r.id}</TableCell>
                         <TableCell>{formatISO(r.updatedAt)}</TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            className="rounded-xl"
-                            onClick={() => alert("Para editar um draft, vamos ligar isso ao wizard na próxima iteração.")}
-                          >
-                            Editar
+                          <Button asChild variant="outline" className="rounded-xl">
+                            <Link href={`/clients/${cnpj}/scopes/edit/${r.id}`}>Editar</Link>
                           </Button>
-                          <Button
-                            variant="outline"
-                            className="ml-2 rounded-xl"
-                            onClick={() => remove(r.id)}
-                          >
-                            Excluir
+                          <Button asChild variant="outline" className="rounded-xl">
+                            <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>Ver</Link>
                           </Button>
                         </TableCell>
                       </TableRow>

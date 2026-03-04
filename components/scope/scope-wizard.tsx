@@ -24,18 +24,25 @@ import { StepReview } from "./steps/step-review";
 
 const steps = ["Cliente", "Contatos", "Operação", "Serviços", "Revisão"] as const;
 
-export function ScopeWizard({ cnpj }: { cnpj: string }) {
+export function ScopeWizard({
+  cnpj,
+  initialScope,
+  draftId: draftIdProp,
+}: {
+  cnpj: string;
+  initialScope?: Scope;
+  draftId?: string | null;
+}) {
   const [step, setStep] = useState(0);
 
   const { upsertDraft, publish } = useScopeStore(cnpj);
-  const [draftId, setDraftId] = useState<string | null>(null);
+  const [draftId, setDraftId] = useState<string | null>(draftIdProp ?? null);
 
   const form = useForm<Scope>({
     resolver: zodResolver(ScopeSchema) as any,
-    defaultValues: {
-      ...defaultScope,
-      client: { ...defaultScope.client, cnpj },
-    },
+    defaultValues: initialScope
+      ? initialScope
+      : { ...defaultScope, client: { ...defaultScope.client, cnpj } },
     mode: "onChange",
   });
 
@@ -73,6 +80,10 @@ export function ScopeWizard({ cnpj }: { cnpj: string }) {
     const pub = publish(draft.id, form.getValues());
     alert(`Publicado! Versão v${pub.version} criada.\n\nID: ${pub.id}`);
   }
+
+  useEffect(() => {
+    if (initialScope) form.reset(initialScope);
+  }, []);
 
   return (
     <FormProvider {...form}>

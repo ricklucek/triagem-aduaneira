@@ -1,8 +1,26 @@
 import { z } from "zod";
 import { Currency, ModalType, OperationType, TaxRegime } from "@/lib/catalog/enums";
-import { SERVICE_CODES } from "@/lib/catalog/services";
+
+// helpers
+const nonEmptyString = z.string().trim().min(1);
 
 export const ScopeSchema = z.object({
+  // Config global (tenant) referenciada (no MVP pode ser hardcoded e opcional)
+  // Se você quiser carimbar no snapshot publicado, mantenha aqui:
+  globalsSnapshot: z
+    .object({
+      salaryMinimumBRL: z.number().nonnegative().default(1518),
+      cascoBank: z
+        .object({
+          bank: z.string().nullable().optional(),
+          agency: z.string().nullable().optional(),
+          account: z.string().nullable().optional(),
+          pixKey: z.string().nullable().optional(),
+        })
+        .default({}),
+    })
+    .default({ salaryMinimumBRL: 1518, cascoBank: {} }),
+
   client: z.object({
     cnpj: z.string().nullable().optional(),
     razaoSocial: z.string().nullable().optional(),
@@ -10,45 +28,99 @@ export const ScopeSchema = z.object({
     ie: z.string().nullable().optional(),
     im: z.string().nullable().optional(),
     regimeTributario: z.enum(TaxRegime).nullable().optional(),
-    radarModalidade: z.string().nullable().optional(),
+    radarModalidade: z.string().nullable().optional(), // integração futura
     enderecoEscritorio: z.string().nullable().optional(),
     enderecoArmazem: z.string().nullable().optional(),
-    responsavelComercial: z.string().nullable().optional(),
+    responsavelComercialId: z.string().nullable().optional(), // catálogo (pessoas)
   }),
 
-  contacts: z.array(z.object({
-    nome: z.string().nullable().optional(),
-    cargoDepartamento: z.string().nullable().optional(),
-    email: z.email().nullable().optional(),
-    telefone: z.string().nullable().optional(),
-    observacao: z.string().nullable().optional(),
-  })).default([]),
+  contacts: z
+    .array(
+      z.object({
+        nome: z.string().nullable().optional(),
+        cargoDepartamento: z.string().nullable().optional(),
+        email: z.string().email().nullable().optional(),
+        telefone: z.string().nullable().optional(),
+        observacao: z.string().nullable().optional(),
+      })
+    )
+    .default([]),
 
+  // Operação agora é multi-seleção
   operation: z.object({
-    tipo: z.enum(OperationType).default("IMPORTACAO"),
-    modal: z.enum(ModalType).nullable().optional(),
-    localEntradaId: z.string().nullable().optional(),
-    localLiberacaoId: z.string().nullable().optional(),
-    ncm: z.array(z.string()).default([]),
-    cnaePrincipal: z.string().nullable().optional(),
-    cnaeSecundario: z.array(z.string()).default([]),
-    anuencias: z.array(z.string()).default([]),
-    impostos: z.array(z.string()).default([]),
-    vinculos: z.array(z.string()).default([]),
-    icmsPercentual: z.number().nullable().optional(),
-    icmsRegra: z.string().nullable().optional(),
-    destinacao: z.string().nullable().optional(),
-    observacoes: z.string().nullable().optional(),
+    types: z.array(z.enum(OperationType)).default([]), // [] = nada selecionado
   }),
 
-  services: z.array(z.object({
-    codigo: z.enum(SERVICE_CODES),
-    descricao: z.string().nullable().optional(),
-    moeda: z.enum(Currency).default("BRL"),
-    valor: z.number().nonnegative().nullable().optional(),
-    regraCalculo: z.string().nullable().optional(),
-    observacao: z.string().nullable().optional(),
-  })).default([]),
+  // Seção de Importação (habilitada quando operation.types inclui IMPORTACAO)
+  importSection: z
+    .object({
+      modal: z.enum(ModalType).nullable().optional(),
+
+      // Multi-select com catálogo
+      entryLocations: z.array(z.string()).default([]), // URF/Porto/Aeroporto etc
+      releaseWarehouses: z.array(z.string()).default([]), // armazém/códigos
+
+      // Arrays
+      ncm: z.array(z.string()).default([]),
+      cnaePrincipal: z.string().nullable().optional(),
+      cnaeSecundario: z.array(z.string()).default([]),
+
+      // Condicionais (vamos deixar estrutura pronta, mas UI pode vir depois)
+      liLpco: z
+        .object({
+          enabled: z.boolean().default(false),
+          anuencias: z.array(z.string()).default([]), // órgãos
+        })
+        .default({ enabled: false, anuencias: [] }),
+    })
+    .default({
+      entryLocations: [],
+      releaseWarehouses: [],
+      ncm: [],
+      cnaeSecundario: [],
+      liLpco: { enabled: false, anuencias: [] },
+    }),
+
+  // Seção de Exportação (vamos ligar depois)
+  exportSection: z
+    .object({
+      modal: z.enum(ModalType).nullable().optional(),
+      departureLocations: z.array(z.string()).default([]), // portos/fronteiras
+      ncm: z.array(z.string()).default([]),
+      cnaeSecundario: z.array(z.string()).default([]),
+    })
+    .default({
+      departureLocations: [],
+      ncm: [],
+      cnaeSecundario: [],
+    }),
+
+  /**
+   * Serviços “rule-driven” (base pronta).
+   * Por enquanto podemos manter UI simples, mas o modelo já suporta regras específicas.
+   */
+  services: z
+    .array(
+      z.object({
+        operationScope: z.enum(["IMPORTACAO", "EXPORTACAO"]),
+        code: z.string(), // depois trocamos para enum de catálogo rule-driven
+        enabled: z.boolean().default(true),
+
+        // pricing
+        currency: z.enum(Currency).default("BRL"),
+        pricingModel: z.enum(["FIXED", "PERCENT", "TEXT", "SALARY_MINIMUM"]).default("FIXED"),
+
+        amount: z.number().nonnegative().nullable().optional(), // FIXED
+        percent: z.number().nonnegative().nullable().optional(), // PERCENT
+        textRule: z.string().nullable().optional(), // TEXT (ex: PTAX 8%)
+        // SALARY_MINIMUM => amount opcional (se quiser override), senão usa globalsSnapshot.salaryMinimumBRL
+
+        notes: z.string().nullable().optional(),
+        // campos específicos por serviço podem entrar aqui sem quebrar:
+        extra: z.record(z.any(), z.any()).default({}),
+      })
+    )
+    .default([]),
 
   meta: z.object({
     status: z.enum(["draft", "published"]).default("draft"),
@@ -61,15 +133,24 @@ export const ScopeSchema = z.object({
 export type Scope = z.infer<typeof ScopeSchema>;
 
 export const defaultScope: Scope = {
+  globalsSnapshot: { salaryMinimumBRL: 1518, cascoBank: {} },
   client: {},
   contacts: [],
-  operation: {
-    tipo: "IMPORTACAO",
+  operation: { types: [] },
+  importSection: {
+    modal: null,
+    entryLocations: [],
+    releaseWarehouses: [],
+    ncm: [],
+    cnaePrincipal: null,
+    cnaeSecundario: [],
+    liLpco: { enabled: false, anuencias: [] },
+  },
+  exportSection: {
+    modal: null,
+    departureLocations: [],
     ncm: [],
     cnaeSecundario: [],
-    anuencias: [],
-    impostos: [],
-    vinculos: [],
   },
   services: [],
   meta: { status: "draft", version: 1, source: "MANUAL", updatedAt: new Date().toISOString() },
