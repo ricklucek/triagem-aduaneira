@@ -51,7 +51,7 @@ export function StepClient() {
             <div className="text-xs text-muted-foreground">Regime tributário</div>
             <Select
               value={regime}
-              onValueChange={(v) => setValue("client.regimeTributario", v as any, { shouldDirty: true })}
+              onValueChange={(v) => setValue("client.regimeTributario", v as Scope["client"]["regimeTributario"], { shouldDirty: true })}
             >
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Selecione" />

@@ -23,7 +23,7 @@ export default function ScopesPage() {
 
   const { cnpj } = useParams<{ cnpj: string }>()
 
-  const { records, loading, cloneLatestPublished, remove } = useScopeStore(cnpj);
+  const { records, loading, cloneLatestPublished } = useScopeStore(cnpj);
 
   const drafts = useMemo(() => records.filter((r) => r.status === "draft"), [records]);
   const published = useMemo(() => records.filter((r) => r.status === "published"), [records]);

@@ -61,8 +61,8 @@ export function StepOperation() {
         <div className="mt-3">
           <MultiSelect
             value={types}
-            onChange={(next) => setValue("operation.types", next as any, { shouldDirty: true })}
-            options={opOptions as any}
+            onChange={(next) => setValue("operation.types", next as Scope["operation"]["types"], { shouldDirty: true })}
+            options={opOptions}
             placeholder="Selecione pelo menos uma operação"
           />
         </div>
@@ -78,7 +78,7 @@ export function StepOperation() {
               <div className="text-xs text-muted-foreground">Modal</div>
               <Select
                 value={importModal}
-                onValueChange={(v) => setValue("importSection.modal", v as any, { shouldDirty: true })}
+                onValueChange={(v) => setValue("importSection.modal", v as Scope["importSection"]["modal"], { shouldDirty: true })}
               >
                 <SelectTrigger className="rounded-xl">
                   <SelectValue placeholder="Selecione" />
@@ -98,7 +98,7 @@ export function StepOperation() {
               <MultiSelect
                 value={entryLocations}
                 onChange={(next) => setValue("importSection.entryLocations", next, { shouldDirty: true })}
-                options={EntryLocations as any}
+                options={EntryLocations}
                 placeholder="Selecione locais de entrada"
               />
             </div>
@@ -108,7 +108,7 @@ export function StepOperation() {
               <MultiSelect
                 value={releaseWarehouses}
                 onChange={(next) => setValue("importSection.releaseWarehouses", next, { shouldDirty: true })}
-                options={ReleaseWarehouses as any}
+                options={ReleaseWarehouses}
                 placeholder="Selecione armazéns"
               />
             </div>
@@ -161,7 +161,7 @@ export function StepOperation() {
                 <MultiSelect
                   value={anuencias}
                   onChange={(next) => setValue("importSection.liLpco.anuencias", next, { shouldDirty: true })}
-                  options={AnuenciasOrgaos as any}
+                  options={AnuenciasOrgaos}
                   placeholder="Selecione órgãos anuentes"
                 />
               </div>
@@ -180,7 +180,7 @@ export function StepOperation() {
               <div className="text-xs text-muted-foreground">Modal</div>
               <Select
                 value={exportModal}
-                onValueChange={(v) => setValue("exportSection.modal", v as any, { shouldDirty: true })}
+                onValueChange={(v) => setValue("exportSection.modal", v as Scope["exportSection"]["modal"], { shouldDirty: true })}
               >
                 <SelectTrigger className="rounded-xl">
                   <SelectValue placeholder="Selecione" />
@@ -200,7 +200,7 @@ export function StepOperation() {
               <MultiSelect
                 value={departureLocations}
                 onChange={(next) => setValue("exportSection.departureLocations", next, { shouldDirty: true })}
-                options={ExportPortsAndBorders as any}
+                options={ExportPortsAndBorders}
                 placeholder="Selecione portos e/ou fronteiras"
               />
             </div>

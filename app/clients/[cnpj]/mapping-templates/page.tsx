@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { listTemplates, deleteTemplatesForClient } from "@/lib/scope/mapping-store";
+import { useMemo, useState } from "react";
+import { listTemplates, deleteTemplatesForClient, type MappingTemplate } from "@/lib/scope/mapping-store";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,21 +16,16 @@ type Props = {
 export default function MappingTemplatesPage({ params }: Props) {
   const { cnpj } = params;
 
-  const [templates, setTemplates] = useState<any[]>([]);
-
-  function load() {
-    const data = listTemplates(cnpj);
-    setTemplates(data);
-  }
-
-  useEffect(() => {
-    load();
-  }, [cnpj]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const templates = useMemo<MappingTemplate[]>(() => {
+    void refreshKey;
+    return listTemplates(cnpj);
+  }, [cnpj, refreshKey]);
 
   function handleDeleteAll() {
     if (!confirm("Remover todos os templates deste cliente?")) return;
     deleteTemplatesForClient(cnpj);
-    load();
+    setRefreshKey((k) => k + 1);
   }
 
   return (

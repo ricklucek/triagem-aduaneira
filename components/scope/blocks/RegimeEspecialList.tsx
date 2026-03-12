@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/form-layout";
 
 type Item = {
-  observacao: string;
+  nomeRegime: string;
   valor: number | null;
 };
 
@@ -23,7 +23,7 @@ export default function RegimeEspecialList({
   onChange: (next: Item[]) => void;
 }) {
   function addItem() {
-    onChange([...items, { observacao: "", valor: null }]);
+    onChange([...items, { nomeRegime: "", valor: null }]);
   }
 
   function updateItem(index: number, patch: Partial<Item>) {
@@ -53,9 +53,9 @@ export default function RegimeEspecialList({
             <Grid columns={2}>
               <Field label="Nome do Regime" required>
                 <TextInput
-                  value={item.observacao}
+                  value={item.nomeRegime}
                   onChange={(e) =>
-                    updateItem(index, { observacao: e.target.value })
+                    updateItem(index, { nomeRegime: e.target.value })
                   }
                 />
               </Field>

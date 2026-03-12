@@ -28,7 +28,7 @@ export type DashboardRow = {
   version: number;
   title?: string;
   updatedAt: string;
-  data: any; // Scope (mantém any aqui para evitar circular import no MVP)
+  data: unknown; // Scope (evita circular import no MVP)
 };
 
 export function listAllScopeRecords(): DashboardRow[] {
