@@ -42,7 +42,7 @@ const targetPaths = [
   "exportSection.departureLocations[]",
 ] as const;
 
-function mockExtract(fileName: string): ExtractedField[] {
+function mockExtract(): ExtractedField[] {
   // MVP: simula extração
   return [
     { key: "CNPJ", value: "56.091.724/0001-42", confidence: 0.82 },
@@ -75,7 +75,7 @@ export function UploadMapper() {
   const currentCnpj = (getValues("client.cnpj") ?? "").toString();
 
   function onChoose(f: File) {
-    const data = mockExtract(f.name);
+    const data = mockExtract();
     const docType = inferDocType(f.name);
 
     // 1) tenta template
@@ -127,7 +127,7 @@ export function UploadMapper() {
 
       if (path === "contacts[0].email") {
         const contacts = getValues("contacts");
-        if (!contacts?.length) setValue("contacts", [{ email: ef.value.trim() } as any], { shouldDirty: true });
+        if (!contacts?.length) setValue("contacts", [{ email: ef.value.trim() }], { shouldDirty: true });
         else setValue("contacts.0.email", ef.value.trim(), { shouldDirty: true });
         continue;
       }
@@ -135,7 +135,7 @@ export function UploadMapper() {
       // OP TYPES
       if (path === "operation.types[]") {
         const ops = parseOperationTypes(ef.value);
-        setValue("operation.types", ops as any, { shouldDirty: true });
+        setValue("operation.types", ops, { shouldDirty: true });
         continue;
       }
 
@@ -146,14 +146,14 @@ export function UploadMapper() {
       }
 
       if (path === "importSection.entryLocations[]") {
-        const { ids, unmatched } = resolveCatalogIdsList(ef.value, EntryLocations as any);
+        const { ids, unmatched } = resolveCatalogIdsList(ef.value, EntryLocations);
         setValue("importSection.entryLocations", ids, { shouldDirty: true });
         if (unmatched.length) unmatchedSummary[path] = unmatched;
         continue;
       }
 
       if (path === "importSection.releaseWarehouses[]") {
-        const { ids, unmatched } = resolveCatalogIdsList(ef.value, ReleaseWarehouses as any);
+        const { ids, unmatched } = resolveCatalogIdsList(ef.value, ReleaseWarehouses);
         setValue("importSection.releaseWarehouses", ids, { shouldDirty: true });
         if (unmatched.length) unmatchedSummary[path] = unmatched;
         continue;
@@ -170,7 +170,7 @@ export function UploadMapper() {
       }
 
       if (path === "importSection.liLpco.anuencias[]") {
-        const { ids, unmatched } = resolveCatalogIdsList(ef.value, AnuenciasOrgaos as any);
+        const { ids, unmatched } = resolveCatalogIdsList(ef.value, AnuenciasOrgaos);
         setValue("importSection.liLpco.anuencias", ids, { shouldDirty: true });
         // se tem anuência, força enabled
         if (ids.length) setValue("importSection.liLpco.enabled", true, { shouldDirty: true });
@@ -185,7 +185,7 @@ export function UploadMapper() {
       }
 
       if (path === "exportSection.departureLocations[]") {
-        const { ids, unmatched } = resolveCatalogIdsList(ef.value, ExportPortsAndBorders as any);
+        const { ids, unmatched } = resolveCatalogIdsList(ef.value, ExportPortsAndBorders);
         setValue("exportSection.departureLocations", ids, { shouldDirty: true });
         if (unmatched.length) unmatchedSummary[path] = unmatched;
         continue;

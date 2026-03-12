@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useScopeStore } from "@/lib/scope/use-scope-store";
 
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ScopeSchema, defaultScope, type Scope } from "@/lib/scope/schema";
 import { getScopeWarnings } from "@/lib/scope/warnings";
@@ -39,14 +39,14 @@ export function ScopeWizard({
   const [draftId, setDraftId] = useState<string | null>(draftIdProp ?? null);
 
   const form = useForm<Scope>({
-    resolver: zodResolver(ScopeSchema) as any,
+    resolver: zodResolver(ScopeSchema) as Resolver<Scope>,
     defaultValues: initialScope
       ? initialScope
       : { ...defaultScope, client: { ...defaultScope.client, cnpj } },
     mode: "onChange",
   });
 
-  const value = form.watch();
+  const value = useWatch({ control: form.control }) as Scope;
   const warnings = useMemo(() => getScopeWarnings(value), [value]);
   const progress = ((step + 1) / steps.length) * 100;
 
@@ -70,7 +70,7 @@ export function ScopeWizard({
     return () => {
       if (saveTimer.current) window.clearTimeout(saveTimer.current);
     };
-  }, [value]); // value = form.watch()
+  }, [draftId, form, upsertDraft, value]); // value = watch
 
   function publishSnapshot() {
     // garante que existe draft salvo
@@ -83,7 +83,7 @@ export function ScopeWizard({
 
   useEffect(() => {
     if (initialScope) form.reset(initialScope);
-  }, []);
+  }, [form, initialScope]);
 
   return (
     <FormProvider {...form}>

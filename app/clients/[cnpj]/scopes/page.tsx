@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { useParams } from "next/navigation";
 import { useScopeStore } from "@/lib/scope/use-scope-store";
 
 import { Card } from "@/components/ui/card";
@@ -9,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
-import { useParams } from "next/navigation";
 
 function formatISO(iso: string) {
   try {
@@ -20,21 +20,21 @@ function formatISO(iso: string) {
 }
 
 export default function ScopesPage() {
-
-  const { cnpj } = useParams<{ cnpj: string }>()
-
-  const { records, loading, cloneLatestPublished, remove } = useScopeStore(cnpj);
+  const { cnpj } = useParams<{ cnpj: string }>();
+  const { records, loading, cloneLatestPublished } = useScopeStore(cnpj);
 
   const drafts = useMemo(() => records.filter((r) => r.status === "draft"), [records]);
   const published = useMemo(() => records.filter((r) => r.status === "published"), [records]);
 
   return (
     <div className="grid gap-4">
-      <Card className="rounded-2xl p-4">
+      <Card className="rounded-2xl border bg-card p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-lg font-semibold">Escopos • {cnpj}</div>
-            <div className="text-sm text-muted-foreground">Drafts e versões publicadas (localStorage)</div>
+            <div className="text-lg font-semibold tracking-tight">Escopos • {cnpj}</div>
+            <div className="text-sm text-muted-foreground">
+              Gestão de rascunhos e documentos publicados.
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -47,11 +47,14 @@ export default function ScopesPage() {
               className="rounded-xl"
               onClick={() => {
                 const r = cloneLatestPublished();
-                if (!r) alert("Nenhuma versão publicada para clonar.");
-                else alert("Draft clonado! Abra o wizard para editar.");
+                if (!r) {
+                  alert("Nenhuma versão publicada para clonar.");
+                  return;
+                }
+                alert("Draft clonado com sucesso.");
               }}
             >
-              Clonar última published → draft
+              Clonar última versão
             </Button>
           </div>
         </div>
@@ -62,8 +65,7 @@ export default function ScopesPage() {
           <div className="text-sm text-muted-foreground">Carregando...</div>
         ) : (
           <div className="grid gap-6">
-            {/* Drafts */}
-            <div>
+            <section>
               <div className="mb-2 flex items-center gap-2">
                 <div className="text-sm font-semibold">Drafts</div>
                 <Badge variant="secondary">{drafts.length}</Badge>
@@ -91,12 +93,12 @@ export default function ScopesPage() {
                         <TableCell className="font-medium">{r.title ?? "(sem razão social)"}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{r.id}</TableCell>
                         <TableCell>{formatISO(r.updatedAt)}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="space-x-2 text-right">
                           <Button asChild variant="outline" className="rounded-xl">
                             <Link href={`/clients/${cnpj}/scopes/edit/${r.id}`}>Editar</Link>
                           </Button>
-                          <Button asChild variant="outline" className="rounded-xl">
-                            <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>Ver</Link>
+                          <Button asChild variant="secondary" className="rounded-xl">
+                            <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>Visualizar</Link>
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -104,10 +106,9 @@ export default function ScopesPage() {
                   )}
                 </TableBody>
               </Table>
-            </div>
+            </section>
 
-            {/* Published */}
-            <div>
+            <section>
               <div className="mb-2 flex items-center gap-2">
                 <div className="text-sm font-semibold">Publicados</div>
                 <Badge variant="secondary">{published.length}</Badge>
@@ -137,21 +138,20 @@ export default function ScopesPage() {
                         <TableCell>{r.title ?? "(sem razão social)"}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{r.id}</TableCell>
                         <TableCell>{formatISO(r.updatedAt)}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            className="rounded-xl"
-                            onClick={() => alert("Viewer de snapshot: na próxima iteração eu te mando /view/[id].")}
-                          >
-                            Ver
+                        <TableCell className="space-x-2 text-right">
+                          <Button asChild variant="secondary" className="rounded-xl">
+                            <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>Visualizar</Link>
                           </Button>
                           <Button
                             variant="outline"
-                            className="ml-2 rounded-xl"
+                            className="rounded-xl"
                             onClick={() => {
                               const draft = cloneLatestPublished(r.id);
-                              if (!draft) alert("Falha ao clonar.");
-                              else alert("Draft clonado a partir desta published.");
+                              if (!draft) {
+                                alert("Falha ao clonar.");
+                                return;
+                              }
+                              alert("Draft clonado a partir desta versão.");
                             }}
                           >
                             Clonar
@@ -162,7 +162,7 @@ export default function ScopesPage() {
                   )}
                 </TableBody>
               </Table>
-            </div>
+            </section>
           </div>
         )}
       </Card>

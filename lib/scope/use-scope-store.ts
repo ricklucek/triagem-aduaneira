@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { Scope } from "@/lib/scope/schema";
 import type { ScopeRecord } from "@/lib/scope/store";
 import {
@@ -13,17 +13,16 @@ import {
 } from "@/lib/scope/store";
 
 export function useScopeStore(cnpj: string) {
-  const [records, setRecords] = useState<ScopeRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [version, setVersion] = useState(0);
+
+  const records: ScopeRecord[] = listScopes(cnpj);
+  const loading = false;
+
+  void version;
 
   const refresh = useCallback(() => {
-    setRecords(listScopes(cnpj));
-    setLoading(false);
-  }, [cnpj]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+    setVersion((v) => v + 1);
+  }, []);
 
   const loadOne = useCallback((id: string) => getScope(cnpj, id), [cnpj]);
 

@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { Currency, ModalType, OperationType, TaxRegime } from "@/lib/catalog/enums";
 
-// helpers
-const nonEmptyString = z.string().trim().min(1);
-
 export const ScopeSchema = z.object({
   // Config global (tenant) referenciada (no MVP pode ser hardcoded e opcional)
   // Se você quiser carimbar no snapshot publicado, mantenha aqui:
