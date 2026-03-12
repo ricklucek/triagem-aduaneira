@@ -280,10 +280,6 @@ export const ImportacaoSchema = z
     }
   });
 
-const ResponsavelServicoFieldSchema = z.object({
-  responsavel: ResponsavelServicoSchema.optional(),
-});
-
 export const ExportacaoSchema = z
   .object({
     analistaDA: z.string().trim().min(1, "Analista DA é obrigatório"),

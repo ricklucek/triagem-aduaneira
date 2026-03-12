@@ -110,7 +110,7 @@ export default function StepSobreEmpresa({ form, errors, onChange }: Props) {
           <Select
             value={s.regimeTributacao}
             onChange={(e) =>
-              patch({ regimeTributacao: e.target.value as any })
+              patch({ regimeTributacao: e.target.value as typeof s.regimeTributacao })
             }
           >
             <option value="SIMPLES_NACIONAL">Simples Nacional</option>
@@ -127,7 +127,7 @@ export default function StepSobreEmpresa({ form, errors, onChange }: Props) {
           <Select
             value={s.responsavelComercial}
             onChange={(e) =>
-              patch({ responsavelComercial: e.target.value as any })
+              patch({ responsavelComercial: e.target.value as typeof s.responsavelComercial })
             }
           >
             <option value="BRUNA_PARIZOTTO">Bruna Parizotto</option>

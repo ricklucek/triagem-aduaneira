@@ -116,8 +116,8 @@ export function StepReview({ onPublish }: { onPublish: () => void }) {
             <div className="space-y-1 md:col-span-2">
               <div className="text-xs text-muted-foreground">Importação</div>
               <div className="text-sm text-muted-foreground space-y-1">
-                <div>Locais de entrada: {joinCatalogLabels(EntryLocations as any, scope.importSection.entryLocations)}</div>
-                <div>Armazéns de liberação: {joinCatalogLabels(ReleaseWarehouses as any, scope.importSection.releaseWarehouses)}</div>
+                <div>Locais de entrada: {joinCatalogLabels(EntryLocations, scope.importSection.entryLocations)}</div>
+                <div>Armazéns de liberação: {joinCatalogLabels(ReleaseWarehouses, scope.importSection.releaseWarehouses)}</div>
                 <div>NCM: {scope.importSection.ncm.length ? scope.importSection.ncm.join(", ") : "-"}</div>
                 <div>CNAE secundário: {scope.importSection.cnaeSecundario.length ? scope.importSection.cnaeSecundario.join(", ") : "-"}</div>
                 <div>LI/LPCO: {scope.importSection.liLpco.enabled ? "Sim" : "Não"}</div>
@@ -133,7 +133,7 @@ export function StepReview({ onPublish }: { onPublish: () => void }) {
             <div className="space-y-1 md:col-span-2">
               <div className="text-xs text-muted-foreground">Exportação</div>
               <div className="text-sm text-muted-foreground space-y-1">
-                <div>Portos/fronteiras: {joinCatalogLabels(ExportPortsAndBorders as any, scope.exportSection.departureLocations)}</div>
+                <div>Portos/fronteiras: {joinCatalogLabels(ExportPortsAndBorders, scope.exportSection.departureLocations)}</div>
                 <div>NCM: {scope.exportSection.ncm.length ? scope.exportSection.ncm.join(", ") : "-"}</div>
                 <div>CNAE secundário: {scope.exportSection.cnaeSecundario.length ? scope.exportSection.cnaeSecundario.join(", ") : "-"}</div>
               </div>

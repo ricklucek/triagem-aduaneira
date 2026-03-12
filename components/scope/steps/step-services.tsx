@@ -50,7 +50,7 @@ export function StepServices() {
     setValue("services", upsertService(scope, { ...current, ...patch }), { shouldDirty: true });
   }
 
-  function patchExtra(operationScope: "IMPORTACAO" | "EXPORTACAO", code: string, extraPatch: Record<string, any>) {
+  function patchExtra(operationScope: "IMPORTACAO" | "EXPORTACAO", code: string, extraPatch: Record<string, unknown>) {
     const current = getService(operationScope, code);
     if (!current) return;
     setValue(
@@ -284,7 +284,7 @@ export function StepServices() {
                       value={getService("IMPORTACAO", "DESPACHO_ADUANEIRO")?.pricingModel ?? "SALARY_MINIMUM"}
                       onValueChange={(v) =>
                         patchService("IMPORTACAO", "DESPACHO_ADUANEIRO", {
-                          pricingModel: v as any,
+                          pricingModel: v as Scope["services"][number]["pricingModel"],
                           currency: "BRL",
                           amount: v === "SALARY_MINIMUM" ? null : getService("IMPORTACAO", "DESPACHO_ADUANEIRO")?.amount ?? null,
                         })
@@ -469,7 +469,7 @@ export function StepServices() {
                     <div className="text-xs text-muted-foreground">Moeda</div>
                     <Select
                       value={getService("EXPORTACAO", "CERTIFICADO_ORIGEM")?.currency ?? "BRL"}
-                      onValueChange={(v) => patchService("EXPORTACAO", "CERTIFICADO_ORIGEM", { currency: v as any })}
+                      onValueChange={(v) => patchService("EXPORTACAO", "CERTIFICADO_ORIGEM", { currency: v as Scope["services"][number]["currency"] })}
                     >
                       <SelectTrigger className="rounded-xl">
                         <SelectValue />
@@ -518,7 +518,7 @@ export function StepServices() {
                     <div className="text-xs text-muted-foreground">Moeda</div>
                     <Select
                       value={getService("EXPORTACAO", "CERTIFICADO_FITOSSANITARIO")?.currency ?? "BRL"}
-                      onValueChange={(v) => patchService("EXPORTACAO", "CERTIFICADO_FITOSSANITARIO", { currency: v as any })}
+                      onValueChange={(v) => patchService("EXPORTACAO", "CERTIFICADO_FITOSSANITARIO", { currency: v as Scope["services"][number]["currency"] })}
                     >
                       <SelectTrigger className="rounded-xl">
                         <SelectValue />
@@ -579,7 +579,7 @@ export function StepServices() {
                     <div className="text-xs text-muted-foreground">Moeda</div>
                     <Select
                       value={getService("EXPORTACAO", "OUTROS_CERTIFICADOS")?.currency ?? "BRL"}
-                      onValueChange={(v) => patchService("EXPORTACAO", "OUTROS_CERTIFICADOS", { currency: v as any })}
+                      onValueChange={(v) => patchService("EXPORTACAO", "OUTROS_CERTIFICADOS", { currency: v as Scope["services"][number]["currency"] })}
                     >
                       <SelectTrigger className="rounded-xl">
                         <SelectValue />

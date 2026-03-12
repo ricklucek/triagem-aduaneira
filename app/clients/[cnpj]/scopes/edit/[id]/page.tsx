@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useScopeStore } from "@/lib/scope/use-scope-store";
 import { ScopeWizard } from "@/components/scope/scope-wizard";
 import type { Scope } from "@/lib/scope/schema";
@@ -14,12 +14,7 @@ export default function EditDraftPage({ params }: { params: { cnpj: string; id: 
   const { loadOne } = useScopeStore(params.cnpj);
 
   const record = useMemo(() => loadOne(params.id), [loadOne, params.id]);
-  const [initial, setInitial] = useState<Scope | null>(null);
-
-  useEffect(() => {
-    if (!record) return;
-    setInitial(record.data);
-  }, [record]);
+  const initial: Scope | null = record?.data ?? null;
 
   if (!record) {
     return (

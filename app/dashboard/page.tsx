@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getScopeRepo } from "@/data/scope/getScopeRepo";
+import type { ScopeSummary } from "@/data/scope/ScopeRepo";
 import CompletenessBadge from "@/components/ui/completeness-badge";
 import {
   Card,
@@ -25,10 +26,10 @@ export default function DashboardPage() {
   const pageSize = 10;
 
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ScopeSummary[]>([]);
   const [total, setTotal] = useState(0);
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     setLoading(true);
     try {
       const offset = (page - 1) * pageSize;
@@ -44,18 +45,14 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [cnpj, page, repo, status, q]);
 
   useEffect(() => {
     carregar();
-  }, [page, status]);
+  }, [carregar]);
 
   useEffect(() => {
     setPage(1);
-  }, [q, cnpj]);
-
-  useEffect(() => {
-    carregar();
   }, [q, cnpj]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));

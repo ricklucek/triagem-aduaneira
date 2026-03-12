@@ -75,18 +75,22 @@ export default function StepServicosExportacao({
 }: Props) {
   const data = form.servicos.exportacao ?? emptyExportacaoServicos();
 
-  function setData(next: any) {
+  function setData(next: NonNullable<EscopoForm["servicos"]["exportacao"]>) {
     onChange({
       ...form,
       servicos: { ...form.servicos, exportacao: next },
     });
   }
 
-  function update(path: string, value: any) {
-    const next = structuredClone(data as any);
+  function update(path: string, value: unknown) {
+    const next = structuredClone(data);
     const keys = path.split(".");
-    let ref = next;
-    for (let i = 0; i < keys.length - 1; i++) ref = ref[keys[i]];
+    let ref: Record<string, unknown> = next as Record<string, unknown>;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const nested = ref[keys[i]];
+      if (typeof nested !== "object" || nested === null) return;
+      ref = nested as Record<string, unknown>;
+    }
     ref[keys[keys.length - 1]] = value;
     setData(next);
   }
@@ -221,7 +225,7 @@ export default function StepServicosExportacao({
         </button>
 
         <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-          {(data.outrosCertificados.itens ?? []).map((item: any, index: number) => (
+          {(data.outrosCertificados.itens ?? []).map((item, index: number) => (
             <div
               key={index}
               style={{ border: "1px solid #eaecf0", borderRadius: 12, padding: 12 }}
@@ -255,7 +259,7 @@ export default function StepServicosExportacao({
                 onClick={() =>
                   update(
                     "outrosCertificados.itens",
-                    data.outrosCertificados.itens.filter((_: any, i: number) => i !== index)
+                    data.outrosCertificados.itens.filter((_, i: number) => i !== index)
                   )
                 }
               >
