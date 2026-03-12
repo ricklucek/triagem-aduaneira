@@ -12,6 +12,23 @@ type Props = {
   onChange: (next: EscopoForm) => void;
 };
 
+const RESPONSAVEIS = [
+  ["ANNA", "Anna"],
+  ["CLEVERSON", "Cleverson"],
+  ["MARCUS", "Marcus"],
+  ["GILMARA", "Gilmara"],
+  ["THEILA", "Theila"],
+  ["KAROL", "Karol"],
+  ["LAYSA", "Laysa"],
+  ["ANTONIO", "Antonio"],
+  ["JONATHAN", "Jonathan"],
+  ["BRUNA_PARIZOTTO", "Bruna Parizotto"],
+  ["BERNARDO", "Bernardo"],
+  ["EVERTON", "Everton"],
+  ["VINICIUS", "Vinicius"],
+  ["KLEBER", "Kleber"],
+] as const;
+
 function emptyImportacaoServicos() {
   return {
     despachoAduaneiroImportacao: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
@@ -90,6 +107,20 @@ export default function StepServicosImportacao({
             </Field>
           ) : null}
         </Grid>
+
+        <Field label="Responsável" required error={errors["despachoAduaneiroImportacao.responsavel"]}>
+          <Select
+            value={data.despachoAduaneiroImportacao.responsavel ?? ""}
+            onChange={(e) => update("despachoAduaneiroImportacao.responsavel", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            {RESPONSAVEIS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -185,6 +216,19 @@ export default function StepServicosImportacao({
             </Field>
           ) : null}
         </Grid>
+        <Field label="Responsável" required error={errors["assessoria.responsavel"]}>
+          <Select
+            value={data.assessoria.responsavel ?? ""}
+            onChange={(e) => update("assessoria.responsavel", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            {RESPONSAVEIS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -208,19 +252,29 @@ export default function StepServicosImportacao({
             />
           </Field>
 
-          <Field
-            label="Percentual"
-            required
-            error={errors["freteInternacional.percentual"]}
-          >
+          <Field label="% sobre CFR" required error={errors["freteInternacional.percentualSobreCfr"]}>
             <NumberInput
-              value={data.freteInternacional.percentual ?? ""}
+              value={data.freteInternacional.percentualSobreCfr ?? ""}
               onChange={(e) =>
-                update("freteInternacional.percentual", Number(e.target.value))
+                update("freteInternacional.percentualSobreCfr", Number(e.target.value))
               }
             />
           </Field>
         </Grid>
+
+        <Field label="Responsável" required error={errors["freteInternacional.responsavel"]}>
+          <Select
+            value={data.freteInternacional.responsavel ?? ""}
+            onChange={(e) => update("freteInternacional.responsavel", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            {RESPONSAVEIS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -245,8 +299,7 @@ export default function StepServicosImportacao({
 
         <Field
           label="Descrição complementar"
-          required
-          error={errors["seguroInternacional.descricaoComplementar"]}
+          hint="Campo opcional"
         >
           <TextArea
             value={data.seguroInternacional.descricaoComplementar ?? ""}
@@ -254,6 +307,20 @@ export default function StepServicosImportacao({
               update("seguroInternacional.descricaoComplementar", e.target.value)
             }
           />
+        </Field>
+
+        <Field label="Responsável" required error={errors["seguroInternacional.responsavel"]}>
+          <Select
+            value={data.seguroInternacional.responsavel ?? ""}
+            onChange={(e) => update("seguroInternacional.responsavel", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            {RESPONSAVEIS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
         </Field>
       </ServicoToggleCard>
 
@@ -274,6 +341,20 @@ export default function StepServicosImportacao({
             <option value="">Selecione</option>
             <option value="SIM">Sim</option>
             <option value="CASO_A_CASO">Caso a caso</option>
+          </Select>
+        </Field>
+
+        <Field label="Responsável" required error={errors["freteRodoviario.responsavel"]}>
+          <Select
+            value={data.freteRodoviario.responsavel ?? ""}
+            onChange={(e) => update("freteRodoviario.responsavel", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            {RESPONSAVEIS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </Select>
         </Field>
       </ServicoToggleCard>

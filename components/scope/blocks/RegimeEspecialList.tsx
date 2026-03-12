@@ -51,7 +51,7 @@ export default function RegimeEspecialList({
         {items.map((item, index) => (
           <Card key={index}>
             <Grid columns={2}>
-              <Field label="Observação" required>
+              <Field label="Nome do Regime" required>
                 <TextInput
                   value={item.observacao}
                   onChange={(e) =>

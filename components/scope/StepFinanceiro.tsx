@@ -39,11 +39,10 @@ export default function StepFinanceiro({ form, errors, onChange }: Props) {
 
         <Field
           label="Observações do financeiro"
-          required
-          error={errors["financeiro.observacoesFinanceiro"]}
+          hint="Campo opcional"
         >
           <TextArea
-            value={form.financeiro.observacoesFinanceiro}
+            value={form.financeiro.observacoesFinanceiro ?? ""}
             onChange={(e) =>
               onChange({
                 ...form,

@@ -18,6 +18,7 @@ export const escopoFormDefault: EscopoForm = {
     enderecoCompletoEscritorio: "",
     enderecoCompletoArmazem: "",
     cnaePrincipal: "",
+    cnaeSecundario: "",
     regimeTributacao: "SIMPLES_NACIONAL",
     responsavelComercial: "EVERTON",
   },

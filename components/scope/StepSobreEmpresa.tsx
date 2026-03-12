@@ -75,16 +75,19 @@ export default function StepSobreEmpresa({ form, errors, onChange }: Props) {
           />
         </Field>
 
-        <Field
-          label="Endereço completo — armazém"
-          required
-          error={errors["sobreEmpresa.enderecoCompletoArmazem"]}
-        >
+        <Field label="Endereço completo — armazém" hint="Campo opcional">
           <TextInput
-            value={s.enderecoCompletoArmazem}
+            value={s.enderecoCompletoArmazem ?? ""}
             onChange={(e) =>
               patch({ enderecoCompletoArmazem: e.target.value })
             }
+          />
+        </Field>
+
+        <Field label="CNAE secundário" hint="Campo opcional">
+          <TextInput
+            value={s.cnaeSecundario ?? ""}
+            onChange={(e) => patch({ cnaeSecundario: e.target.value })}
           />
         </Field>
 

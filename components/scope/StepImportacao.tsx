@@ -59,41 +59,31 @@ const ANUENCIAS = [
 ] as const;
 
 export default function StepImportacao({ form, errors, onChange }: Props) {
-  const data =
-    form.operacao.importacao ?? {
-      analistaDA: "ANNA",
-      analistaAE: "KAROL",
-      produtosImportados: "",
-      ncms: [""],
-      vinculoComExportador: "NAO",
-      locaisEntrada: [],
-      outroLocalEntrada: "",
-      armazensLiberacao: [],
-      outroArmazemLiberacao: "",
-      necessidadeDtcDta: "NAO",
-      necessidadeLiLpco: "NAO",
-      anuencias: [],
-      impostosFederais: {
-        contaPagamento: "CASCO",
-        ii: { regime: "INTEGRAL", detalheBeneficio: "" },
-        ipi: { regime: "INTEGRAL", detalheBeneficio: "" },
-        pis: { regime: "INTEGRAL", detalheBeneficio: "" },
-        cofins: { regime: "INTEGRAL", detalheBeneficio: "" },
-      },
-      afrmm: {
-        contaPagamento: "CASCO",
-        regime: "INTEGRAL",
-        detalheBeneficio: "",
-      },
-      icms: {
-        contaPagamento: "CASCO",
-        regime: "INTEGRAL",
-        recolhida: "",
-        efetiva: "",
-      },
-      destinacao: "REVENDA",
-      subtipoConsumo: null,
-    };
+  const data = form.operacao.importacao ?? {
+    analistaDA: "ANNA",
+    analistaAE: "KAROL",
+    produtosImportados: "",
+    ncms: [{ codigo: "", possuiNve: undefined }],
+    vinculoComExportador: "NAO",
+    locaisEntrada: [] as string[],
+    outroLocalEntrada: "",
+    armazensLiberacao: [] as string[],
+    outroArmazemLiberacao: "",
+    necessidadeDtcDta: "NAO",
+    necessidadeLiLpco: "NAO",
+    anuencias: [] as string[],
+    impostosFederais: {
+      contaPagamento: "CASCO",
+      ii: { regime: "INTEGRAL", detalheBeneficio: "" },
+      ipi: { regime: "INTEGRAL", detalheBeneficio: "" },
+      pis: { regime: "INTEGRAL", detalheBeneficio: "" },
+      cofins: { regime: "INTEGRAL", detalheBeneficio: "" },
+    },
+    afrmm: undefined,
+    icms: undefined,
+    destinacao: "REVENDA",
+    subtipoConsumo: null,
+  };
 
   function setData(next: any) {
     onChange({
@@ -154,21 +144,77 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
 
         <Field
           label="Produtos importados"
-          required
-          error={errors["produtosImportados"]}
+          hint="Campo opcional"
         >
           <TextArea
-            value={data.produtosImportados}
+            value={data.produtosImportados ?? ""}
             onChange={(e) => update("produtosImportados", e.target.value)}
           />
         </Field>
       </Section>
 
-      <NcmListBlock
-        items={data.ncms}
-        onChange={(next) => update("ncms", next)}
-        error={errors["ncms"]}
-      />
+      <Section title="NCMs">
+        <button
+          type="button"
+          onClick={() => update("ncms", [...data.ncms, { codigo: "", possuiNve: undefined }])}
+        >
+          + Adicionar NCM
+        </button>
+
+        <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+          {data.ncms.map((item: any, index: number) => (
+            <div
+              key={index}
+              style={{ border: "1px solid #eaecf0", borderRadius: 12, padding: 12 }}
+            >
+              <Grid columns={2}>
+                <Field label={`NCM ${index + 1}`} required error={index === 0 ? errors["ncms"] : undefined}>
+                  <TextInput
+                    value={item.codigo}
+                    onChange={(e) => {
+                      const next = [...data.ncms];
+                      next[index] = { ...next[index], codigo: e.target.value };
+                      update("ncms", next);
+                    }}
+                  />
+                </Field>
+
+                <Field label="Possui NVE?" hint="Campo opcional">
+                  <Select
+                    value={item.possuiNve ?? ""}
+                    onChange={(e) => {
+                      const next = [...data.ncms];
+                      next[index] = {
+                        ...next[index],
+                        possuiNve: (e.target.value == "SIM") ? "SIM" : (e.target.value == "NAO") ? "NAO" : undefined,
+                      };
+                      update("ncms", next);
+                    }}
+                  >
+                    <option value="">Selecione</option>
+                    <option value="SIM">Sim</option>
+                    <option value="NAO">Não</option>
+                  </Select>
+                </Field>
+              </Grid>
+
+              {data.ncms.length > 1 ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    update(
+                      "ncms",
+                      data.ncms.filter((_: any, i: number) => i !== index)
+                    )
+                  }
+                >
+                  Remover
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </Section>
 
       <Section title="Parâmetros operacionais">
         <Grid columns={2}>
@@ -203,30 +249,29 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
         </Grid>
       </Section>
 
-      <Section title="Locais de entrada">
-        <Stack gap={10}>
+      <Field
+        label="Locais de entrada"
+        required
+        error={errors["locaisEntrada"]}
+      >
+        <select
+          multiple
+          value={data.locaisEntrada}
+          onChange={(e) =>
+            update(
+              "locaisEntrada",
+              Array.from(e.target.selectedOptions).map((o) => o.value)
+            )
+          }
+          style={{ width: "100%", minHeight: 140, borderRadius: 10, padding: 12 }}
+        >
           {LOCAIS_ENTRADA.map(([value, label]) => (
-            <Checkbox
-              key={value}
-              label={label}
-              checked={data.locaisEntrada.includes(value)}
-              onChange={(checked) =>
-                toggleArrayValue("locaisEntrada", value, checked)
-              }
-            />
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
-
-          <Field
-            label="Outro local de entrada"
-            error={errors["locaisEntrada"] || errors["outroLocalEntrada"]}
-          >
-            <TextInput
-              value={data.outroLocalEntrada ?? ""}
-              onChange={(e) => update("outroLocalEntrada", e.target.value)}
-            />
-          </Field>
-        </Stack>
-      </Section>
+        </select>
+      </Field>
 
       <Section title="Armazéns de liberação">
         <Stack gap={10}>
@@ -363,100 +408,47 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
         ))}
       </Section>
 
-      <Section title="AFRMM">
-        <Grid columns={2}>
-          <Field label="Conta para pagamento" required>
-            <Select
-              value={data.afrmm.contaPagamento}
-              onChange={(e) => update("afrmm.contaPagamento", e.target.value)}
-            >
-              <option value="CASCO">Casco</option>
-              <option value="CLIENTE">Cliente</option>
-            </Select>
-          </Field>
+      <Field label="AFRMM">
+        <Select
+          value={data.afrmm ? "SIM" : "NAO"}
+          onChange={(e) =>
+            update(
+              "afrmm",
+              e.target.value === "SIM"
+                ? {
+                  contaPagamento: "CASCO",
+                  regime: "INTEGRAL",
+                  detalheBeneficio: "",
+                }
+                : undefined
+            )
+          }
+        >
+          <option value="NAO">Não</option>
+          <option value="SIM">Sim</option>
+        </Select>
+      </Field>
 
-          <Field label="Regime" required>
-            <Select
-              value={data.afrmm.regime}
-              onChange={(e) => update("afrmm.regime", e.target.value)}
-            >
-              <option value="INTEGRAL">Integral</option>
-              <option value="BENEFICIO">Benefício</option>
-            </Select>
-          </Field>
-        </Grid>
-
-        {data.afrmm.contaPagamento === "CLIENTE" ? (
-          <ContaBancariaBlock
-            title="Conta do cliente"
-            value={data.afrmm.dadosContaCliente ?? { banco: "", agencia: "", conta: "" }}
-            onChange={(next) => update("afrmm.dadosContaCliente", next)}
-          />
-        ) : null}
-
-        {data.afrmm.regime === "BENEFICIO" ? (
-          <Field
-            label="Detalhe do benefício"
-            required
-            error={errors["afrmm.detalheBeneficio"]}
-          >
-            <TextInput
-              value={data.afrmm.detalheBeneficio ?? ""}
-              onChange={(e) => update("afrmm.detalheBeneficio", e.target.value)}
-            />
-          </Field>
-        ) : null}
-      </Section>
-
-      <Section title="ICMS">
-        <Grid columns={2}>
-          <Field label="Conta para pagamento" required>
-            <Select
-              value={data.icms.contaPagamento}
-              onChange={(e) => update("icms.contaPagamento", e.target.value)}
-            >
-              <option value="CASCO">Casco</option>
-              <option value="CLIENTE">Cliente</option>
-            </Select>
-          </Field>
-
-          <Field label="Regime" required>
-            <Select
-              value={data.icms.regime}
-              onChange={(e) => update("icms.regime", e.target.value)}
-            >
-              <option value="INTEGRAL">Integral</option>
-              <option value="BENEFICIO">Benefício</option>
-            </Select>
-          </Field>
-        </Grid>
-
-        {data.icms.contaPagamento === "CLIENTE" ? (
-          <ContaBancariaBlock
-            title="Conta do cliente"
-            value={data.icms.dadosContaCliente ?? { banco: "", agencia: "", conta: "" }}
-            onChange={(next) => update("icms.dadosContaCliente", next)}
-          />
-        ) : null}
-
-        {data.icms.regime === "BENEFICIO" ? (
-          <Grid columns={2}>
-            <Field label="Recolhida" required error={errors["icms.recolhida"]}>
-              <TextInput
-                value={data.icms.recolhida ?? ""}
-                onChange={(e) => update("icms.recolhida", e.target.value)}
-              />
-            </Field>
-
-            <Field label="Efetiva" required error={errors["icms.efetiva"]}>
-              <TextInput
-                value={data.icms.efetiva ?? ""}
-                onChange={(e) => update("icms.efetiva", e.target.value)}
-              />
-            </Field>
-          </Grid>
-        ) : null}
-      </Section>
+      <Field label="ICMS">
+        <Select
+          value={data.afrmm ? "SIM" : "NAO"}
+          onChange={(e) =>
+            update(
+              "afrmm",
+              e.target.value === "SIM"
+                ? {
+                  contaPagamento: "CASCO",
+                  regime: "INTEGRAL",
+                  detalheBeneficio: "",
+                }
+                : undefined
+            )
+          }
+        >
+          <option value="NAO">Não</option>
+          <option value="SIM">Sim</option>
+        </Select>
+      </Field>
 
       <Section title="Destinação">
         <Grid columns={2}>

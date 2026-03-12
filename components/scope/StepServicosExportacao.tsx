@@ -12,6 +12,23 @@ type Props = {
   onChange: (next: EscopoForm) => void;
 };
 
+const RESPONSAVEIS = [
+  ["ANNA", "Anna"],
+  ["CLEVERSON", "Cleverson"],
+  ["MARCUS", "Marcus"],
+  ["GILMARA", "Gilmara"],
+  ["THEILA", "Theila"],
+  ["KAROL", "Karol"],
+  ["LAYSA", "Laysa"],
+  ["ANTONIO", "Antonio"],
+  ["JONATHAN", "Jonathan"],
+  ["BRUNA_PARIZOTTO", "Bruna Parizotto"],
+  ["BERNARDO", "Bernardo"],
+  ["EVERTON", "Everton"],
+  ["VINICIUS", "Vinicius"],
+  ["KLEBER", "Kleber"],
+] as const;
+
 function emptyExportacaoServicos() {
   return {
     despachoAduaneiroExportacao: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
@@ -86,6 +103,20 @@ export default function StepServicosExportacao({
             </Field>
           ) : null}
         </Grid>
+
+        <Field label="Responsável" required error={errors["despachoAduaneiroExportacao.responsavel"]}>
+          <Select
+            value={data.despachoAduaneiroExportacao.responsavel ?? ""}
+            onChange={(e) => update("despachoAduaneiroExportacao.responsavel", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            {RESPONSAVEIS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -153,33 +184,62 @@ export default function StepServicosExportacao({
         checked={data.outrosCertificados.habilitado}
         onToggle={(checked) => update("outrosCertificados.habilitado", checked)}
       >
-        <Grid columns={2}>
-          <Field
-            label="Especificação do certificado"
-            required
-            error={errors["outrosCertificados.especificacaoCertificado"]}
-          >
-            <TextInput
-              value={data.outrosCertificados.especificacaoCertificado ?? ""}
-              onChange={(e) =>
-                update("outrosCertificados.especificacaoCertificado", e.target.value)
-              }
-            />
-          </Field>
+        <button
+          type="button"
+          onClick={() =>
+            update("outrosCertificados.itens", [
+              ...(data.outrosCertificados.itens ?? []),
+              { chave: "", valor: null },
+            ])
+          }
+        >
+          + Adicionar certificado
+        </button>
 
-          <Field
-            label="Valor"
-            required
-            error={errors["outrosCertificados.valor"]}
-          >
-            <NumberInput
-              value={data.outrosCertificados.valor ?? ""}
-              onChange={(e) =>
-                update("outrosCertificados.valor", Number(e.target.value))
-              }
-            />
-          </Field>
-        </Grid>
+        <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+          {(data.outrosCertificados.itens ?? []).map((item: any, index: number) => (
+            <div
+              key={index}
+              style={{ border: "1px solid #eaecf0", borderRadius: 12, padding: 12 }}
+            >
+              <Grid columns={2}>
+                <Field label="Certificado" required>
+                  <TextInput
+                    value={item.chave}
+                    onChange={(e) => {
+                      const next = [...data.outrosCertificados.itens];
+                      next[index] = { ...next[index], chave: e.target.value };
+                      update("outrosCertificados.itens", next);
+                    }}
+                  />
+                </Field>
+
+                <Field label="Valor" required>
+                  <NumberInput
+                    value={item.valor ?? ""}
+                    onChange={(e) => {
+                      const next = [...data.outrosCertificados.itens];
+                      next[index] = { ...next[index], valor: Number(e.target.value) };
+                      update("outrosCertificados.itens", next);
+                    }}
+                  />
+                </Field>
+              </Grid>
+
+              <button
+                type="button"
+                onClick={() =>
+                  update(
+                    "outrosCertificados.itens",
+                    data.outrosCertificados.itens.filter((_: any, i: number) => i !== index)
+                  )
+                }
+              >
+                Remover
+              </button>
+            </div>
+          ))}
+        </div>
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -209,6 +269,20 @@ export default function StepServicosExportacao({
             </Field>
           ) : null}
         </Grid>
+
+        <Field label="Responsável" required error={errors["assessoria.responsavel"]}>
+          <Select
+            value={data.assessoria.responsavel ?? ""}
+            onChange={(e) => update("assessoria.responsavel", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            {RESPONSAVEIS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -228,15 +302,29 @@ export default function StepServicosExportacao({
             />
           </Field>
 
-          <Field label="Percentual" required>
+          <Field label="% sobre CFR" required error={errors["freteInternacional.percentualSobreCfr"]}>
             <NumberInput
-              value={data.freteInternacional.percentual ?? ""}
+              value={data.freteInternacional.percentualSobreCfr ?? ""}
               onChange={(e) =>
-                update("freteInternacional.percentual", Number(e.target.value))
+                update("freteInternacional.percentualSobreCfr", Number(e.target.value))
               }
             />
           </Field>
         </Grid>
+
+        <Field label="Responsável" required error={errors["freteInternacional.responsavel"]}>
+          <Select
+            value={data.freteInternacional.responsavel ?? ""}
+            onChange={(e) => update("freteInternacional.responsavel", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            {RESPONSAVEIS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -255,13 +343,30 @@ export default function StepServicosExportacao({
           />
         </Field>
 
-        <Field label="Descrição complementar" required>
+        <Field
+          label="Descrição complementar"
+          hint="Campo opcional"
+        >
           <TextArea
             value={data.seguroInternacional.descricaoComplementar ?? ""}
             onChange={(e) =>
               update("seguroInternacional.descricaoComplementar", e.target.value)
             }
           />
+        </Field>
+
+        <Field label="Responsável" required error={errors["seguroInternacional.responsavel"]}>
+          <Select
+            value={data.seguroInternacional.responsavel ?? ""}
+            onChange={(e) => update("seguroInternacional.responsavel", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            {RESPONSAVEIS.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
         </Field>
       </ServicoToggleCard>
 
@@ -281,6 +386,20 @@ export default function StepServicosExportacao({
           </Select>
         </Field>
       </ServicoToggleCard>
+
+      <Field label="Responsável" required error={errors["freteRodoviario.responsavel"]}>
+        <Select
+          value={data.freteRodoviario.responsavel ?? ""}
+          onChange={(e) => update("freteRodoviario.responsavel", e.target.value)}
+        >
+          <option value="">Selecione</option>
+          {RESPONSAVEIS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </Select>
+      </Field>
 
       <RegimeEspecialList
         items={data.regimeEspecial}
