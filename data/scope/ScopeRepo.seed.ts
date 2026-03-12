@@ -96,7 +96,7 @@ function makeSeed(): SeedRecord[] {
             analistaDA: "ANNA",
             analistaAE: "KAROL",
             produtosImportados: "Componentes eletrônicos",
-            ncms: ["85371020"],
+            ncms: [{ codigo: "85371020", possuiNve: null }],
             vinculoComExportador: "NAO",
             locaisEntrada: ["PARANAGUA_0917800"],
             outroLocalEntrada: "",
@@ -133,6 +133,7 @@ function makeSeed(): SeedRecord[] {
               habilitado: true,
               tipoValor: "OUTRO",
               valor: 1518,
+              responsavel: "EVERTON",
             },
             preposto: {
               habilitado: true,
@@ -145,20 +146,23 @@ function makeSeed(): SeedRecord[] {
               habilitado: true,
               tipoValor: "SALARIO_MINIMO",
               valor: null,
+              responsavel: "EVERTON",
             },
             freteInternacional: {
               habilitado: true,
               ptaxNegociado: "PTAX + 8%",
-              percentual: 8,
+              percentualSobreCfr: 8,
             },
             seguroInternacional: {
               habilitado: true,
               valorNegociado: 0.99,
               descricaoComplementar: "0,99% do CIF",
+              responsavel: "EVERTON",
             },
             freteRodoviario: {
               habilitado: true,
               modalidade: "CASO_A_CASO",
+              responsavel: "EVERTON",
             },
             regimeEspecial: [],
             emissaoNfe: {

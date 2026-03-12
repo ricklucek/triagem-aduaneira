@@ -29,17 +29,41 @@ const RESPONSAVEIS = [
   ["KLEBER", "Kleber"],
 ] as const;
 
-function emptyExportacaoServicos() {
+function emptyExportacaoServicos(): NonNullable<EscopoForm["servicos"]["exportacao"]> {
   return {
-    despachoAduaneiroExportacao: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
-    preposto: { habilitado: false, valor: null, inclusoNoDesembaracoCasco: undefined },
+    despachoAduaneiroExportacao: {
+      habilitado: false,
+      tipoValor: "SALARIO_MINIMO",
+      valor: null,
+      responsavel: undefined,
+    },
+    preposto: {
+      habilitado: false,
+      valor: null,
+      inclusoNoDesembaracoCasco: undefined,
+    },
     certificadoOrigem: { habilitado: false, valor: null },
     certificadoFitossanitario: { habilitado: false, valor: null },
-    outrosCertificados: { habilitado: false, especificacaoCertificado: "", valor: null },
-    assessoria: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
-    freteInternacional: { habilitado: false, ptaxNegociado: "", percentual: null },
-    seguroInternacional: { habilitado: false, valorNegociado: null, descricaoComplementar: "" },
-    freteRodoviario: { habilitado: false, modalidade: undefined },
+    outrosCertificados: { habilitado: false, itens: [] },
+    assessoria: {
+      habilitado: false,
+      tipoValor: "SALARIO_MINIMO",
+      valor: null,
+      responsavel: undefined,
+    },
+    freteInternacional: {
+      habilitado: false,
+      ptaxNegociado: "",
+      percentualSobreCfr: null,
+      responsavel: undefined,
+    },
+    seguroInternacional: {
+      habilitado: false,
+      valorNegociado: null,
+      descricaoComplementar: "",
+      responsavel: undefined,
+    },
+    freteRodoviario: { habilitado: false, modalidade: undefined, responsavel: undefined },
     regimeEspecial: [],
   };
 }

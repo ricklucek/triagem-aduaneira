@@ -29,16 +29,36 @@ const RESPONSAVEIS = [
   ["KLEBER", "Kleber"],
 ] as const;
 
-function emptyImportacaoServicos() {
+function emptyImportacaoServicos(): NonNullable<EscopoForm["servicos"]["importacao"]> {
   return {
-    despachoAduaneiroImportacao: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
+    despachoAduaneiroImportacao: {
+      habilitado: false,
+      tipoValor: "SALARIO_MINIMO",
+      valor: null,
+      responsavel: undefined,
+    },
     preposto: { habilitado: false, valor: null, inclusoNoDesembaracoCasco: undefined },
     emissaoLiLpco: { habilitado: false, valor: null },
     cadastroCatalogoProdutos: { habilitado: false, valor: null },
-    assessoria: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
-    freteInternacional: { habilitado: false, ptaxNegociado: "", percentual: null },
-    seguroInternacional: { habilitado: false, valorNegociado: null, descricaoComplementar: "" },
-    freteRodoviario: { habilitado: false, modalidade: undefined },
+    assessoria: {
+      habilitado: false,
+      tipoValor: "SALARIO_MINIMO",
+      valor: null,
+      responsavel: undefined,
+    },
+    freteInternacional: {
+      habilitado: false,
+      ptaxNegociado: "",
+      percentualSobreCfr: null,
+      responsavel: undefined,
+    },
+    seguroInternacional: {
+      habilitado: false,
+      valorNegociado: null,
+      descricaoComplementar: "",
+      responsavel: undefined,
+    },
+    freteRodoviario: { habilitado: false, modalidade: undefined, responsavel: undefined },
     regimeEspecial: [],
     emissaoNfe: { habilitado: false, valor: null },
   };
