@@ -14,15 +14,14 @@ import {
 
 export function useScopeStore(cnpj: string) {
   const [version, setVersion] = useState(0);
-
   const records: ScopeRecord[] = listScopes(cnpj);
   const loading = false;
-
-  void version;
 
   const refresh = useCallback(() => {
     setVersion((v) => v + 1);
   }, []);
+
+  void version;
 
   const loadOne = useCallback((id: string) => getScope(cnpj, id), [cnpj]);
 
