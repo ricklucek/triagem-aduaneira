@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ScopeWizard from "@/components/scope/ScopeWizard";
 import VersionHistory from "@/components/scope/VersionHistory";
@@ -19,24 +19,24 @@ export default function ScopeDetailPage() {
   const [status, setStatus] = useState<"draft" | "published" | "archived">("draft");
   const [versions, setVersions] = useState<ScopeVersion[]>([]);
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     try {
       const rec = await repo.getScope(scopeId);
       const versionList = await repo.listVersions(scopeId);
       setDraft(rec.draft);
       setStatus(rec.status);
       setVersions(versionList);
-    } catch (e) {
+    } catch {
       alert("Escopo não encontrado.");
       router.push("/dashboard");
     } finally {
       setLoading(false);
     }
-  }
+  }, [repo, router, scopeId]);
 
   useEffect(() => {
     carregar();
-  }, [scopeId]);
+  }, [carregar]);
 
   async function handleSave(nextData: EscopoForm) {
     await repo.saveDraft(scopeId, nextData);

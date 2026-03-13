@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { getScopeRepo } from "@/data/scope/getScopeRepo";
+import { RotateCw } from "lucide-react";
 import CompletenessBadge from "@/components/ui/completeness-badge";
 import {
   Card,
@@ -13,51 +13,33 @@ import {
   Toolbar,
 } from "@/components/ui/form-layout";
 import { TextInput, Select } from "@/components/ui/form-fields";
+import { useScopes } from "@/lib/api/hooks/use-scope-api";
 
 type StatusFilter = "todos" | "draft" | "published" | "archived";
 
 export default function DashboardPage() {
-  const repo = useMemo(() => getScopeRepo(), []);
   const [status, setStatus] = useState<StatusFilter>("todos");
   const [q, setQ] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
 
-  async function carregar() {
-    setLoading(true);
-    try {
-      const offset = (page - 1) * pageSize;
-      const res = await repo.listScopes({
-        status: status === "todos" ? undefined : status,
-        q: q || undefined,
-        cnpj: cnpj || undefined,
-        limit: pageSize,
-        offset,
-      });
-      setItems(res.items);
-      setTotal(res.total);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const params = useMemo(
+    () => ({
+      status: status === "todos" ? undefined : status,
+      q: q || undefined,
+      cnpj: cnpj || undefined,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    }),
+    [cnpj, page, q, status]
+  );
 
-  useEffect(() => {
-    carregar();
-  }, [page, status]);
+  const { data, error, isLoading } = useScopes(params);
 
-  useEffect(() => {
-    setPage(1);
-  }, [q, cnpj]);
-
-  useEffect(() => {
-    carregar();
-  }, [q, cnpj]);
-
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
@@ -77,10 +59,7 @@ export default function DashboardPage() {
           left={
             <>
               <div style={{ minWidth: 180 }}>
-                <Select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as StatusFilter)}
-                >
+                <Select value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
                   <option value="todos">Todos</option>
                   <option value="draft">Draft</option>
                   <option value="published">Publicado</option>
@@ -92,7 +71,7 @@ export default function DashboardPage() {
                 <TextInput
                   placeholder="Buscar por razão social ou CNPJ"
                   value={q}
-                  onChange={(e) => setQ(e.target.value)}
+                  onChange={(e) => { setQ(e.target.value); setPage(1); }}
                 />
               </div>
 
@@ -100,7 +79,7 @@ export default function DashboardPage() {
                 <TextInput
                   placeholder="CNPJ exato"
                   value={cnpj}
-                  onChange={(e) => setCnpj(e.target.value)}
+                  onChange={(e) => { setCnpj(e.target.value); setPage(1); }}
                 />
               </div>
             </>
@@ -111,19 +90,17 @@ export default function DashboardPage() {
       <div style={{ height: 16 }} />
 
       <Card padded={false}>
-        {loading ? (
-          <div style={{ padding: 20 }}>Carregando...</div>
+        {isLoading ? (
+          <div style={{ padding: 20, display: "flex", alignItems: "center", gap: 8 }}>
+            <RotateCw className="h-4 w-4 animate-spin" /> Carregando...
+          </div>
+        ) : error ? (
+          <div style={{ padding: 20 }}>Falha ao carregar dados.</div>
         ) : items.length === 0 ? (
           <div style={{ padding: 20 }}>Nenhum escopo encontrado.</div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 14,
-              }}
-            >
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
               <thead>
                 <tr style={{ background: "#f9fafb" }}>
                   <th style={thStyle}>CNPJ</th>
@@ -142,21 +119,13 @@ export default function DashboardPage() {
                     <td style={tdStyle}>{x.cnpj}</td>
                     <td style={tdStyle}>{x.razao_social}</td>
                     <td style={tdStyle}>{x.status}</td>
-                    <td style={tdStyle}>
-                      <CompletenessBadge value={x.completeness_score} />
-                    </td>
-                    <td style={tdStyle}>
-                      {new Date(x.updated_at).toLocaleString("pt-BR")}
-                    </td>
-                    <td style={tdStyle}>
-                      {x.last_published_at
-                        ? new Date(x.last_published_at).toLocaleString("pt-BR")
-                        : "-"}
-                    </td>
+                    <td style={tdStyle}><CompletenessBadge value={x.completeness_score} /></td>
+                    <td style={tdStyle}>{new Date(x.updated_at).toLocaleString("pt-BR")}</td>
+                    <td style={tdStyle}>{x.last_published_at ? new Date(x.last_published_at).toLocaleString("pt-BR") : "-"}</td>
                     <td style={tdStyle}>{x.version_count}</td>
                     <td style={tdStyle}>
-                      <Link href={`/scopes/${x.id}`}>
-                        <SecondaryButton>Abrir</SecondaryButton>
+                      <Link href={x.status === "published" ? `/clients/${x.cnpj}/scopes/view/${x.id}` : `/scopes/${x.id}`}>
+                        <SecondaryButton>{x.status === "published" ? "Visualizar" : "Abrir"}</SecondaryButton>
                       </Link>
                     </td>
                   </tr>
@@ -171,22 +140,14 @@ export default function DashboardPage() {
 
       <Toolbar
         left={
-          <SecondaryButton
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-          >
+          <SecondaryButton onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
             Anterior
           </SecondaryButton>
         }
         right={
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <span>
-              Página {page} de {totalPages} — Total: {total}
-            </span>
-            <SecondaryButton
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-            >
+            <span>Página {page} de {totalPages} — Total: {total}</span>
+            <SecondaryButton onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
               Próxima
             </SecondaryButton>
           </div>

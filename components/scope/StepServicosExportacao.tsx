@@ -29,17 +29,41 @@ const RESPONSAVEIS = [
   ["KLEBER", "Kleber"],
 ] as const;
 
-function emptyExportacaoServicos() {
+function emptyExportacaoServicos(): NonNullable<EscopoForm["servicos"]["exportacao"]> {
   return {
-    despachoAduaneiroExportacao: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
-    preposto: { habilitado: false, valor: null, inclusoNoDesembaracoCasco: undefined },
+    despachoAduaneiroExportacao: {
+      habilitado: false,
+      tipoValor: "SALARIO_MINIMO",
+      valor: null,
+      responsavel: undefined,
+    },
+    preposto: {
+      habilitado: false,
+      valor: null,
+      inclusoNoDesembaracoCasco: undefined,
+    },
     certificadoOrigem: { habilitado: false, valor: null },
     certificadoFitossanitario: { habilitado: false, valor: null },
-    outrosCertificados: { habilitado: false, especificacaoCertificado: "", valor: null },
-    assessoria: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
-    freteInternacional: { habilitado: false, ptaxNegociado: "", percentual: null },
-    seguroInternacional: { habilitado: false, valorNegociado: null, descricaoComplementar: "" },
-    freteRodoviario: { habilitado: false, modalidade: undefined },
+    outrosCertificados: { habilitado: false, itens: [] },
+    assessoria: {
+      habilitado: false,
+      tipoValor: "SALARIO_MINIMO",
+      valor: null,
+      responsavel: undefined,
+    },
+    freteInternacional: {
+      habilitado: false,
+      ptaxNegociado: "",
+      percentualSobreCfr: null,
+      responsavel: undefined,
+    },
+    seguroInternacional: {
+      habilitado: false,
+      valorNegociado: null,
+      descricaoComplementar: "",
+      responsavel: undefined,
+    },
+    freteRodoviario: { habilitado: false, modalidade: undefined, responsavel: undefined },
     regimeEspecial: [],
   };
 }
@@ -51,18 +75,22 @@ export default function StepServicosExportacao({
 }: Props) {
   const data = form.servicos.exportacao ?? emptyExportacaoServicos();
 
-  function setData(next: any) {
+  function setData(next: NonNullable<EscopoForm["servicos"]["exportacao"]>) {
     onChange({
       ...form,
       servicos: { ...form.servicos, exportacao: next },
     });
   }
 
-  function update(path: string, value: any) {
-    const next = structuredClone(data as any);
+  function update(path: string, value: unknown) {
+    const next = structuredClone(data);
     const keys = path.split(".");
-    let ref = next;
-    for (let i = 0; i < keys.length - 1; i++) ref = ref[keys[i]];
+    let ref: Record<string, unknown> = next as Record<string, unknown>;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const nested = ref[keys[i]];
+      if (typeof nested !== "object" || nested === null) return;
+      ref = nested as Record<string, unknown>;
+    }
     ref[keys[keys.length - 1]] = value;
     setData(next);
   }
@@ -197,7 +225,7 @@ export default function StepServicosExportacao({
         </button>
 
         <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-          {(data.outrosCertificados.itens ?? []).map((item: any, index: number) => (
+          {(data.outrosCertificados.itens ?? []).map((item, index: number) => (
             <div
               key={index}
               style={{ border: "1px solid #eaecf0", borderRadius: 12, padding: 12 }}
@@ -231,7 +259,7 @@ export default function StepServicosExportacao({
                 onClick={() =>
                   update(
                     "outrosCertificados.itens",
-                    data.outrosCertificados.itens.filter((_: any, i: number) => i !== index)
+                    data.outrosCertificados.itens.filter((_, i: number) => i !== index)
                   )
                 }
               >

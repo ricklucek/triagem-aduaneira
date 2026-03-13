@@ -29,16 +29,36 @@ const RESPONSAVEIS = [
   ["KLEBER", "Kleber"],
 ] as const;
 
-function emptyImportacaoServicos() {
+function emptyImportacaoServicos(): NonNullable<EscopoForm["servicos"]["importacao"]> {
   return {
-    despachoAduaneiroImportacao: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
+    despachoAduaneiroImportacao: {
+      habilitado: false,
+      tipoValor: "SALARIO_MINIMO",
+      valor: null,
+      responsavel: undefined,
+    },
     preposto: { habilitado: false, valor: null, inclusoNoDesembaracoCasco: undefined },
     emissaoLiLpco: { habilitado: false, valor: null },
     cadastroCatalogoProdutos: { habilitado: false, valor: null },
-    assessoria: { habilitado: false, tipoValor: "SALARIO_MINIMO", valor: null },
-    freteInternacional: { habilitado: false, ptaxNegociado: "", percentual: null },
-    seguroInternacional: { habilitado: false, valorNegociado: null, descricaoComplementar: "" },
-    freteRodoviario: { habilitado: false, modalidade: undefined },
+    assessoria: {
+      habilitado: false,
+      tipoValor: "SALARIO_MINIMO",
+      valor: null,
+      responsavel: undefined,
+    },
+    freteInternacional: {
+      habilitado: false,
+      ptaxNegociado: "",
+      percentualSobreCfr: null,
+      responsavel: undefined,
+    },
+    seguroInternacional: {
+      habilitado: false,
+      valorNegociado: null,
+      descricaoComplementar: "",
+      responsavel: undefined,
+    },
+    freteRodoviario: { habilitado: false, modalidade: undefined, responsavel: undefined },
     regimeEspecial: [],
     emissaoNfe: { habilitado: false, valor: null },
   };
@@ -51,18 +71,22 @@ export default function StepServicosImportacao({
 }: Props) {
   const data = form.servicos.importacao ?? emptyImportacaoServicos();
 
-  function setData(next: any) {
+  function setData(next: NonNullable<EscopoForm["servicos"]["importacao"]>) {
     onChange({
       ...form,
       servicos: { ...form.servicos, importacao: next },
     });
   }
 
-  function update(path: string, value: any) {
-    const next = structuredClone(data as any);
+  function update(path: string, value: unknown) {
+    const next = structuredClone(data);
     const keys = path.split(".");
-    let ref = next;
-    for (let i = 0; i < keys.length - 1; i++) ref = ref[keys[i]];
+    let ref: Record<string, unknown> = next as Record<string, unknown>;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const nested = ref[keys[i]];
+      if (typeof nested !== "object" || nested === null) return;
+      ref = nested as Record<string, unknown>;
+    }
     ref[keys[keys.length - 1]] = value;
     setData(next);
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { escopoFormDefault } from "@/domain/scope/defaults";
 import { EtapaFormulario, EscopoForm } from "@/domain/scope/types";
 import { validarEtapa, validarFormularioCompleto } from "@/domain/scope/validate";
@@ -87,7 +87,7 @@ export default function ScopeWizard({
   const etapas = useMemo(() => buildEtapas(form), [form]);
   const etapaAtual = etapas[indiceEtapa];
 
-  async function persist(data: EscopoForm, silent = false) {
+  const persist = useCallback(async (data: EscopoForm, silent = false) => {
     if (!onSave) return;
     setSaving(true);
     try {
@@ -96,7 +96,7 @@ export default function ScopeWizard({
     } finally {
       setSaving(false);
     }
-  }
+  }, [onSave]);
 
   useEffect(() => {
     if (!mountedRef.current) {
@@ -115,7 +115,7 @@ export default function ScopeWizard({
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [form]);
+  }, [form, onSave, persist]);
 
   async function proximaEtapa() {
     const result = validarEtapa(etapaAtual, form);
