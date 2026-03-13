@@ -1,58 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ScopeWizard from "@/components/scope/ScopeWizard";
 import VersionHistory from "@/components/scope/VersionHistory";
-import { getScopeRepo } from "@/data/scope/getScopeRepo";
 import { EscopoForm } from "@/domain/scope/types";
 import { Card, PageShell, SecondaryButton, Stack } from "@/components/ui/form-layout";
-import { ScopeVersion } from "@/data/scope/ScopeRepo";
+import { useScope, useScopeVersions } from "@/lib/api/hooks/use-scope-api";
+import { scopeApi } from "@/lib/api/services/scopes";
 
 export default function ScopeDetailPage() {
   const { scopeId } = useParams<{ scopeId: string }>();
   const router = useRouter();
-  const repo = useMemo(() => getScopeRepo(), []);
 
-  const [loading, setLoading] = useState(true);
-  const [draft, setDraft] = useState<EscopoForm | null>(null);
-  const [status, setStatus] = useState<"draft" | "published" | "archived">("draft");
-  const [versions, setVersions] = useState<ScopeVersion[]>([]);
+  const { data: scopeResponse, isLoading: loadingScope, error: scopeError, mutate } = useScope(scopeId);
+  const { data: versionsResponse, isLoading: loadingVersions, mutate: mutateVersions } = useScopeVersions(scopeId);
 
-  const carregar = useCallback(async () => {
-    try {
-      const rec = await repo.getScope(scopeId);
-      const versionList = await repo.listVersions(scopeId);
-      setDraft(rec.draft);
-      setStatus(rec.status);
-      setVersions(versionList);
-    } catch {
-      alert("Escopo não encontrado.");
-      router.push("/dashboard");
-    } finally {
-      setLoading(false);
-    }
-  }, [repo, router, scopeId]);
+  const loading = loadingScope || loadingVersions;
+  const draft = scopeResponse?.draft ?? null;
+  const status = scopeResponse?.status ?? "draft";
+  const versions = versionsResponse ?? [];
 
-  useEffect(() => {
-    carregar();
-  }, [carregar]);
+  const handleSave = useCallback(
+    async (nextData: EscopoForm) => {
+      await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
+      await mutate();
+    },
+    [mutate, scopeId]
+  );
 
-  async function handleSave(nextData: EscopoForm) {
-    await repo.saveDraft(scopeId, nextData);
-    setDraft(nextData);
-    const rec = await repo.getScope(scopeId);
-    setStatus(rec.status);
-  }
-
-  async function handlePublish() {
-    await repo.publish(scopeId);
-    await carregar();
+  const handlePublish = useCallback(async () => {
+    await scopeApi.publishScope(scopeId);
+    await Promise.all([mutate(), mutateVersions()]);
     alert("Escopo publicado com sucesso.");
-  }
+  }, [mutate, mutateVersions, scopeId]);
 
   if (loading) return <div style={{ padding: 24 }}>Carregando escopo...</div>;
-  if (!draft) return <div style={{ padding: 24 }}>Escopo não encontrado.</div>;
+  if (scopeError || !draft) return <div style={{ padding: 24 }}>Escopo não encontrado.</div>;
 
   return (
     <PageShell>
