@@ -6,7 +6,6 @@ import { getScopeRepo } from "@/data/scope/getScopeRepo";
 import type { ScopeSummary } from "@/data/scope/ScopeRepo";
 import CompletenessBadge from "@/components/ui/completeness-badge";
 import {
-  Card,
   PageHeader,
   PageShell,
   PrimaryButton,
@@ -14,6 +13,7 @@ import {
   Toolbar,
 } from "@/components/ui/form-layout";
 import { TextInput, Select } from "@/components/ui/form-fields";
+import { Card } from "@/components/ui/card";
 
 type StatusFilter = "todos" | "draft" | "published" | "archived";
 
@@ -107,7 +107,7 @@ export default function DashboardPage() {
 
       <div style={{ height: 16 }} />
 
-      <Card padded={false}>
+      <Card>
         {loading ? (
           <div style={{ padding: 20 }}>Carregando...</div>
         ) : items.length === 0 ? (

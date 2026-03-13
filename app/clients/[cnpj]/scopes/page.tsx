@@ -50,7 +50,6 @@ export default function ScopesPage() {
   return (
     <div className="grid gap-4">
       <Card className="rounded-2xl border bg-card p-4 shadow-sm">
-      <Card className="rounded-2xl border bg-card p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="text-lg font-semibold tracking-tight">Escopos • {cnpj}</div>

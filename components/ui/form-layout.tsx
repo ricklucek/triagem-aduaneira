@@ -1,18 +1,14 @@
 "use client";
 
 import React from "react";
+import { Button } from "./button";
+import { Card } from "./card";
 
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f8fafc",
-        padding: 24,
-      }}
-    >
+    <Card className="rounded-2xl p-4">
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>{children}</div>
-    </div>
+    </Card>
   );
 }
 
@@ -42,28 +38,6 @@ export function PageHeader({
         ) : null}
       </div>
       {right}
-    </div>
-  );
-}
-
-export function Card({
-  children,
-  padded = true,
-}: {
-  children: React.ReactNode;
-  padded?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        background: "#fff",
-        border: "1px solid #e4e7ec",
-        borderRadius: 16,
-        boxShadow: "0 1px 2px rgba(16,24,40,0.04)",
-        padding: padded ? 20 : 0,
-      }}
-    >
-      {children}
     </div>
   );
 }
@@ -214,16 +188,9 @@ export function PrimaryButton(
   props: React.ButtonHTMLAttributes<HTMLButtonElement>
 ) {
   return (
-    <button
+    <Button
       {...props}
       style={{
-        border: 0,
-        background: "#175cd3",
-        color: "#fff",
-        padding: "10px 16px",
-        borderRadius: 10,
-        cursor: "pointer",
-        fontWeight: 600,
         ...props.style,
       }}
     />
