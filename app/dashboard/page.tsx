@@ -152,8 +152,8 @@ export default function DashboardPage() {
                     </td>
                     <td style={tdStyle}>{x.version_count}</td>
                     <td style={tdStyle}>
-                      <Link href={`/scopes/${x.id}`}>
-                        <SecondaryButton>Abrir</SecondaryButton>
+                      <Link href={x.status === "published" ? `/clients/${x.cnpj}/scopes/view/${x.id}` : `/scopes/${x.id}`}>
+                        <SecondaryButton>{x.status === "published" ? "Visualizar" : "Abrir"}</SecondaryButton>
                       </Link>
                     </td>
                   </tr>
