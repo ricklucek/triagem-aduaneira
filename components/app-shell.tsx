@@ -1,23 +1,54 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { getAuthSession } from "@/lib/auth/session-storage";
+import { logoutSession } from "@/lib/api/hooks/use-auth";
 
-const nav = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/clients", label: "Clientes" },
-];
+const navByRole = {
+  admin: [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/admin", label: "Painel Admin" },
+    { href: "/clients", label: "Clientes" },
+  ],
+  comercial: [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/comercial", label: "Meu Painel" },
+    { href: "/clients", label: "Clientes" },
+  ],
+  credenciamento: [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/credenciamento", label: "Meu Painel" },
+    { href: "/clients", label: "Clientes" },
+  ],
+  operacao: [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/operacao", label: "Meu Painel" },
+    { href: "/clients", label: "Clientes" },
+  ],
+} as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const session = getAuthSession();
+  const isAuthenticated = Boolean(session?.user);
+  const role = session?.user.role;
+  const nav = role ? navByRole[role] : [];
+
+  const handleLogout = async () => {
+    await logoutSession();
+    router.push("/login");
+  };
 
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="mx-auto flex min-h-screen w-full max-w-350">
-        {/* Sidebar */}
+        {isAuthenticated && (
         <aside className="hidden w-64 flex-col border-r bg-background p-4 md:flex">
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold tracking-tight">ScopeDesk</div>
@@ -41,19 +72,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <div className="mt-auto pt-4 text-xs text-muted-foreground">
-            Empresa logística • Ambiente de protótipo
+          <div className="mt-auto space-y-2 pt-4 text-xs text-muted-foreground">
+            <p>Perfil: {session?.user.role ?? "não autenticado"}</p>
+            {session?.user && (
+              <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
+                Sair
+              </Button>
+            )}
           </div>
         </aside>
+      )}
 
-        {/* Main */}
         <main className="flex w-full flex-col">
-          {/* Topbar */}
           <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/80 px-4 py-3 backdrop-blur">
             <div className="text-sm text-muted-foreground">Triagem • Montagem do Escopo</div>
             <div className="flex items-center gap-2">
               <Badge variant="outline">PT-BR</Badge>
-              <Badge variant="outline">Enterprise</Badge>
+              {isAuthenticated ? (
+                <Badge variant="outline">Enterprise</Badge>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => router.push("/login")}>
+                  Entrar
+                </Button>
+              )}
             </div>
           </header>
 
