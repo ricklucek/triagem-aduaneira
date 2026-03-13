@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getScopeRepo } from "@/data/scope/getScopeRepo";
+import { RotateCw } from "lucide-react";
+import { scopeApi } from "@/lib/api/services/scopes";
 
 export default function NewScopePage({ params }: { params: { cnpj: string } }) {
   const router = useRouter();
@@ -11,19 +12,23 @@ export default function NewScopePage({ params }: { params: { cnpj: string } }) {
     let cancelled = false;
 
     (async () => {
-      const repo = getScopeRepo();
-      const { id } = await repo.createScope();
-      const rec = await repo.getScope(id);
-      await repo.saveDraft(id, {
-        ...rec.draft,
-        sobreEmpresa: {
-          ...rec.draft.sobreEmpresa,
-          cnpj: params.cnpj,
-        },
-      });
+      try {
+        const { id } = await scopeApi.createScope();
+        const rec = await scopeApi.getScope(id);
+        await scopeApi.saveScopeDraft({
+          id,
+          draft: {
+            ...rec.draft,
+            sobreEmpresa: {
+              ...rec.draft.sobreEmpresa,
+              cnpj: params.cnpj,
+            },
+          },
+        });
 
-      if (!cancelled) {
-        router.replace(`/clients/${params.cnpj}/scopes/edit/${id}`);
+        if (!cancelled) router.replace(`/clients/${params.cnpj}/scopes/edit/${id}`);
+      } catch {
+        if (!cancelled) router.replace(`/clients/${params.cnpj}/scopes`);
       }
     })();
 
@@ -32,5 +37,9 @@ export default function NewScopePage({ params }: { params: { cnpj: string } }) {
     };
   }, [params.cnpj, router]);
 
-  return <div className="p-6 text-sm text-muted-foreground">Criando escopo...</div>;
+  return (
+    <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
+      <RotateCw className="h-4 w-4 animate-spin" /> Criando escopo...
+    </div>
+  );
 }

@@ -1,23 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { getScopeRepo } from "@/data/scope/getScopeRepo";
+import { RotateCw } from "lucide-react";
 import type { EscopoForm } from "@/domain/scope/types";
-import type { ScopeVersion } from "@/data/scope/ScopeRepo";
+import { useScope, useScopeVersions } from "@/lib/api/hooks/use-scope-api";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function formatISO(iso?: string | null) {
   if (!iso) return "-";
@@ -36,7 +30,6 @@ function ScopeDetails({ scope, versionLabel }: { scope: EscopoForm; versionLabel
           <h2 className="text-base font-semibold">Resumo</h2>
           <Badge>{versionLabel}</Badge>
         </div>
-
         <div className="grid gap-2 text-sm md:grid-cols-2">
           <p><span className="text-muted-foreground">CNPJ:</span> {scope.sobreEmpresa.cnpj || "-"}</p>
           <p><span className="text-muted-foreground">Razão social:</span> {scope.sobreEmpresa.razaoSocial || "-"}</p>
@@ -85,46 +78,35 @@ function ScopeDetails({ scope, versionLabel }: { scope: EscopoForm; versionLabel
 
 export default function ScopeViewPage() {
   const { cnpj, id } = useParams<{ cnpj: string; id: string }>();
-  const repo = useMemo(() => getScopeRepo(), []);
+  const { data: scopeResponse, isLoading: loadingScope, error: scopeError } = useScope(id);
+  const { data: versionsResponse, isLoading: loadingVersions } = useScopeVersions(id);
 
-  const [loading, setLoading] = useState(true);
-  const [draft, setDraft] = useState<EscopoForm | null>(null);
-  const [versions, setVersions] = useState<ScopeVersion[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<string>("draft");
 
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const rec = await repo.getScope(id);
-        const allVersions = await repo.listVersions(id);
-        if (!cancelled) {
-          setDraft(rec.draft);
-          setVersions(allVersions.sort((a, b) => b.version_number - a.version_number));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id, repo]);
+  const versions = useMemo(
+    () => [...(versionsResponse ?? [])].sort((a, b) => b.version_number - a.version_number),
+    [versionsResponse]
+  );
 
   const selectedScope = useMemo(() => {
+    const draft = scopeResponse?.draft;
     if (!draft) return null;
     if (selectedVersion === "draft") return draft;
     const version = versions.find((v) => String(v.version_number) === selectedVersion);
     return version?.data ?? draft;
-  }, [draft, selectedVersion, versions]);
+  }, [scopeResponse?.draft, selectedVersion, versions]);
 
-  if (loading) {
-    return <Card className="p-4 text-sm text-muted-foreground">Carregando visualização...</Card>;
+  if (loadingScope || loadingVersions) {
+    return (
+      <Card className="p-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <RotateCw className="h-4 w-4 animate-spin" /> Carregando visualização...
+        </div>
+      </Card>
+    );
   }
 
-  if (!selectedScope) {
+  if (scopeError || !selectedScope) {
     return (
       <Card className="p-4">
         <p className="font-medium">Escopo não encontrado.</p>
@@ -159,7 +141,7 @@ export default function ScopeViewPage() {
         <div className="grid gap-2 md:grid-cols-[220px_1fr] md:items-center">
           <p className="text-sm text-muted-foreground">Versões disponíveis:</p>
           <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-            <SelectTrigger className="w-full md:w-90">
+            <SelectTrigger className="w-full md:w-[360px]">
               <SelectValue placeholder="Selecione uma versão" />
             </SelectTrigger>
             <SelectContent>

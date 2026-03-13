@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { getScopeRepo } from "@/data/scope/getScopeRepo";
-import type { ScopeSummary } from "@/data/scope/ScopeRepo";
+import { useMemo } from "react";
 import { useParams } from "next/navigation";
+import { RotateCw } from "lucide-react";
+import { scopeApi } from "@/lib/api/services/scopes";
+import { useScopes } from "@/lib/api/hooks/use-scope-api";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,30 +23,28 @@ function formatISO(iso: string) {
 
 export default function ScopesPage() {
   const { cnpj } = useParams<{ cnpj: string }>();
-  const repo = useMemo(() => getScopeRepo(), []);
+  const { data, error, isLoading, mutate } = useScopes({ cnpj, limit: 500, offset: 0 });
 
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<ScopeSummary[]>([]);
+  const items = useMemo(() => data?.items ?? [], [data]);
+  const drafts = useMemo(() => items.filter((r) => r.status === "draft"), [items]);
+  const published = useMemo(() => items.filter((r) => r.status === "published"), [items]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const res = await repo.listScopes({ cnpj, limit: 500, offset: 0 });
-        if (!cancelled) setItems(res.items);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [cnpj, repo]);
-
-  const drafts = items.filter((r) => r.status === "draft");
-  const published = items.filter((r) => r.status === "published");
+  async function cloneFromPublished(scopeId: string) {
+    try {
+      const rec = await scopeApi.getScope(scopeId);
+      const created = await scopeApi.createScope();
+      await scopeApi.saveScopeDraft({
+        id: created.id,
+        draft: {
+          ...rec.draft,
+        },
+      });
+      await mutate();
+      alert("Draft clonado a partir da versão publicada.");
+    } catch {
+      alert("Falha ao clonar versão publicada.");
+    }
+  }
 
   return (
     <div className="grid gap-4">
@@ -63,11 +62,14 @@ export default function ScopesPage() {
 
         <Separator className="my-4" />
 
-        {loading ? (
-          <div className="text-sm text-muted-foreground">Carregando...</div>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <RotateCw className="h-4 w-4 animate-spin" /> Carregando...
+          </div>
+        ) : error ? (
+          <div className="text-sm text-destructive">Falha ao carregar escopos.</div>
         ) : (
           <div className="grid gap-6">
-            <section>
             <section>
               <div className="mb-2 flex items-center gap-2">
                 <div className="text-sm font-semibold">Drafts</div>
@@ -134,9 +136,12 @@ export default function ScopesPage() {
                         <TableCell className="text-xs text-muted-foreground">{r.id}</TableCell>
                         <TableCell>{formatISO(r.updated_at)}</TableCell>
                         <TableCell>v{r.version_count}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="space-x-2 text-right">
                           <Button asChild variant="secondary" className="rounded-xl">
                             <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>Visualizar</Link>
+                          </Button>
+                          <Button variant="outline" className="rounded-xl" onClick={() => cloneFromPublished(r.id)}>
+                            Clonar
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -145,11 +150,9 @@ export default function ScopesPage() {
                 </TableBody>
               </Table>
             </section>
-            </section>
           </div>
         )}
       </Card>
     </div>
   );
 }
-

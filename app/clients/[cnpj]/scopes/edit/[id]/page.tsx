@@ -1,66 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 import ScopeWizard from "@/components/scope/ScopeWizard";
-import { getScopeRepo } from "@/data/scope/getScopeRepo";
 import type { EscopoForm } from "@/domain/scope/types";
+import { scopeApi } from "@/lib/api/services/scopes";
+import { useScope } from "@/lib/api/hooks/use-scope-api";
+import { RotateCw } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function EditDraftPage({ params }: { params: { cnpj: string; id: string } }) {
-  const repo = useMemo(() => getScopeRepo(), []);
-  const [loading, setLoading] = useState(true);
-  const [draft, setDraft] = useState<EscopoForm | null>(null);
-  const [status, setStatus] = useState<"draft" | "published" | "archived">("draft");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const rec = await repo.getScope(params.id);
-        if (!cancelled) {
-          setDraft(rec.draft);
-          setStatus(rec.status);
-        }
-      } catch {
-        if (!cancelled) setDraft(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [params.id, repo]);
+  const { data, isLoading, error, mutate } = useScope(params.id);
 
   async function handleSave(nextData: EscopoForm) {
-    await repo.saveDraft(params.id, nextData);
-    setDraft(nextData);
-    const rec = await repo.getScope(params.id);
-    setStatus(rec.status);
+    await scopeApi.saveScopeDraft({ id: params.id, draft: nextData });
+    await mutate();
   }
 
   async function handlePublish() {
-    await repo.publish(params.id);
-    const rec = await repo.getScope(params.id);
-    setStatus(rec.status);
-    setDraft(rec.draft);
+    await scopeApi.publishScope(params.id);
+    await mutate();
     alert("Escopo publicado com sucesso.");
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Card className="rounded-2xl p-4">
-        <div className="text-sm text-muted-foreground">Carregando draft...</div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <RotateCw className="h-4 w-4 animate-spin" /> Carregando draft...
+        </div>
       </Card>
     );
   }
 
-  if (!draft) {
+  if (error || !data) {
     return (
       <Card className="rounded-2xl p-4">
         <div className="text-sm font-semibold">Draft não encontrado</div>
@@ -74,12 +48,12 @@ export default function EditDraftPage({ params }: { params: { cnpj: string; id: 
 
   return (
     <ScopeWizard
-      initialData={draft}
+      initialData={data.draft}
       onSave={handleSave}
       onPublish={handlePublish}
       title={`Escopo ${params.id}`}
       subtitle="Edite, valide e publique o escopo do cliente."
-      status={status}
+      status={data.status}
     />
   );
 }
