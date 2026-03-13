@@ -159,7 +159,7 @@ export default function ScopeViewPage() {
         <div className="grid gap-2 md:grid-cols-[220px_1fr] md:items-center">
           <p className="text-sm text-muted-foreground">Versões disponíveis:</p>
           <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-            <SelectTrigger className="w-full md:w-[360px]">
+            <SelectTrigger className="w-full md:w-90">
               <SelectValue placeholder="Selecione uma versão" />
             </SelectTrigger>
             <SelectContent>
