@@ -50,6 +50,7 @@ export default function ScopesPage() {
   return (
     <div className="grid gap-4">
       <Card className="rounded-2xl border bg-card p-4 shadow-sm">
+      <Card className="rounded-2xl border bg-card p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="text-lg font-semibold tracking-tight">Escopos • {cnpj}</div>
@@ -67,6 +68,7 @@ export default function ScopesPage() {
           <div className="text-sm text-muted-foreground">Carregando...</div>
         ) : (
           <div className="grid gap-6">
+            <section>
             <section>
               <div className="mb-2 flex items-center gap-2">
                 <div className="text-sm font-semibold">Drafts</div>
@@ -144,9 +146,11 @@ export default function ScopesPage() {
                 </TableBody>
               </Table>
             </section>
+            </section>
           </div>
         )}
       </Card>
     </div>
   );
 }
+
