@@ -2,7 +2,6 @@
 
 import { EscopoForm } from "@/domain/scope/types";
 import ContaBancariaBlock from "./blocks/ContaBancariaBlock";
-import NcmListBlock from "./blocks/NcmListBlock";
 import { Checkbox, Field, Select, TextArea, TextInput } from "@/components/ui/form-fields";
 import { Card, Grid, Section, Stack } from "@/components/ui/form-layout";
 
@@ -59,7 +58,7 @@ const ANUENCIAS = [
 ] as const;
 
 export default function StepImportacao({ form, errors, onChange }: Props) {
-  const data = form.operacao.importacao ?? {
+  const data: NonNullable<EscopoForm["operacao"]["importacao"]> = form.operacao.importacao ?? {
     analistaDA: "ANNA",
     analistaAE: "KAROL",
     produtosImportados: "",
@@ -83,20 +82,24 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
     icms: undefined,
     destinacao: "REVENDA",
     subtipoConsumo: null,
-  };
+  } as NonNullable<EscopoForm["operacao"]["importacao"]>;
 
-  function setData(next: any) {
+  function setData(next: NonNullable<EscopoForm["operacao"]["importacao"]>) {
     onChange({
       ...form,
       operacao: { ...form.operacao, importacao: next },
     });
   }
 
-  function update(path: string, value: any) {
-    const next = structuredClone(data as any);
+  function update(path: string, value: unknown) {
+    const next = structuredClone(data);
     const keys = path.split(".");
-    let ref = next;
-    for (let i = 0; i < keys.length - 1; i++) ref = ref[keys[i]];
+    let ref: Record<string, unknown> = next as Record<string, unknown>;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const nested = ref[keys[i]];
+      if (typeof nested !== "object" || nested === null) return;
+      ref = nested as Record<string, unknown>;
+    }
     ref[keys[keys.length - 1]] = value;
     setData(next);
   }
@@ -106,7 +109,7 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
     value: string,
     checked: boolean
   ) {
-    const current = new Set((data as any)[field] as string[]);
+    const current = new Set(data[field] as string[]);
     if (checked) current.add(value);
     else current.delete(value);
     update(field, Array.from(current));
@@ -162,7 +165,7 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
         </button>
 
         <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-          {data.ncms.map((item: any, index: number) => (
+          {data.ncms.map((item, index: number) => (
             <div
               key={index}
               style={{ border: "1px solid #eaecf0", borderRadius: 12, padding: 12 }}
@@ -204,7 +207,7 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
                   onClick={() =>
                     update(
                       "ncms",
-                      data.ncms.filter((_: any, i: number) => i !== index)
+                      data.ncms.filter((_, i: number) => i !== index)
                     )
                   }
                 >

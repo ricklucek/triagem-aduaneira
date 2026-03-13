@@ -33,18 +33,22 @@ export default function StepExportacao({ form, errors, onChange }: Props) {
       subtipoConsumo: null,
     };
 
-  function setData(next: any) {
+  function setData(next: NonNullable<EscopoForm["operacao"]["exportacao"]>) {
     onChange({
       ...form,
       operacao: { ...form.operacao, exportacao: next },
     });
   }
 
-  function update(path: string, value: any) {
-    const next = structuredClone(data as any);
+  function update(path: string, value: unknown) {
+    const next = structuredClone(data);
     const keys = path.split(".");
-    let ref = next;
-    for (let i = 0; i < keys.length - 1; i++) ref = ref[keys[i]];
+    let ref: Record<string, unknown> = next as Record<string, unknown>;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const nested = ref[keys[i]];
+      if (typeof nested !== "object" || nested === null) return;
+      ref = nested as Record<string, unknown>;
+    }
     ref[keys[keys.length - 1]] = value;
     setData(next);
   }

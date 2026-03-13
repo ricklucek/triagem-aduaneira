@@ -50,14 +50,14 @@ export function calculateCompleteness(data: EscopoForm): number {
   if (data.operacao.tipos.includes("EXPORTACAO")) {
     const e = data.operacao.exportacao;
 
-    const ncmsList = e?.ncms || [] as any[];
+    const ncmsList: Array<{ codigo?: string } | string> = e?.ncms ?? [];
 
     check(!!e);
     if (e) {
       check(hasValue(e.analistaDA));
       check(hasValue(e.analistaAE));
       check(hasValue(e.produtosExportados));
-      check(ncmsList.length > 0 && ncmsList.every((x) => hasValue(x.codigo)));
+      check(ncmsList.length > 0 && ncmsList.every((x) => hasValue(typeof x === "string" ? x : x.codigo)));
       check(
         e.portosFronteiras.length > 0 ||
           hasValue(e.outroPorto) ||

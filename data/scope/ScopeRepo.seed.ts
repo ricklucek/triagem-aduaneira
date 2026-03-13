@@ -51,7 +51,7 @@ function makeSeed(): SeedRecord[] {
               enderecoCompletoArmazem: "Rua Depósito, 50 - Itajaí/SC",
               cnaePrincipal: "6201500",
               regimeTributacao: "LUCRO_REAL",
-              responsavelComercial: "EVERTON",
+              responsavelComercial: "EVERTON" as EscopoForm["sobreEmpresa"]["responsavelComercial"],
             },
           },
         },
@@ -80,7 +80,7 @@ function makeSeed(): SeedRecord[] {
           enderecoCompletoArmazem: "Rua Depósito, 50 - Itajaí/SC",
           cnaePrincipal: "6201500",
           regimeTributacao: "LUCRO_REAL",
-          responsavelComercial: "EVERTON",
+          responsavelComercial: "EVERTON" as EscopoForm["sobreEmpresa"]["responsavelComercial"],
         },
         contatos: [
           {
@@ -96,7 +96,7 @@ function makeSeed(): SeedRecord[] {
             analistaDA: "ANNA",
             analistaAE: "KAROL",
             produtosImportados: "Componentes eletrônicos",
-            ncms: ["85371020"],
+            ncms: [{ codigo: "85371020", possuiNve: null }],
             vinculoComExportador: "NAO",
             locaisEntrada: ["PARANAGUA_0917800"],
             outroLocalEntrada: "",
@@ -133,6 +133,7 @@ function makeSeed(): SeedRecord[] {
               habilitado: true,
               tipoValor: "OUTRO",
               valor: 1518,
+              responsavel: "EVERTON",
             },
             preposto: {
               habilitado: true,
@@ -145,20 +146,23 @@ function makeSeed(): SeedRecord[] {
               habilitado: true,
               tipoValor: "SALARIO_MINIMO",
               valor: null,
+              responsavel: "EVERTON",
             },
             freteInternacional: {
               habilitado: true,
               ptaxNegociado: "PTAX + 8%",
-              percentual: 8,
+              percentualSobreCfr: 8,
             },
             seguroInternacional: {
               habilitado: true,
               valorNegociado: 0.99,
               descricaoComplementar: "0,99% do CIF",
+              responsavel: "EVERTON",
             },
             freteRodoviario: {
               habilitado: true,
               modalidade: "CASO_A_CASO",
+              responsavel: "EVERTON",
             },
             regimeEspecial: [],
             emissaoNfe: {
@@ -205,7 +209,7 @@ function makeSeed(): SeedRecord[] {
       const n = i + 3;
       return {
         id: `seed-demo-${String(n).padStart(3, "0")}`,
-        status: n % 3 === 0 ? "published" : "draft" as any,
+        status: n % 3 === 0 ? "published" : "draft" as SeedRecord["status"],
         updated_at: isoDaysAgo(n % 7),
         last_published_at: n % 3 === 0 ? isoDaysAgo(n % 7) : null,
         version_count: n % 3 === 0 ? 1 : 0,
@@ -222,8 +226,8 @@ function makeSeed(): SeedRecord[] {
             enderecoCompletoEscritorio: `Rua Escritório ${n}`,
             enderecoCompletoArmazem: `Rua Armazém ${n}`,
             cnaePrincipal: `CNAE${n}`,
-            regimeTributacao: "SIMPLES_NACIONAL" as any,
-            responsavelComercial: "EVERTON" as any,
+            regimeTributacao: "SIMPLES_NACIONAL" as EscopoForm["sobreEmpresa"]["regimeTributacao"],
+            responsavelComercial: "EVERTON" as EscopoForm["sobreEmpresa"]["responsavelComercial"],
           },
         },
       };
