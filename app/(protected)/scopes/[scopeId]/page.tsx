@@ -22,12 +22,11 @@ export default function ScopeDetailPage() {
   const versions = versionsResponse ?? [];
 
   const handleSave = useCallback(
-    async (nextData: EscopoForm) => {
-      await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
-      await mutate();
-    },
-    [mutate, scopeId]
-  );
+  async (nextData: EscopoForm) => {
+    await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
+  },
+  [scopeId]
+);
 
   const handlePublish = useCallback(async () => {
     await scopeApi.publishScope(scopeId);
