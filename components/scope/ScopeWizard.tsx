@@ -87,16 +87,23 @@ export default function ScopeWizard({
   const etapas = useMemo(() => buildEtapas(form), [form]);
   const etapaAtual = etapas[indiceEtapa];
 
-  const persist = useCallback(async (data: EscopoForm, silent = false) => {
-    if (!onSave) return;
-    setSaving(true);
-    try {
-      await onSave(data);
-      setSavedMessage(silent ? "Salvo automaticamente" : "Salvo");
-    } finally {
-      setSaving(false);
-    }
-  }, [onSave]);
+  const persist = useCallback(
+    async (data: EscopoForm, silent = false): Promise<boolean> => {
+      if (!onSave) return true;
+      setSaving(true);
+      try {
+        await onSave(data);
+        setSavedMessage(silent ? "Salvo automaticamente" : "Salvo");
+        return true;
+      } catch {
+        setSavedMessage("Erro ao salvar");
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [onSave]
+  );
 
   useEffect(() => {
     if (!mountedRef.current) {
@@ -109,7 +116,7 @@ export default function ScopeWizard({
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
     saveTimeoutRef.current = setTimeout(() => {
-      persist(form, true);
+      void persist(form, true);
     }, 800);
 
     return () => {
@@ -122,8 +129,9 @@ export default function ScopeWizard({
     setErrors(result.errors);
     if (!result.ok) return;
 
-    await persist(form);
+    setErrors({});
     setIndiceEtapa((prev) => Math.min(prev + 1, etapas.length - 1));
+    void persist(form);
   }
 
   function etapaAnterior() {
@@ -136,8 +144,10 @@ export default function ScopeWizard({
     setErrors(result.errors);
     if (!result.ok) return;
 
-    await persist(form);
-    alert("Formulário válido. Rascunho salvo com sucesso.");
+    const ok = await persist(form);
+    if (ok) {
+      alert("Formulário válido. Rascunho salvo com sucesso.");
+    }
   }
 
   async function publicar() {
@@ -145,7 +155,9 @@ export default function ScopeWizard({
     setErrors(result.errors);
     if (!result.ok) return;
 
-    await persist(form);
+    const ok = await persist(form);
+    if (!ok) return;
+
     if (onPublish) {
       await onPublish();
       setSavedMessage("Publicado");
@@ -190,10 +202,7 @@ export default function ScopeWizard({
         subtitle={`${subtitle} • Status: ${status} • ${saving ? "Salvando..." : savedMessage}`}
       />
 
-      <StepPills
-        steps={etapas.map((e) => STEP_LABELS[e])}
-        currentIndex={indiceEtapa}
-      />
+      <StepPills steps={etapas.map((e) => STEP_LABELS[e])} currentIndex={indiceEtapa} />
 
       {errorList.length > 0 ? (
         <div style={{ marginBottom: 16 }}>
@@ -212,7 +221,9 @@ export default function ScopeWizard({
             <SecondaryButton type="button" onClick={etapaAnterior} disabled={saving}>
               Anterior
             </SecondaryButton>
-          ) : <div />
+          ) : (
+            <div />
+          )
         }
         right={
           <div style={{ display: "flex", gap: 8 }}>

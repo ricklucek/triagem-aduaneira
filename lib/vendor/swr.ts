@@ -4,6 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type SWRKey = string | null;
 
+type SWROptions = {
+  revalidateOnFocus?: boolean;
+};
+
 type SWRResponse<Data> = {
   data: Data | undefined;
   error: Error | undefined;
@@ -11,7 +15,12 @@ type SWRResponse<Data> = {
   mutate: () => Promise<void>;
 };
 
-export default function useSWR<Data>(key: SWRKey, fetcher: (key: string) => Promise<Data>): SWRResponse<Data> {
+export default function useSWR<Data>(
+  key: SWRKey,
+  fetcher: (key: string) => Promise<Data>,
+  options?: SWROptions
+ ): SWRResponse<Data> {
+  void options;
   const [data, setData] = useState<Data>();
   const [error, setError] = useState<Error>();
   const [isLoading, setIsLoading] = useState(Boolean(key));
