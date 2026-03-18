@@ -5,17 +5,17 @@ export default function HomePage() {
   return (
     <PageShell>
       <PageHeader
-        title="Protótipo de Escopos"
-        subtitle="Acesso rápido ao dashboard e criação de novo escopo."
+        title="Triagem Aduaneira"
+        subtitle="Acesse o login e os painéis por perfil para consumir dados via API."
       />
 
       <Stack>
-        <Link href="/dashboard">
-          <PrimaryButton>Ir para Dashboard</PrimaryButton>
+        <Link href="/login">
+          <PrimaryButton>Entrar com login e senha</PrimaryButton>
         </Link>
 
-        <Link href="/scopes/new">
-          <PrimaryButton>Criar Novo Escopo</PrimaryButton>
+        <Link href="/dashboard">
+          <PrimaryButton>Ir para Dashboard de Escopos</PrimaryButton>
         </Link>
       </Stack>
     </PageShell>

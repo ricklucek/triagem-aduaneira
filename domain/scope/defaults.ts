@@ -20,7 +20,7 @@ export const escopoFormDefault: EscopoForm = {
     cnaePrincipal: "",
     cnaeSecundario: "",
     regimeTributacao: "SIMPLES_NACIONAL",
-    responsavelComercial: "EVERTON",
+    responsavelComercial: "",
   },
 
   contatos: [

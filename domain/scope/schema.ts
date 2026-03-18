@@ -10,30 +10,13 @@ export const RegimeTributacaoSchema = z.enum([
   "LUCRO_REAL",
 ]);
 
-export const ResponsavelComercialSchema = z.enum([
-  "BRUNA_PARIZOTTO",
-  "BERNARDO",
-  "EVERTON",
-  "VINICIUS",
-  "KLEBER",
-]);
+export const ResponsavelComercialSchema = z.string().trim().min(1, "Responsável comercial é obrigatório");
 
 export const TipoOperacaoSchema = z.enum(["IMPORTACAO", "EXPORTACAO"]);
 
-export const AnalistaDAImportacaoSchema = z.enum([
-  "ANNA",
-  "CLEVERSON",
-  "MARCUS",
-  "GILMARA",
-  "THEILA",
-]);
+export const AnalistaDAImportacaoSchema = z.string().trim().min(1, "Analista DA é obrigatório");
 
-export const AnalistaAEImportacaoSchema = z.enum([
-  "KAROL",
-  "LAYSA",
-  "ANTONIO",
-  "JONATHAN",
-]);
+export const AnalistaAEImportacaoSchema = z.string().trim().min(1, "Analista AE é obrigatório");
 
 export const DtcDtaSchema = z.enum(["DTC", "DTA", "NAO"]);
 
@@ -55,33 +38,9 @@ export const AnuenciaImportacaoSchema = z.enum([
   "ANTT_ANTAQ_ANAC",
 ]);
 
-export const LocalEntradaImportacaoSchema = z.enum([
-  "PARANAGUA_0917800",
-  "CURITIBA_0917900",
-  "SANTOS_0817800",
-  "VIRACOPOS_0817700",
-  "SALVADOR_0517800",
-  "RIO_0717700",
-  "SUAPE_0417902",
-]);
+export const LocalEntradaImportacaoSchema = z.string().trim().min(1);
 
-export const ArmazemLiberacaoImportacaoSchema = z.enum([
-  "SANTOS_BANDEIRANTES_8931364",
-  "SANTOS_MOVECTA_8933001",
-  "SANTOS_MULTILOG_8933201",
-  "SANTOS_EUDMARCO_8933202",
-  "VCP_8921101",
-  "GRU_8911101",
-  "CLIF_9983001",
-  "PORTONAVE_9101602",
-  "MULTILOG_ITAJAI_9103201",
-  "PACLOG_NAVEGANTES_9101102",
-  "PACLOG_CURITIBA_9991102",
-  "PS1_MULTILOG_CURITIBA_9993202",
-  "TCP_PARANAGUA_9801303",
-  "ROCHA_PARANAGUA_9801408",
-  "TECON_SUAPE_4931303",
-]);
+export const ArmazemLiberacaoImportacaoSchema = z.string().trim().min(1);
 
 export const DestinacaoSchema = z.enum(["CONSUMO", "REVENDA"]);
 export const SubtipoConsumoSchema = z.enum([
@@ -116,22 +75,7 @@ export const NcmItemSchema = z.object({
   possuiNve: z.enum(["SIM", "NAO"]).optional().nullable(),
 });
 
-export const ResponsavelServicoSchema = z.enum([
-  "ANNA",
-  "CLEVERSON",
-  "MARCUS",
-  "GILMARA",
-  "THEILA",
-  "KAROL",
-  "LAYSA",
-  "ANTONIO",
-  "JONATHAN",
-  "BRUNA_PARIZOTTO",
-  "BERNARDO",
-  "EVERTON",
-  "VINICIUS",
-  "KLEBER",
-]);
+export const ResponsavelServicoSchema = z.string().trim().min(1, "Responsável é obrigatório");
 
 const BeneficioTributoSchema = z
   .object({

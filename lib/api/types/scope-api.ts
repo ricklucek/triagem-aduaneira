@@ -5,6 +5,7 @@ import type {
   ScopeVersion,
 } from "@/data/scope/ScopeRepo";
 import type { EscopoForm } from "@/domain/scope/types";
+import type { ScopeMetadataResponse } from "@/lib/api/types/scope-metadata";
 
 export type ScopeStatus = "draft" | "published" | "archived";
 
@@ -32,4 +33,5 @@ export interface ScopeApiClient {
   saveScopeDraft(payload: SaveScopeDraftPayload): Promise<void>;
   publishScope(id: string): Promise<PublishResult>;
   listScopeVersions(id: string): Promise<ScopeVersionsResponse>;
+  getMetadata(): Promise<ScopeMetadataResponse>;
 }

@@ -2,15 +2,15 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getScopeRepo } from "@/data/scope/getScopeRepo";
+import { scopeApi } from "@/lib/api/services/scopes";
 
 export default function NewScopePage() {
   const router = useRouter();
 
   useEffect(() => {
     (async () => {
-      const repo = getScopeRepo();
-      const { id } = await repo.createScope();
+      const metadata = await scopeApi.getMetadata();
+      const { id } = await scopeApi.createScope({ informacoesFixas: metadata.informacoesFixas });
       router.replace(`/scopes/${id}`);
     })();
   }, [router]);

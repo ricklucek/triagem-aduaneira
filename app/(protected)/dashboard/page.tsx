@@ -11,6 +11,7 @@ import {
   SecondaryButton,
   Toolbar,
 } from "@/components/ui/form-layout";
+import { Card } from "@/components/ui/card";
 import { TextInput, Select } from "@/components/ui/form-fields";
 import { useScopes } from "@/lib/api/hooks/use-scope-api";
 
@@ -88,7 +89,7 @@ export default function DashboardPage() {
 
       <div style={{ height: 16 }} />
 
-      <Card padded={false}>
+      <Card>
         {isLoading ? (
           <div style={{ padding: 20, display: "flex", alignItems: "center", gap: 8 }}>
             <RotateCw className="h-4 w-4 animate-spin" /> Carregando...

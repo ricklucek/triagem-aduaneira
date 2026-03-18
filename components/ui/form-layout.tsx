@@ -236,3 +236,5 @@ export function DangerButton(
     />
   );
 }
+
+export { Card };
