@@ -225,29 +225,20 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
         </Grid>
       </Section>
 
-      <Field
-        label="Locais de entrada"
-        required
-        error={errors["locaisEntrada"]}
-      >
-        <select
-          multiple
-          value={data.locaisEntrada}
-          onChange={(e) =>
-            update(
-              "locaisEntrada",
-              Array.from(e.target.selectedOptions).map((o) => o.value)
-            )
-          }
-          className="min-h-36 rounded-md border border-input p-3"
-        >
+      <Section title="Locais de entrada">
+        <Stack gap={10}>
           {ARMAZENS.map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
+            <Checkbox
+              key={value}
+              label={label}
+              checked={data.locaisEntrada.includes(value)}
+              onChange={(checked) =>
+                toggleArrayValue("locaisEntrada", value, checked)
+              }
+            />
           ))}
-        </select>
-      </Field>
+        </Stack>
+      </Section>
 
       <Section title="Armazéns de liberação">
         <Stack gap={10}>
@@ -405,62 +396,44 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
         </Select>
       </Field>
 
-      <Field label="ICMS">
-        <Select
-          value={data.icms ? "SIM" : "NAO"}
-          onChange={(e) =>
-            update(
-              "icms",
-              e.target.value === "SIM"
-                ? {
-                  contaPagamento: "CASCO",
-                  regime: "INTEGRAL",
-                  detalheBeneficio: "",
-                }
-                : undefined
-            )
-          }
-        >
-          <option value="NAO">Não</option>
-          <option value="SIM">Sim</option>
-        </Select>
-
+      <Section title={""}>
         <Card>
-            <Grid columns={2}>
-              <Field label="ICMS" required>
-                <Select
-                  value={data.icms.regime}
-                  onChange={(e) =>
-                    update(`icms.regime`, e.target.value)
-                  }
-                >
-                  <option value="INTEGRAL">Integral</option>
-                  <option value="BENEFICIO">Benefício</option>
-                </Select>
-              </Field>
+          <Grid columns={2}>
+            <Field label="ICMS" required>
+              <Select
+                value={data.icms.regime}
+                onChange={(e) =>
+                  update(`icms.regime`, e.target.value)
+                }
+              >
+                <option value="INTEGRAL">Integral</option>
+                <option value="BENEFICIO">Benefício</option>
+              </Select>
+            </Field>
 
-              {data.icms.regime === "BENEFICIO" ? (
-                <Field
-                  label={`Detalhe do benefício — ICMS`}
-                  required
-                  error={errors[`icms.detalheBeneficio`]}
-                >
-                  <TextInput
-                    value={
-                      data.icms.detalheBeneficio ?? ""
-                    }
-                    onChange={(e) =>
-                      update(
-                        `icms.detalheBeneficio`,
-                        e.target.value
-                      )
-                    }
-                  />
-                </Field>
-              ) : null}
-            </Grid>
-          </Card>
-      </Field>
+            {data.icms.regime === "BENEFICIO" ? (
+              <Field
+                label={`Detalhe do benefício — ICMS`}
+                required
+                error={errors[`icms.detalheBeneficio`]}
+              >
+                <TextInput
+                  value={
+                    data.icms.detalheBeneficio ?? ""
+                  }
+                  onChange={(e) =>
+                    update(
+                      `icms.detalheBeneficio`,
+                      e.target.value
+                    )
+                  }
+                />
+              </Field>
+            ) : null}
+          </Grid>
+        </Card>
+      </Section>
+
 
       <Section title="Destinação">
         <Grid columns={2}>
