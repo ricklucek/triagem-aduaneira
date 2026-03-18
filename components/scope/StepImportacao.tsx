@@ -73,7 +73,7 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
       cofins: { regime: "INTEGRAL", detalheBeneficio: "" },
     },
     afrmm: undefined,
-    icms: undefined,
+    icms: { regime: "INTEGRAL", detalheBeneficio: "" },
     destinacao: "REVENDA",
     subtipoConsumo: null,
   } as NonNullable<EscopoForm["operacao"]["importacao"]>;
@@ -424,6 +424,42 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
           <option value="NAO">Não</option>
           <option value="SIM">Sim</option>
         </Select>
+
+        <Card>
+            <Grid columns={2}>
+              <Field label="ICMS" required>
+                <Select
+                  value={data.icms.regime}
+                  onChange={(e) =>
+                    update(`icms.regime`, e.target.value)
+                  }
+                >
+                  <option value="INTEGRAL">Integral</option>
+                  <option value="BENEFICIO">Benefício</option>
+                </Select>
+              </Field>
+
+              {data.icms.regime === "BENEFICIO" ? (
+                <Field
+                  label={`Detalhe do benefício — ICMS`}
+                  required
+                  error={errors[`icms.detalheBeneficio`]}
+                >
+                  <TextInput
+                    value={
+                      data.icms.detalheBeneficio ?? ""
+                    }
+                    onChange={(e) =>
+                      update(
+                        `icms.detalheBeneficio`,
+                        e.target.value
+                      )
+                    }
+                  />
+                </Field>
+              ) : null}
+            </Grid>
+          </Card>
       </Field>
 
       <Section title="Destinação">

@@ -127,13 +127,7 @@ export const ImportacaoSchema = z
       detalheBeneficio: z.string().trim().optional().nullable(),
     }).optional(),
 
-    icms: z.object({
-      contaPagamento: ContaPagamentoSchema.optional(),
-      dadosContaCliente: ContaBancariaSchema.optional(),
-      regime: IntegralBeneficioSchema.optional(),
-      recolhida: z.string().trim().optional().nullable(),
-      efetiva: z.string().trim().optional().nullable(),
-    }).optional(),
+    icms: BeneficioTributoSchema,
 
     destinacao: DestinacaoSchema,
     subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
@@ -190,29 +184,12 @@ export const ImportacaoSchema = z
       });
     }
 
-    if (value.icms?.contaPagamento === "CLIENTE" && !value.icms.dadosContaCliente) {
+    if (value.icms?.regime === "BENEFICIO" && !value.icms.detalheBeneficio) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["icms", "dadosContaCliente"],
-        message: "Dados da conta do cliente são obrigatórios",
+        path: ["icms", "detalheBeneficio"],
+        message: "Detalhe do benefício ICMS é obrigatório",
       });
-    }
-
-    if (value.icms?.regime === "BENEFICIO") {
-      if (!value.icms.recolhida) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["icms", "recolhida"],
-          message: "Recolhida é obrigatória",
-        });
-      }
-      if (!value.icms.efetiva) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["icms", "efetiva"],
-          message: "Efetiva é obrigatória",
-        });
-      }
     }
 
     if (value.destinacao === "CONSUMO" && !value.subtipoConsumo) {
