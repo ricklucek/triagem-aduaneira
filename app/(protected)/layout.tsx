@@ -2,12 +2,12 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { getAuthSession } from "@/lib/auth/session-storage";
+import { useAuthSession } from "@/lib/auth/session-storage";
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const session = getAuthSession();
+  const session = useAuthSession();
 
   useEffect(() => {
     if (!session) {

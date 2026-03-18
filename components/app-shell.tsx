@@ -8,8 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu } from "@/components/ui/sidebar";
-import { getAuthSession } from "@/lib/auth/session-storage";
 import { logoutSession } from "@/lib/api/hooks/use-auth";
+import { useAuthSession } from "@/lib/auth/session-storage";
 import { cn } from "@/lib/utils";
 
 const navByRole = {
@@ -41,7 +41,7 @@ function NavLinks({ items, pathname }: { items: readonly { href: string; label: 
       {items.map((item) => {
         const active = pathname.startsWith(item.href);
         return (
-          <Link key={item.href} href={item.href} className={cn("rounded-lg px-3 py-2 text-sm transition hover:bg-muted", active && "bg-muted font-medium")}>
+          <Link key={item.href} href={item.href} className={cn("rounded-lg px-3 py-2.5 text-sm transition hover:bg-muted", active && "bg-muted font-medium") }>
             {item.label}
           </Link>
         );
@@ -53,7 +53,7 @@ function NavLinks({ items, pathname }: { items: readonly { href: string; label: 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const session = getAuthSession();
+  const session = useAuthSession();
   const isAuthenticated = Boolean(session?.user);
   const role = session?.user.role;
   const nav = role ? navByRole[role] : [];
@@ -69,7 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {isAuthenticated ? (
           <Sidebar>
             <SidebarHeader>
-              <div className="flex items-center justify-between"><div className="text-sm font-semibold tracking-tight">ScopeDesk</div><Badge variant="secondary">MVP</Badge></div>
+              <div className="flex items-center justify-between gap-3"><div className="text-sm font-semibold tracking-tight">ScopeDesk</div><Badge variant="secondary">MVP</Badge></div>
               <Separator className="mt-4" />
             </SidebarHeader>
             <SidebarContent><NavLinks items={nav} pathname={pathname} /></SidebarContent>
@@ -80,22 +80,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Sidebar>
         ) : null}
 
-        <main className="flex w-full flex-col">
-          <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/80 px-4 py-3 backdrop-blur">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <main className="flex w-full min-w-0 flex-col">
+          <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b bg-background/80 px-4 py-3 backdrop-blur md:px-6">
+            <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
               {isAuthenticated ? (
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon-sm" className="md:hidden"><Menu /></Button>
                   </SheetTrigger>
-                  <SheetContent side="left">
-                    <div className="mt-6"><NavLinks items={nav} pathname={pathname} /></div>
+                  <SheetContent side="left" className="w-72 p-0">
+                    <div className="p-4">
+                      <div className="flex items-center justify-between gap-3"><div className="text-sm font-semibold tracking-tight">ScopeDesk</div><Badge variant="secondary">MVP</Badge></div>
+                      <Separator className="mt-4" />
+                    </div>
+                    <div className="px-4 pb-6"><NavLinks items={nav} pathname={pathname} /></div>
                   </SheetContent>
                 </Sheet>
               ) : null}
-              <span>Triagem • Montagem do Escopo</span>
+              <span className="truncate">Triagem • Montagem do Escopo</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-start sm:self-auto">
               <Badge variant="outline">PT-BR</Badge>
               {isAuthenticated ? <Badge variant="outline">Enterprise</Badge> : <Button variant="outline" size="sm" onClick={() => router.push("/login")}>Entrar</Button>}
             </div>

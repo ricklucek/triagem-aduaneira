@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { escopoFormDefault } from "@/domain/scope/defaults";
 import { EtapaFormulario, EscopoForm } from "@/domain/scope/types";
 import { validarEtapa, validarFormularioCompleto } from "@/domain/scope/validate";

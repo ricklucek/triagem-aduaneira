@@ -30,12 +30,9 @@ export default function ScopeDetailPage() {
   const status = scopeResponse?.status ?? "draft";
   const responsaveis = metadataResponse?.responsaveis ?? [];
 
-  const handleSave = useCallback(
-    async (nextData: EscopoForm) => {
-      await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
-    },
-    [scopeId]
-  );
+  const handleSave = useCallback(async (nextData: EscopoForm) => {
+    await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
+  }, [scopeId]);
 
   const handlePublish = useCallback(async () => {
     await scopeApi.publishScope(scopeId);
@@ -47,15 +44,13 @@ export default function ScopeDetailPage() {
   if (scopeError || !draft) return <div style={{ padding: 24 }}>Escopo não encontrado.</div>;
 
   return (
-    <PageShell>
-      <div style={{ marginBottom: 16 }}>
-        <SecondaryButton type="button" onClick={() => router.push("/dashboard")}>
-          Voltar ao dashboard
-        </SecondaryButton>
+    <PageShell className="space-y-4">
+      <div className="mb-4">
+        <SecondaryButton type="button" onClick={() => router.push("/dashboard")}>Voltar ao dashboard</SecondaryButton>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) minmax(320px, 1fr)", gap: 20, alignItems: "start" }}>
-        <div>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] xl:items-start">
+        <div className="min-w-0">
           <ScopeWizard
             initialData={draft}
             responsaveis={responsaveis}
@@ -69,8 +64,8 @@ export default function ScopeDetailPage() {
 
         <Stack>
           <VersionHistory versions={versions} />
-          <Card>
-            <h3 style={{ marginTop: 0 }}>Resumo</h3>
+          <Card className="rounded-[1.75rem] border-border/80 p-5 shadow-sm sm:p-6">
+            <h3 className="text-xl font-semibold tracking-tight">Resumo</h3>
             <p><strong>Status:</strong> {status}</p>
             <p><strong>Razão social:</strong> {draft.sobreEmpresa.razaoSocial || "-"}</p>
             <p><strong>CNPJ:</strong> {draft.sobreEmpresa.cnpj || "-"}</p>
