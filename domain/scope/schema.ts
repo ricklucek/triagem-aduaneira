@@ -10,30 +10,13 @@ export const RegimeTributacaoSchema = z.enum([
   "LUCRO_REAL",
 ]);
 
-export const ResponsavelComercialSchema = z.enum([
-  "BRUNA_PARIZOTTO",
-  "BERNARDO",
-  "EVERTON",
-  "VINICIUS",
-  "KLEBER",
-]);
+export const ResponsavelComercialSchema = z.string().trim().min(1, "Responsável comercial é obrigatório");
 
 export const TipoOperacaoSchema = z.enum(["IMPORTACAO", "EXPORTACAO"]);
 
-export const AnalistaDAImportacaoSchema = z.enum([
-  "ANNA",
-  "CLEVERSON",
-  "MARCUS",
-  "GILMARA",
-  "THEILA",
-]);
+export const AnalistaDAImportacaoSchema = z.string().trim().min(1, "Analista DA é obrigatório");
 
-export const AnalistaAEImportacaoSchema = z.enum([
-  "KAROL",
-  "LAYSA",
-  "ANTONIO",
-  "JONATHAN",
-]);
+export const AnalistaAEImportacaoSchema = z.string().trim().min(1, "Analista AE é obrigatório");
 
 export const DtcDtaSchema = z.enum(["DTC", "DTA", "NAO"]);
 
@@ -55,33 +38,9 @@ export const AnuenciaImportacaoSchema = z.enum([
   "ANTT_ANTAQ_ANAC",
 ]);
 
-export const LocalEntradaImportacaoSchema = z.enum([
-  "PARANAGUA_0917800",
-  "CURITIBA_0917900",
-  "SANTOS_0817800",
-  "VIRACOPOS_0817700",
-  "SALVADOR_0517800",
-  "RIO_0717700",
-  "SUAPE_0417902",
-]);
+export const LocalEntradaImportacaoSchema = z.string().trim().min(1);
 
-export const ArmazemLiberacaoImportacaoSchema = z.enum([
-  "SANTOS_BANDEIRANTES_8931364",
-  "SANTOS_MOVECTA_8933001",
-  "SANTOS_MULTILOG_8933201",
-  "SANTOS_EUDMARCO_8933202",
-  "VCP_8921101",
-  "GRU_8911101",
-  "CLIF_9983001",
-  "PORTONAVE_9101602",
-  "MULTILOG_ITAJAI_9103201",
-  "PACLOG_NAVEGANTES_9101102",
-  "PACLOG_CURITIBA_9991102",
-  "PS1_MULTILOG_CURITIBA_9993202",
-  "TCP_PARANAGUA_9801303",
-  "ROCHA_PARANAGUA_9801408",
-  "TECON_SUAPE_4931303",
-]);
+export const ArmazemLiberacaoImportacaoSchema = z.string().trim().min(1);
 
 export const DestinacaoSchema = z.enum(["CONSUMO", "REVENDA"]);
 export const SubtipoConsumoSchema = z.enum([
@@ -116,22 +75,7 @@ export const NcmItemSchema = z.object({
   possuiNve: z.enum(["SIM", "NAO"]).optional().nullable(),
 });
 
-export const ResponsavelServicoSchema = z.enum([
-  "ANNA",
-  "CLEVERSON",
-  "MARCUS",
-  "GILMARA",
-  "THEILA",
-  "KAROL",
-  "LAYSA",
-  "ANTONIO",
-  "JONATHAN",
-  "BRUNA_PARIZOTTO",
-  "BERNARDO",
-  "EVERTON",
-  "VINICIUS",
-  "KLEBER",
-]);
+export const ResponsavelServicoSchema = z.string().trim().min(1, "Responsável é obrigatório");
 
 const BeneficioTributoSchema = z
   .object({
@@ -317,12 +261,13 @@ export const ExportacaoSchema = z
 const ServicoValorOuSalarioSchema = z
   .object({
     habilitado: z.boolean(),
-    tipoValor: z.enum(["SALARIO_MINIMO", "OUTRO"]).optional(),
+    tipoValor: z.enum(["SALARIO_MINIMO", "OUTRO"]).optional().nullable(),
     valor: z.number().optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional(),
+    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
+
     if (!value.tipoValor) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -330,6 +275,7 @@ const ServicoValorOuSalarioSchema = z
         message: "Tipo de valor é obrigatório",
       });
     }
+
     if (value.tipoValor === "OUTRO" && (!value.valor || value.valor <= 0)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -337,6 +283,7 @@ const ServicoValorOuSalarioSchema = z
         message: "Valor é obrigatório",
       });
     }
+
     if (!value.responsavel) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -365,10 +312,11 @@ const ServicoPrepostoSchema = z
   .object({
     habilitado: z.boolean(),
     valor: z.number().optional().nullable(),
-    inclusoNoDesembaracoCasco: SimNaoSchema.optional(),
+    inclusoNoDesembaracoCasco: SimNaoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
+
     if (!value.valor || value.valor <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -376,6 +324,7 @@ const ServicoPrepostoSchema = z
         message: "Valor é obrigatório",
       });
     }
+
     if (!value.inclusoNoDesembaracoCasco) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -390,10 +339,11 @@ const ServicoFreteInternacionalSchema = z
     habilitado: z.boolean(),
     ptaxNegociado: z.string().trim().optional().nullable(),
     percentualSobreCfr: z.number().optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional(),
+    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
+
     if (!value.ptaxNegociado) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -401,6 +351,7 @@ const ServicoFreteInternacionalSchema = z
         message: "PTAX negociado é obrigatório",
       });
     }
+
     if (value.percentualSobreCfr == null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -408,6 +359,7 @@ const ServicoFreteInternacionalSchema = z
         message: "% sobre CFR é obrigatório",
       });
     }
+
     if (!value.responsavel) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -422,10 +374,11 @@ const ServicoSeguroSchema = z
     habilitado: z.boolean(),
     valorNegociado: z.number().optional().nullable(),
     descricaoComplementar: z.string().trim().optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional(),
+    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
+
     if (!value.valorNegociado || value.valorNegociado <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -433,6 +386,7 @@ const ServicoSeguroSchema = z
         message: "Valor negociado é obrigatório",
       });
     }
+
     if (!value.responsavel) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -442,22 +396,25 @@ const ServicoSeguroSchema = z
     }
   });
 
-
+  
 const ServicoFreteRodoviarioSchema = z
   .object({
     habilitado: z.boolean(),
-    modalidade: z.enum(["SIM", "CASO_A_CASO"]).optional(),
-    responsavel: ResponsavelServicoSchema.optional(),
+    modalidade: z.enum(["SIM", "CASO_A_CASO"]).optional().nullable(),
+    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
-    if (value.habilitado && !value.modalidade) {
+    if (!value.habilitado) return;
+
+    if (!value.modalidade) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["modalidade"],
         message: "Modalidade é obrigatória",
       });
     }
-    if (value.habilitado && !value.responsavel) {
+
+    if (!value.responsavel) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["responsavel"],

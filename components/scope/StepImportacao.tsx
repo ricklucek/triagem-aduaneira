@@ -5,21 +5,15 @@ import ContaBancariaBlock from "./blocks/ContaBancariaBlock";
 import { Checkbox, Field, Select, TextArea, TextInput } from "@/components/ui/form-fields";
 import { Card, Grid, Section, Stack } from "@/components/ui/form-layout";
 
+import { ResponsiblePicker } from "./ResponsiblePicker";
+import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+
 type Props = {
   form: EscopoForm;
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
+  responsaveis: ScopeResponsible[];
 };
-
-const LOCAIS_ENTRADA = [
-  ["PARANAGUA_0917800", "Paranaguá"],
-  ["CURITIBA_0917900", "Curitiba"],
-  ["SANTOS_0817800", "Santos"],
-  ["VIRACOPOS_0817700", "Viracopos"],
-  ["SALVADOR_0517800", "Salvador"],
-  ["RIO_0717700", "Rio de Janeiro"],
-  ["SUAPE_0417902", "Suape"],
-] as const;
 
 const ARMAZENS = [
   ["SANTOS_BANDEIRANTES_8931364", "Santos Bandeirantes"],
@@ -57,10 +51,10 @@ const ANUENCIAS = [
   "ANTT_ANTAQ_ANAC",
 ] as const;
 
-export default function StepImportacao({ form, errors, onChange }: Props) {
+export default function StepImportacao({ form, errors, onChange, responsaveis }: Props) {
   const data: NonNullable<EscopoForm["operacao"]["importacao"]> = form.operacao.importacao ?? {
-    analistaDA: "ANNA",
-    analistaAE: "KAROL",
+    analistaDA: "",
+    analistaAE: "",
     produtosImportados: "",
     ncms: [{ codigo: "", possuiNve: undefined }],
     vinculoComExportador: "NAO",
@@ -119,30 +113,9 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
     <Stack>
       <Section title="Importação" description="Regras e parâmetros da operação de importação.">
         <Grid columns={2}>
-          <Field label="Analista DA" required error={errors["analistaDA"]}>
-            <Select
-              value={data.analistaDA}
-              onChange={(e) => update("analistaDA", e.target.value)}
-            >
-              <option value="ANNA">Anna</option>
-              <option value="CLEVERSON">Cleverson</option>
-              <option value="MARCUS">Marcus</option>
-              <option value="GILMARA">Gilmara</option>
-              <option value="THEILA">Theila</option>
-            </Select>
-          </Field>
+          <ResponsiblePicker label="Analista DA" value={data.analistaDA} onChange={(value) => update("analistaDA", value)} options={responsaveis} error={errors["analistaDA"]} filterSetores={["Operação", "operacao", "Despacho Aduaneiro"]} />
 
-          <Field label="Analista AE" required error={errors["analistaAE"]}>
-            <Select
-              value={data.analistaAE}
-              onChange={(e) => update("analistaAE", e.target.value)}
-            >
-              <option value="KAROL">Karol</option>
-              <option value="LAYSA">Laysa</option>
-              <option value="ANTONIO">Antonio</option>
-              <option value="JONATHAN">Jonathan</option>
-            </Select>
-          </Field>
+          <ResponsiblePicker label="Analista AE" value={data.analistaAE} onChange={(value) => update("analistaAE", value)} options={responsaveis} error={errors["analistaAE"]} filterSetores={["Operação", "operacao", "Atendimento"]} />
         </Grid>
 
         <Field
@@ -266,9 +239,9 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
               Array.from(e.target.selectedOptions).map((o) => o.value)
             )
           }
-          style={{ width: "100%", minHeight: 140, borderRadius: 10, padding: 12 }}
+          className="min-h-36 rounded-md border border-input p-3"
         >
-          {LOCAIS_ENTRADA.map(([value, label]) => (
+          {ARMAZENS.map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>
@@ -434,10 +407,10 @@ export default function StepImportacao({ form, errors, onChange }: Props) {
 
       <Field label="ICMS">
         <Select
-          value={data.afrmm ? "SIM" : "NAO"}
+          value={data.icms ? "SIM" : "NAO"}
           onChange={(e) =>
             update(
-              "afrmm",
+              "icms",
               e.target.value === "SIM"
                 ? {
                   contaPagamento: "CASCO",

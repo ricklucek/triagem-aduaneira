@@ -8,6 +8,7 @@ export const API_ROUTES = {
   scopes: {
     create: "/scopes",
     list: "/scopes",
+    metadata: "/scopes/metadata",
     detail: (scopeId: string) => `/scopes/${scopeId}`,
     saveDraft: (scopeId: string) => `/scopes/${scopeId}/draft`,
     publish: (scopeId: string) => `/scopes/${scopeId}/publish`,
@@ -18,6 +19,9 @@ export const API_ROUTES = {
     byPerson: "/scopes/analytics/by-person",
     bySector: "/scopes/analytics/by-sector",
     monthlyCreated: "/scopes/analytics/monthly-created",
+  },
+  admin: {
+    settings: "/admin/settings",
   },
   dashboards: {
     admin: "/dashboards/admin",

@@ -5,10 +5,14 @@ import NcmListBlock from "./blocks/NcmListBlock";
 import { Checkbox, Field, Select, TextArea, TextInput } from "@/components/ui/form-fields";
 import { Grid, Section, Stack } from "@/components/ui/form-layout";
 
+import { ResponsiblePicker } from "./ResponsiblePicker";
+import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+
 type Props = {
   form: EscopoForm;
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
+  responsaveis: ScopeResponsible[];
 };
 
 const PORTOS = [
@@ -19,7 +23,7 @@ const PORTOS = [
   ["CORUMBA", "Corumbá"],
 ] as const;
 
-export default function StepExportacao({ form, errors, onChange }: Props) {
+export default function StepExportacao({ form, errors, onChange, responsaveis }: Props) {
   const data =
     form.operacao.exportacao ?? {
       analistaDA: "",
@@ -64,19 +68,9 @@ export default function StepExportacao({ form, errors, onChange }: Props) {
     <Stack>
       <Section title="Exportação" description="Regras e parâmetros da operação de exportação.">
         <Grid columns={2}>
-          <Field label="Analista DA" required error={errors["analistaDA"]}>
-            <TextInput
-              value={data.analistaDA}
-              onChange={(e) => update("analistaDA", e.target.value)}
-            />
-          </Field>
+          <ResponsiblePicker label="Analista DA" value={data.analistaDA} onChange={(value) => update("analistaDA", value)} options={responsaveis} error={errors["analistaDA"]} />
 
-          <Field label="Analista AE" required error={errors["analistaAE"]}>
-            <TextInput
-              value={data.analistaAE}
-              onChange={(e) => update("analistaAE", e.target.value)}
-            />
-          </Field>
+          <ResponsiblePicker label="Analista AE" value={data.analistaAE} onChange={(value) => update("analistaAE", value)} options={responsaveis} error={errors["analistaAE"]} />
         </Grid>
 
         <Field

@@ -3,6 +3,7 @@
 import useSWR from "swr";
 import type { ListScopesParams } from "@/data/scope/ScopeRepo";
 import { scopeApi } from "@/lib/api/services/scopes";
+import { adminSettingsApi } from "@/lib/api/services/admin-settings";
 
 export function useScopes(params: ListScopesParams | null) {
   const key = params ? `scopes:${JSON.stringify(params)}` : null;
@@ -26,4 +27,8 @@ export function useScopeVersions(scopeId: string | null) {
     if (!scopeId) throw new Error("Scope id inválido para versões.");
     return scopeApi.listScopeVersions(scopeId);
   });
+}
+
+export function useScopeMetadata() {
+  return useSWR("scope:metadata", adminSettingsApi.getScopeMetadata);
 }

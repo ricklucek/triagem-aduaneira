@@ -3,6 +3,7 @@
 import useSWR from "swr";
 import { dashboardApi } from "@/lib/api/services/dashboards";
 import { usersApi } from "@/lib/api/services/users";
+import { adminSettingsApi } from "@/lib/api/services/admin-settings";
 
 export function useAdminDashboard() {
   return useSWR("dashboard:admin", dashboardApi.getAdminMetrics);
@@ -22,4 +23,8 @@ export function useOperacaoDashboard() {
 
 export function useUsers() {
   return useSWR("users:list", usersApi.listUsers);
+}
+
+export function useAdminSettings() {
+  return useSWR("admin:settings", adminSettingsApi.getSettings);
 }

@@ -5,29 +5,15 @@ import RegimeEspecialList from "./blocks/RegimeEspecialList";
 import ServicoToggleCard from "./blocks/ServicoToggleCard";
 import { Field, NumberInput, Select, TextArea, TextInput } from "@/components/ui/form-fields";
 import { Grid, Stack } from "@/components/ui/form-layout";
+import { ResponsiblePicker } from "./ResponsiblePicker";
+import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 
 type Props = {
   form: EscopoForm;
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
+  responsaveis: ScopeResponsible[];
 };
-
-const RESPONSAVEIS = [
-  ["ANNA", "Anna"],
-  ["CLEVERSON", "Cleverson"],
-  ["MARCUS", "Marcus"],
-  ["GILMARA", "Gilmara"],
-  ["THEILA", "Theila"],
-  ["KAROL", "Karol"],
-  ["LAYSA", "Laysa"],
-  ["ANTONIO", "Antonio"],
-  ["JONATHAN", "Jonathan"],
-  ["BRUNA_PARIZOTTO", "Bruna Parizotto"],
-  ["BERNARDO", "Bernardo"],
-  ["EVERTON", "Everton"],
-  ["VINICIUS", "Vinicius"],
-  ["KLEBER", "Kleber"],
-] as const;
 
 function emptyExportacaoServicos(): NonNullable<EscopoForm["servicos"]["exportacao"]> {
   return {
@@ -72,6 +58,7 @@ export default function StepServicosExportacao({
   form,
   errors,
   onChange,
+  responsaveis,
 }: Props) {
   const data = form.servicos.exportacao ?? emptyExportacaoServicos();
 
@@ -107,7 +94,7 @@ export default function StepServicosExportacao({
         <Grid columns={2}>
           <Field label="Tipo de valor" required>
             <Select
-              value={data.despachoAduaneiroExportacao.tipoValor}
+              value={data.despachoAduaneiroExportacao.tipoValor as string | undefined}
               onChange={(e) =>
                 update("despachoAduaneiroExportacao.tipoValor", e.target.value)
               }
@@ -132,19 +119,7 @@ export default function StepServicosExportacao({
           ) : null}
         </Grid>
 
-        <Field label="Responsável" required error={errors["despachoAduaneiroExportacao.responsavel"]}>
-          <Select
-            value={data.despachoAduaneiroExportacao.responsavel ?? ""}
-            onChange={(e) => update("despachoAduaneiroExportacao.responsavel", e.target.value)}
-          >
-            <option value="">Selecione</option>
-            {RESPONSAVEIS.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        <ResponsiblePicker label="Responsável" value={data.despachoAduaneiroExportacao.responsavel} onChange={(value) => update("despachoAduaneiroExportacao.responsavel", value)} options={responsaveis} error={errors["despachoAduaneiroExportacao.responsavel"]} />
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -278,7 +253,7 @@ export default function StepServicosExportacao({
         <Grid columns={2}>
           <Field label="Tipo de valor" required>
             <Select
-              value={data.assessoria.tipoValor}
+              value={data.assessoria.tipoValor as string | undefined}
               onChange={(e) => update("assessoria.tipoValor", e.target.value)}
             >
               <option value="SALARIO_MINIMO">Um salário mínimo vigente</option>
@@ -298,19 +273,7 @@ export default function StepServicosExportacao({
           ) : null}
         </Grid>
 
-        <Field label="Responsável" required error={errors["assessoria.responsavel"]}>
-          <Select
-            value={data.assessoria.responsavel ?? ""}
-            onChange={(e) => update("assessoria.responsavel", e.target.value)}
-          >
-            <option value="">Selecione</option>
-            {RESPONSAVEIS.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        <ResponsiblePicker label="Responsável" value={data.assessoria.responsavel} onChange={(value) => update("assessoria.responsavel", value)} options={responsaveis} error={errors["assessoria.responsavel"]} />
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -340,19 +303,7 @@ export default function StepServicosExportacao({
           </Field>
         </Grid>
 
-        <Field label="Responsável" required error={errors["freteInternacional.responsavel"]}>
-          <Select
-            value={data.freteInternacional.responsavel ?? ""}
-            onChange={(e) => update("freteInternacional.responsavel", e.target.value)}
-          >
-            <option value="">Selecione</option>
-            {RESPONSAVEIS.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        <ResponsiblePicker label="Responsável" value={data.freteInternacional.responsavel} onChange={(value) => update("freteInternacional.responsavel", value)} options={responsaveis} error={errors["freteInternacional.responsavel"]} />
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -383,19 +334,7 @@ export default function StepServicosExportacao({
           />
         </Field>
 
-        <Field label="Responsável" required error={errors["seguroInternacional.responsavel"]}>
-          <Select
-            value={data.seguroInternacional.responsavel ?? ""}
-            onChange={(e) => update("seguroInternacional.responsavel", e.target.value)}
-          >
-            <option value="">Selecione</option>
-            {RESPONSAVEIS.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        <ResponsiblePicker label="Responsável" value={data.seguroInternacional.responsavel} onChange={(value) => update("seguroInternacional.responsavel", value)} options={responsaveis} error={errors["seguroInternacional.responsavel"]} />
       </ServicoToggleCard>
 
       <ServicoToggleCard
@@ -415,19 +354,7 @@ export default function StepServicosExportacao({
         </Field>
       </ServicoToggleCard>
 
-      <Field label="Responsável" required error={errors["freteRodoviario.responsavel"]}>
-        <Select
-          value={data.freteRodoviario.responsavel ?? ""}
-          onChange={(e) => update("freteRodoviario.responsavel", e.target.value)}
-        >
-          <option value="">Selecione</option>
-          {RESPONSAVEIS.map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </Select>
-      </Field>
+      <ResponsiblePicker label="Responsável" value={data.freteRodoviario.responsavel} onChange={(value) => update("freteRodoviario.responsavel", value)} options={responsaveis} error={errors["freteRodoviario.responsavel"]} />
 
       <RegimeEspecialList
         items={data.regimeEspecial}

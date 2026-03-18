@@ -9,6 +9,7 @@ import type {
   ScopeVersionsResponse,
   ScopeApiClient,
 } from "@/lib/api/types/scope-api";
+import type { ScopeMetadataResponse } from "@/lib/api/types/scope-metadata";
 
 export const scopeApi: ScopeApiClient = {
   async createScope(initial?: Partial<EscopoForm>): Promise<CreateScopeResponse> {
@@ -37,6 +38,11 @@ export const scopeApi: ScopeApiClient = {
 
   async listScopeVersions(id: string): Promise<ScopeVersionsResponse> {
     const { data } = await http.get<ScopeVersionsResponse>(API_ROUTES.scopes.versions(id));
+    return data;
+  },
+
+  async getMetadata(): Promise<ScopeMetadataResponse> {
+    const { data } = await http.get<ScopeMetadataResponse>(API_ROUTES.scopes.metadata);
     return data;
   },
 };
