@@ -174,12 +174,36 @@ export const ImportacaoSchema = z
       });
     }
 
-    if (value.afrmm?.contaPagamento === "CLIENTE" && !value.afrmm.dadosContaCliente) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["afrmm", "dadosContaCliente"],
-        message: "Dados da conta do cliente são obrigatórios",
-      });
+    if (value.afrmm?.contaPagamento === "CLIENTE") {
+      if (!value.afrmm.dadosContaCliente) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["afrmm", "dadosContaCliente"],
+          message: "Dados da conta do cliente são obrigatórios",
+        });
+      } else {
+        if (!value.afrmm.dadosContaCliente.banco?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["afrmm", "dadosContaCliente", "banco"],
+            message: "Banco é obrigatório",
+          });
+        }
+        if (!value.afrmm.dadosContaCliente.agencia?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["afrmm", "dadosContaCliente", "agencia"],
+            message: "Agência é obrigatória",
+          });
+        }
+        if (!value.afrmm.dadosContaCliente.conta?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["afrmm", "dadosContaCliente", "conta"],
+            message: "Conta é obrigatória",
+          });
+        }
+      }
     }
 
     if (value.afrmm?.regime === "BENEFICIO" && !value.afrmm.detalheBeneficio) {
@@ -190,12 +214,36 @@ export const ImportacaoSchema = z
       });
     }
 
-    if (value.icms?.contaPagamento === "CLIENTE" && !value.icms.dadosContaCliente) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["icms", "dadosContaCliente"],
-        message: "Dados da conta do cliente são obrigatórios",
-      });
+    if (value.icms?.contaPagamento === "CLIENTE") {
+      if (!value.icms.dadosContaCliente) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["icms", "dadosContaCliente"],
+          message: "Dados da conta do cliente são obrigatórios",
+        });
+      } else {
+        if (!value.icms.dadosContaCliente.banco?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["icms", "dadosContaCliente", "banco"],
+            message: "Banco é obrigatório",
+          });
+        }
+        if (!value.icms.dadosContaCliente.agencia?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["icms", "dadosContaCliente", "agencia"],
+            message: "Agência é obrigatória",
+          });
+        }
+        if (!value.icms.dadosContaCliente.conta?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["icms", "dadosContaCliente", "conta"],
+            message: "Conta é obrigatória",
+          });
+        }
+      }
     }
 
     if (value.icms?.regime === "BENEFICIO") {
