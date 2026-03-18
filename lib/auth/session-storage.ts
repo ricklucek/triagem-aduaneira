@@ -9,34 +9,66 @@ export interface AuthSession {
   tokens: AuthTokens;
 }
 
+let cachedRaw: string | null = null;
+let cachedSession: AuthSession | null = null;
+
 function emitSessionChange() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(AUTH_EVENT));
 }
 
-export function getAuthSession(): AuthSession | null {
+function readSessionFromStorage(): AuthSession | null {
   if (typeof window === "undefined") return null;
+
   const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-  if (!raw) return null;
+
+  if (raw === null) {
+    cachedRaw = null;
+    cachedSession = null;
+    return null;
+  }
+
+  if (raw === cachedRaw) {
+    return cachedSession;
+  }
 
   try {
-    return JSON.parse(raw) as AuthSession;
+    const parsed = JSON.parse(raw) as AuthSession;
+    cachedRaw = raw;
+    cachedSession = parsed;
+    return parsed;
   } catch {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    cachedRaw = null;
+    cachedSession = null;
     emitSessionChange();
     return null;
   }
 }
 
+export function getAuthSession(): AuthSession | null {
+  return readSessionFromStorage();
+}
+
 export function setAuthSession(session: AuthSession) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+
+  const raw = JSON.stringify(session);
+  localStorage.setItem(AUTH_STORAGE_KEY, raw);
+
+  cachedRaw = raw;
+  cachedSession = session;
+
   emitSessionChange();
 }
 
 export function clearAuthSession() {
   if (typeof window === "undefined") return;
+
   localStorage.removeItem(AUTH_STORAGE_KEY);
+  cachedRaw = null;
+  cachedSession = null;
+
   emitSessionChange();
 }
 
@@ -45,18 +77,32 @@ function subscribe(callback: () => void) {
 
   const onStorage = (event: StorageEvent) => {
     if (event.key && event.key !== AUTH_STORAGE_KEY) return;
+
+    // invalida cache antes de avisar o React
+    cachedRaw = null;
+    cachedSession = null;
+    callback();
+  };
+
+  const onCustomEvent = () => {
+    cachedRaw = null;
+    cachedSession = null;
     callback();
   };
 
   window.addEventListener("storage", onStorage);
-  window.addEventListener(AUTH_EVENT, callback);
+  window.addEventListener(AUTH_EVENT, onCustomEvent);
 
   return () => {
     window.removeEventListener("storage", onStorage);
-    window.removeEventListener(AUTH_EVENT, callback);
+    window.removeEventListener(AUTH_EVENT, onCustomEvent);
   };
 }
 
+function getServerSnapshot(): AuthSession | null {
+  return null;
+}
+
 export function useAuthSession() {
-  return useSyncExternalStore(subscribe, getAuthSession, () => null);
+  return useSyncExternalStore(subscribe, getAuthSession, getServerSnapshot);
 }

@@ -26,20 +26,20 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
   return (
     <Section title="Sobre a empresa" description="Dados cadastrais principais do cliente.">
       <Grid columns={2}>
-        <Field label="Razão Social" required error={errors["sobreEmpresa.razaoSocial"]}>
-          <TextInput invalid={Boolean(errors["sobreEmpresa.razaoSocial"])} value={s.razaoSocial} onChange={(e) => patch({ razaoSocial: e.target.value })} />
+        <Field label="Razão Social" required error={errors["razaoSocial"]}>
+          <TextInput invalid={Boolean(errors["razaoSocial"])} value={s.razaoSocial} onChange={(e) => patch({ razaoSocial: e.target.value })} />
         </Field>
-        <Field label="CNPJ" required error={errors["sobreEmpresa.cnpj"]}>
-          <TextInput invalid={Boolean(errors["sobreEmpresa.cnpj"])} value={s.cnpj} onChange={(e) => patch({ cnpj: e.target.value })} />
+        <Field label="CNPJ" required error={errors["cnpj"]}>
+          <TextInput invalid={Boolean(errors["cnpj"])} value={s.cnpj} onChange={(e) => patch({ cnpj: e.target.value })} />
         </Field>
-        <Field label="Inscrição Estadual" required error={errors["sobreEmpresa.inscricaoEstadual"]}>
-          <TextInput invalid={Boolean(errors["sobreEmpresa.inscricaoEstadual"])} value={s.inscricaoEstadual} onChange={(e) => patch({ inscricaoEstadual: e.target.value })} />
+        <Field label="Inscrição Estadual" required error={errors["inscricaoEstadual"]}>
+          <TextInput invalid={Boolean(errors["inscricaoEstadual"])} value={s.inscricaoEstadual} onChange={(e) => patch({ inscricaoEstadual: e.target.value })} />
         </Field>
         <Field label="Inscrição Municipal" hint="Campo opcional">
           <TextInput value={s.inscricaoMunicipal ?? ""} onChange={(e) => patch({ inscricaoMunicipal: e.target.value })} />
         </Field>
-        <Field label="Endereço completo — escritório" required error={errors["sobreEmpresa.enderecoCompletoEscritorio"]}>
-          <TextInput invalid={Boolean(errors["sobreEmpresa.enderecoCompletoEscritorio"])} value={s.enderecoCompletoEscritorio} onChange={(e) => patch({ enderecoCompletoEscritorio: e.target.value })} />
+        <Field label="Endereço completo — escritório" required error={errors["enderecoCompletoEscritorio"]}>
+          <TextInput invalid={Boolean(errors["enderecoCompletoEscritorio"])} value={s.enderecoCompletoEscritorio} onChange={(e) => patch({ enderecoCompletoEscritorio: e.target.value })} />
         </Field>
         <Field label="Endereço completo — armazém" hint="Campo opcional">
           <TextInput value={s.enderecoCompletoArmazem ?? ""} onChange={(e) => patch({ enderecoCompletoArmazem: e.target.value })} />
@@ -47,11 +47,11 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
         <Field label="CNAE secundário" hint="Campo opcional">
           <TextInput value={s.cnaeSecundario ?? ""} onChange={(e) => patch({ cnaeSecundario: e.target.value })} />
         </Field>
-        <Field label="CNAE principal" required error={errors["sobreEmpresa.cnaePrincipal"]}>
-          <TextInput invalid={Boolean(errors["sobreEmpresa.cnaePrincipal"])} value={s.cnaePrincipal} onChange={(e) => patch({ cnaePrincipal: e.target.value })} />
+        <Field label="CNAE principal" required error={errors["cnaePrincipal"]}>
+          <TextInput invalid={Boolean(errors["cnaePrincipal"])} value={s.cnaePrincipal} onChange={(e) => patch({ cnaePrincipal: e.target.value })} />
         </Field>
-        <Field label="Regime de tributação" required error={errors["sobreEmpresa.regimeTributacao"]}>
-          <Select invalid={Boolean(errors["sobreEmpresa.regimeTributacao"])} value={s.regimeTributacao} onChange={(e) => patch({ regimeTributacao: e.target.value as typeof s.regimeTributacao })}>
+        <Field label="Regime de tributação" required error={errors["regimeTributacao"]}>
+          <Select invalid={Boolean(errors["regimeTributacao"])} value={s.regimeTributacao} onChange={(e) => patch({ regimeTributacao: e.target.value as typeof s.regimeTributacao })}>
             <option value="">Selecione</option>
             <option value="SIMPLES_NACIONAL">Simples Nacional</option>
             <option value="LUCRO_PRESUMIDO">Lucro Presumido</option>
@@ -64,7 +64,7 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
           onChange={(value) => patch({ responsavelComercial: value })}
           options={responsaveis}
           filterRoles={["comercial", "admin"]}
-          error={errors["sobreEmpresa.responsavelComercial"]}
+          error={errors["responsavelComercial"]}
         />
       </Grid>
     </Section>

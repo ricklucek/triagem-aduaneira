@@ -52,7 +52,7 @@ export default function DashboardPage() {
         <Toolbar
           left={
             <>
-              <div className="w-full sm:w-[220px]">
+              <div className="w-full sm:w-55">
                 <Select value={status} onChange={(e) => { setStatus(e.target.value as StatusFilter); setPage(1); }}>
                   <option value="todos">Todos</option>
                   <option value="draft">Draft</option>
@@ -60,10 +60,10 @@ export default function DashboardPage() {
                   <option value="archived">Arquivado</option>
                 </Select>
               </div>
-              <div className="w-full sm:min-w-[280px] sm:flex-1">
+              <div className="w-full sm:min-w-70 sm:flex-1">
                 <TextInput placeholder="Buscar por razão social ou CNPJ" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
               </div>
-              <div className="w-full sm:w-[220px]">
+              <div className="w-full sm:w-55">
                 <TextInput placeholder="CNPJ exato" value={cnpj} onChange={(e) => { setCnpj(e.target.value); setPage(1); }} />
               </div>
             </>

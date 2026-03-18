@@ -117,6 +117,12 @@ export default function StepContatos({ form, errors, onChange }: Props) {
           </Card>
         ))}
       </Stack>
+
+      {errors ? <div className="text-sm font-medium text-destructive">{errors['contatos']}</div> : null}
+      {errors ? <div className="text-sm font-medium text-destructive">{errors['nome']}</div> : null}
+      {errors ? <div className="text-sm font-medium text-destructive">{errors['cargoDepartamento']}</div> : null}
+      {errors ? <div className="text-sm font-medium text-destructive">{errors['email']}</div> : null}
+      {errors ? <div className="text-sm font-medium text-destructive">{errors['telefone']}</div> : null}
     </Section>
   );
 }

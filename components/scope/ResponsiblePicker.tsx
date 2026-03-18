@@ -42,11 +42,11 @@ export function ResponsiblePicker({
 
   return (
     <div className="space-y-2">
-      <span className="text-sm font-medium">{label}</span>
-      <div className={cn("rounded-lg border bg-background", error && "border-destructive") }>
+      <span className={cn("text-sm font-medium text-foreground", error && "text-destructive")}>{label}</span>
+      <div className={cn("rounded-xl border bg-background", error && "border-destructive bg-destructive/5") }>
         <button
           type="button"
-          className="flex w-full items-center justify-between px-3 py-2 text-left text-sm"
+          className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm"
           onClick={() => setOpen((prev) => !prev)}
         >
           <span className={cn(!selected && "text-muted-foreground")}>{selected ? `${selected.nome} • ${selected.setor}` : "Selecione um responsável"}</span>

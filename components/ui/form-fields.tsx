@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export function Field({ label, required, hint, error, children }: { label: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode; }) {
   return (
     <label className="block space-y-2.5">
-      <div className="text-sm font-semibold text-foreground">
+      <div className={cn("text-sm font-semibold text-foreground", error && "text-destructive")}>
         {label} {required ? <span className="text-destructive">*</span> : null}
       </div>
       {children}
