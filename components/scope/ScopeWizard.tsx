@@ -12,15 +12,7 @@ import StepServicosImportacao from "./StepServicosImportacao";
 import StepExportacao from "./StepExportacao";
 import StepServicosExportacao from "./StepServicosExportacao";
 import StepFinanceiro from "./StepFinanceiro";
-import {
-  AlertWarning,
-  PageHeader,
-  PageShell,
-  PrimaryButton,
-  SecondaryButton,
-  StepPills,
-  Toolbar,
-} from "@/components/ui/form-layout";
+import { PageHeader, PageShell, PrimaryButton, SecondaryButton, StepPills, Toolbar } from "@/components/ui/form-layout";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 
 function buildEtapas(data: EscopoForm): EtapaFormulario[] {
@@ -161,18 +153,11 @@ export default function ScopeWizard({
     }
   }
 
-  const errorList = Object.entries(errors).map(([k, v]) => `${k}: ${v}`);
 
   return (
     <PageShell>
       <PageHeader title={title} subtitle={`${subtitle} • Status: ${status} • ${saving ? "Salvando..." : savedMessage}`} />
       <StepPills steps={etapas.map((e) => STEP_LABELS[e])} currentIndex={indiceEtapa} />
-
-      {errorList.length > 0 ? (
-        <div style={{ marginBottom: 16 }}>
-          <AlertWarning title="Existem campos obrigatórios pendentes nesta etapa." items={errorList} />
-        </div>
-      ) : null}
 
       <div style={{ marginBottom: 20 }}>{renderEtapa()}</div>
 
