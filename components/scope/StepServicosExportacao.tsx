@@ -94,7 +94,7 @@ export default function StepServicosExportacao({
         <Grid columns={2}>
           <Field label="Tipo de valor" required>
             <Select
-              value={data.despachoAduaneiroExportacao.tipoValor}
+              value={data.despachoAduaneiroExportacao.tipoValor as string | undefined}
               onChange={(e) =>
                 update("despachoAduaneiroExportacao.tipoValor", e.target.value)
               }
@@ -253,7 +253,7 @@ export default function StepServicosExportacao({
         <Grid columns={2}>
           <Field label="Tipo de valor" required>
             <Select
-              value={data.assessoria.tipoValor}
+              value={data.assessoria.tipoValor as string | undefined}
               onChange={(e) => update("assessoria.tipoValor", e.target.value)}
             >
               <option value="SALARIO_MINIMO">Um salário mínimo vigente</option>

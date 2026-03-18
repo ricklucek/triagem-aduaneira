@@ -74,8 +74,6 @@ export default function ScopeWizard({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState("Não salvo");
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(false);
 
   useEffect(() => {
     if (initialData) setForm(initialData);
@@ -101,25 +99,6 @@ export default function ScopeWizard({
     },
     [onSave]
   );
-
-  useEffect(() => {
-    if (!mountedRef.current) {
-      mountedRef.current = true;
-      return;
-    }
-
-    if (!onSave) return;
-
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-
-    saveTimeoutRef.current = setTimeout(() => {
-      void persist(form, true);
-    }, 800);
-
-    return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    };
-  }, [form, onSave, persist]);
 
   async function proximaEtapa() {
     const result = validarEtapa(etapaAtual, form);

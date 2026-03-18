@@ -407,10 +407,10 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
 
       <Field label="ICMS">
         <Select
-          value={data.afrmm ? "SIM" : "NAO"}
+          value={data.icms ? "SIM" : "NAO"}
           onChange={(e) =>
             update(
-              "afrmm",
+              "icms",
               e.target.value === "SIM"
                 ? {
                   contaPagamento: "CASCO",

@@ -261,12 +261,13 @@ export const ExportacaoSchema = z
 const ServicoValorOuSalarioSchema = z
   .object({
     habilitado: z.boolean(),
-    tipoValor: z.enum(["SALARIO_MINIMO", "OUTRO"]).optional(),
+    tipoValor: z.enum(["SALARIO_MINIMO", "OUTRO"]).optional().nullable(),
     valor: z.number().optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional(),
+    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
+
     if (!value.tipoValor) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -274,6 +275,7 @@ const ServicoValorOuSalarioSchema = z
         message: "Tipo de valor é obrigatório",
       });
     }
+
     if (value.tipoValor === "OUTRO" && (!value.valor || value.valor <= 0)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -281,6 +283,7 @@ const ServicoValorOuSalarioSchema = z
         message: "Valor é obrigatório",
       });
     }
+
     if (!value.responsavel) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -309,10 +312,11 @@ const ServicoPrepostoSchema = z
   .object({
     habilitado: z.boolean(),
     valor: z.number().optional().nullable(),
-    inclusoNoDesembaracoCasco: SimNaoSchema.optional(),
+    inclusoNoDesembaracoCasco: SimNaoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
+
     if (!value.valor || value.valor <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -320,6 +324,7 @@ const ServicoPrepostoSchema = z
         message: "Valor é obrigatório",
       });
     }
+
     if (!value.inclusoNoDesembaracoCasco) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -334,10 +339,11 @@ const ServicoFreteInternacionalSchema = z
     habilitado: z.boolean(),
     ptaxNegociado: z.string().trim().optional().nullable(),
     percentualSobreCfr: z.number().optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional(),
+    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
+
     if (!value.ptaxNegociado) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -345,6 +351,7 @@ const ServicoFreteInternacionalSchema = z
         message: "PTAX negociado é obrigatório",
       });
     }
+
     if (value.percentualSobreCfr == null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -352,6 +359,7 @@ const ServicoFreteInternacionalSchema = z
         message: "% sobre CFR é obrigatório",
       });
     }
+
     if (!value.responsavel) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -366,10 +374,11 @@ const ServicoSeguroSchema = z
     habilitado: z.boolean(),
     valorNegociado: z.number().optional().nullable(),
     descricaoComplementar: z.string().trim().optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional(),
+    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
+
     if (!value.valorNegociado || value.valorNegociado <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -377,6 +386,7 @@ const ServicoSeguroSchema = z
         message: "Valor negociado é obrigatório",
       });
     }
+
     if (!value.responsavel) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -386,22 +396,25 @@ const ServicoSeguroSchema = z
     }
   });
 
-
+  
 const ServicoFreteRodoviarioSchema = z
   .object({
     habilitado: z.boolean(),
-    modalidade: z.enum(["SIM", "CASO_A_CASO"]).optional(),
-    responsavel: ResponsavelServicoSchema.optional(),
+    modalidade: z.enum(["SIM", "CASO_A_CASO"]).optional().nullable(),
+    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
-    if (value.habilitado && !value.modalidade) {
+    if (!value.habilitado) return;
+
+    if (!value.modalidade) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["modalidade"],
         message: "Modalidade é obrigatória",
       });
     }
-    if (value.habilitado && !value.responsavel) {
+
+    if (!value.responsavel) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["responsavel"],

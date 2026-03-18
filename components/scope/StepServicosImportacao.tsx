@@ -90,7 +90,7 @@ export default function StepServicosImportacao({
         <Grid columns={2}>
           <Field label="Tipo de valor" required>
             <Select
-              value={data.despachoAduaneiroImportacao.tipoValor}
+              value={data.despachoAduaneiroImportacao.tipoValor as string | undefined}
               onChange={(e) =>
                 update("despachoAduaneiroImportacao.tipoValor", e.target.value)
               }
@@ -196,7 +196,7 @@ export default function StepServicosImportacao({
         <Grid columns={2}>
           <Field label="Tipo de valor" required>
             <Select
-              value={data.assessoria.tipoValor}
+              value={data.assessoria.tipoValor as string | undefined}
               onChange={(e) => update("assessoria.tipoValor", e.target.value)}
             >
               <option value="SALARIO_MINIMO">Um salário mínimo vigente</option>
