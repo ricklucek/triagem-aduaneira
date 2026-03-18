@@ -127,7 +127,13 @@ export const ImportacaoSchema = z
       detalheBeneficio: z.string().trim().optional().nullable(),
     }).optional(),
 
-    icms: BeneficioTributoSchema,
+    icms: z.object({
+      contaPagamento: ContaPagamentoSchema.optional(),
+      dadosContaCliente: ContaBancariaSchema.optional(),
+      regime: IntegralBeneficioSchema.optional(),
+      recolhida: z.string().trim().optional().nullable(),
+      efetiva: z.string().trim().optional().nullable(),
+    }).optional(),
 
     destinacao: DestinacaoSchema,
     subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
@@ -168,28 +174,68 @@ export const ImportacaoSchema = z
       });
     }
 
-    if (value.afrmm?.contaPagamento === "CLIENTE" && !value.afrmm.dadosContaCliente) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["afrmm", "dadosContaCliente"],
-        message: "Dados da conta do cliente são obrigatórios",
-      });
+    if (value.afrmm?.contaPagamento === "CLIENTE") {
+      if (!value.afrmm.dadosContaCliente) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["afrmm", "dadosContaCliente"],
+          message: "Dados da conta do cliente são obrigatórios",
+        });
+      } else {
+        if (!value.afrmm.dadosContaCliente.banco?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["afrmm", "dadosContaCliente", "banco"],
+            message: "Banco é obrigatório",
+          });
+        }
+        if (!value.afrmm.dadosContaCliente.agencia?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["afrmm", "dadosContaCliente", "agencia"],
+            message: "Agência é obrigatória",
+          });
+        }
+        if (!value.afrmm.dadosContaCliente.conta?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["afrmm", "dadosContaCliente", "conta"],
+            message: "Conta é obrigatória",
+          });
+        }
+      }
     }
 
-    if (value.afrmm?.regime === "BENEFICIO" && !value.afrmm.detalheBeneficio) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["afrmm", "detalheBeneficio"],
-        message: "Detalhe do benefício AFRMM é obrigatório",
-      });
-    }
-
-    if (value.icms?.regime === "BENEFICIO" && !value.icms.detalheBeneficio) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["icms", "detalheBeneficio"],
-        message: "Detalhe do benefício ICMS é obrigatório",
-      });
+    if (value.icms?.contaPagamento === "CLIENTE") {
+      if (!value.icms.dadosContaCliente) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["icms", "dadosContaCliente"],
+          message: "Dados da conta do cliente são obrigatórios",
+        });
+      } else {
+        if (!value.icms.dadosContaCliente.banco?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["icms", "dadosContaCliente", "banco"],
+            message: "Banco é obrigatório",
+          });
+        }
+        if (!value.icms.dadosContaCliente.agencia?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["icms", "dadosContaCliente", "agencia"],
+            message: "Agência é obrigatória",
+          });
+        }
+        if (!value.icms.dadosContaCliente.conta?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["icms", "dadosContaCliente", "conta"],
+            message: "Conta é obrigatória",
+          });
+        }
+      }
     }
 
     if (value.destinacao === "CONSUMO" && !value.subtipoConsumo) {
@@ -373,7 +419,7 @@ const ServicoSeguroSchema = z
     }
   });
 
-  
+
 const ServicoFreteRodoviarioSchema = z
   .object({
     habilitado: z.boolean(),

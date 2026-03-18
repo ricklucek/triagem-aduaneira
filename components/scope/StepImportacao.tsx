@@ -51,6 +51,25 @@ const ANUENCIAS = [
   "ANTT_ANTAQ_ANAC",
 ] as const;
 
+const EMPTY_CONTA = {
+  banco: "",
+  agencia: "",
+  conta: "",
+};
+
+const DEFAULT_AFRMM = {
+  contaPagamento: "CASCO",
+  regime: "INTEGRAL",
+  detalheBeneficio: "",
+} as const;
+
+const DEFAULT_ICMS = {
+  contaPagamento: "CASCO",
+  regime: "INTEGRAL",
+  recolhida: "",
+  efetiva: "",
+} as const;
+
 export default function StepImportacao({ form, errors, onChange, responsaveis }: Props) {
   const data: NonNullable<EscopoForm["operacao"]["importacao"]> = form.operacao.importacao ?? {
     analistaDA: "",
@@ -108,6 +127,9 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
     else current.delete(value);
     update(field, Array.from(current));
   }
+
+  const afrmmData = data.afrmm ?? { ...DEFAULT_AFRMM };
+  const icmsData = data.icms ?? { ...DEFAULT_ICMS };
 
   return (
     <Stack>
@@ -375,63 +397,141 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
         ))}
       </Section>
 
-      <Field label="AFRMM">
-        <Select
-          value={data.afrmm ? "SIM" : "NAO"}
-          onChange={(e) =>
-            update(
-              "afrmm",
-              e.target.value === "SIM"
-                ? {
-                  contaPagamento: "CASCO",
-                  regime: "INTEGRAL",
-                  detalheBeneficio: "",
-                }
-                : undefined
-            )
-          }
-        >
-          <option value="NAO">Não</option>
-          <option value="SIM">Sim</option>
-        </Select>
-      </Field>
+      <Section title="AFRMM" description="Configure a conta de pagamento e o enquadramento do AFRMM.">
+        <Grid columns={2}>
+          <Field label="Conta para pagamento" required error={errors["afrmm.contaPagamento"]}>
+            <Select
+              invalid={Boolean(errors["afrmm.contaPagamento"])}
+              value={afrmmData.contaPagamento ?? "CASCO"}
+              onChange={(e) =>
+                update("afrmm", {
+                  ...afrmmData,
+                  contaPagamento: e.target.value,
+                  dadosContaCliente: e.target.value === "CLIENTE" ? afrmmData.dadosContaCliente ?? { ...EMPTY_CONTA } : undefined,
+                })
+              }
+            >
+              <option value="CASCO">Conta da Casco</option>
+              <option value="CLIENTE">Conta do cliente</option>
+            </Select>
+          </Field>
 
-      <Section title={""}>
-        <Card>
+          <Field label="Regime" required error={errors["afrmm.regime"]}>
+            <Select
+              invalid={Boolean(errors["afrmm.regime"])}
+              value={afrmmData.regime ?? "INTEGRAL"}
+              onChange={(e) =>
+                update("afrmm", {
+                  ...afrmmData,
+                  regime: e.target.value,
+                  detalheBeneficio: e.target.value === "BENEFICIO" ? afrmmData.detalheBeneficio ?? "" : "",
+                })
+              }
+            >
+              <option value="INTEGRAL">Integral</option>
+              <option value="BENEFICIO">Benefício</option>
+            </Select>
+          </Field>
+        </Grid>
+
+        {afrmmData.contaPagamento === "CLIENTE" ? (
+          <Card className="gap-4 rounded-2xl border-border/80 p-4 shadow-none sm:p-5">
+            <ContaBancariaBlock
+              title="Dados da conta do cliente"
+              value={afrmmData.dadosContaCliente ?? { ...EMPTY_CONTA }}
+              onChange={(next) => update("afrmm", { ...afrmmData, dadosContaCliente: next })}
+              errors={{
+                banco: errors["afrmm.dadosContaCliente.banco"],
+                agencia: errors["afrmm.dadosContaCliente.agencia"],
+                conta: errors["afrmm.dadosContaCliente.conta"],
+              }}
+            />
+          </Card>
+        ) : null}
+
+        {afrmmData.regime === "BENEFICIO" ? (
+          <Field label="Detalhe do benefício" required error={errors["afrmm.detalheBeneficio"]}>
+            <TextInput
+              invalid={Boolean(errors["afrmm.detalheBeneficio"])}
+              value={afrmmData.detalheBeneficio ?? ""}
+              onChange={(e) => update("afrmm", { ...afrmmData, detalheBeneficio: e.target.value })}
+            />
+          </Field>
+        ) : null}
+      </Section>
+
+      <Section title="ICMS" description="Configure a conta de pagamento e o enquadramento do ICMS.">
+        <Grid columns={2}>
+          <Field label="Conta para pagamento" required error={errors["icms.contaPagamento"]}>
+            <Select
+              invalid={Boolean(errors["icms.contaPagamento"])}
+              value={icmsData.contaPagamento ?? "CASCO"}
+              onChange={(e) =>
+                update("icms", {
+                  ...icmsData,
+                  contaPagamento: e.target.value,
+                  dadosContaCliente: e.target.value === "CLIENTE" ? icmsData.dadosContaCliente ?? { ...EMPTY_CONTA } : undefined,
+                })
+              }
+            >
+              <option value="CASCO">Conta da Casco</option>
+              <option value="CLIENTE">Conta do cliente</option>
+            </Select>
+          </Field>
+
+          <Field label="Regime" required error={errors["icms.regime"]}>
+            <Select
+              invalid={Boolean(errors["icms.regime"])}
+              value={icmsData.regime ?? "INTEGRAL"}
+              onChange={(e) =>
+                update("icms", {
+                  ...icmsData,
+                  regime: e.target.value,
+                  recolhida: e.target.value === "BENEFICIO" ? icmsData.recolhida ?? "" : "",
+                  efetiva: e.target.value === "BENEFICIO" ? icmsData.efetiva ?? "" : "",
+                })
+              }
+            >
+              <option value="INTEGRAL">Integral</option>
+              <option value="BENEFICIO">Benefício</option>
+            </Select>
+          </Field>
+        </Grid>
+
+        {icmsData.contaPagamento === "CLIENTE" ? (
+          <Card className="gap-4 rounded-2xl border-border/80 p-4 shadow-none sm:p-5">
+            <ContaBancariaBlock
+              title="Dados da conta do cliente"
+              value={icmsData.dadosContaCliente ?? { ...EMPTY_CONTA }}
+              onChange={(next) => update("icms", { ...icmsData, dadosContaCliente: next })}
+              errors={{
+                banco: errors["icms.dadosContaCliente.banco"],
+                agencia: errors["icms.dadosContaCliente.agencia"],
+                conta: errors["icms.dadosContaCliente.conta"],
+              }}
+            />
+          </Card>
+        ) : null}
+
+        {icmsData.regime === "BENEFICIO" ? (
           <Grid columns={2}>
-            <Field label="ICMS" required>
-              <Select
-                value={data.icms.regime}
-                onChange={(e) =>
-                  update(`icms.regime`, e.target.value)
-                }
-              >
-                <option value="INTEGRAL">Integral</option>
-                <option value="BENEFICIO">Benefício</option>
-              </Select>
+            <Field label="Recolhida" required error={errors["icms.recolhida"]}>
+              <TextInput
+                invalid={Boolean(errors["icms.recolhida"])}
+                value={icmsData.recolhida ?? ""}
+                onChange={(e) => update("icms", { ...icmsData, recolhida: e.target.value })}
+              />
             </Field>
 
-            {data.icms.regime === "BENEFICIO" ? (
-              <Field
-                label={`Detalhe do benefício — ICMS`}
-                required
-                error={errors[`icms.detalheBeneficio`]}
-              >
-                <TextInput
-                  value={
-                    data.icms.detalheBeneficio ?? ""
-                  }
-                  onChange={(e) =>
-                    update(
-                      `icms.detalheBeneficio`,
-                      e.target.value
-                    )
-                  }
-                />
-              </Field>
-            ) : null}
+            <Field label="Efetiva" required error={errors["icms.efetiva"]}>
+              <TextInput
+                invalid={Boolean(errors["icms.efetiva"])}
+                value={icmsData.efetiva ?? ""}
+                onChange={(e) => update("icms", { ...icmsData, efetiva: e.target.value })}
+              />
+            </Field>
           </Grid>
-        </Card>
+        ) : null}
       </Section>
 
 
