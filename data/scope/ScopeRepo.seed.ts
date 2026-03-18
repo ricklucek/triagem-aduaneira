@@ -117,7 +117,17 @@ function makeSeed(): SeedRecord[] {
               regime: "INTEGRAL",
               detalheBeneficio: "",
             },
-            icms: { regime: "INTEGRAL", detalheBeneficio: "" },
+            icms: {
+              contaPagamento: "CASCO",
+              dadosContaCliente: {
+                banco: "Itaú",
+                agencia: "1234",
+                conta: "56789-0",
+              },
+              regime: "INTEGRAL",
+              recolhida: '',
+              efetiva: '',
+            },
             destinacao: "REVENDA",
             subtipoConsumo: null,
           },
