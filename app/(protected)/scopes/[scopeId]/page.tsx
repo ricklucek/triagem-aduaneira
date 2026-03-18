@@ -6,7 +6,7 @@ import ScopeWizard from "@/components/scope/ScopeWizard";
 import VersionHistory from "@/components/scope/VersionHistory";
 import { EscopoForm } from "@/domain/scope/types";
 import { Card, PageShell, SecondaryButton, Stack } from "@/components/ui/form-layout";
-import { useScope, useScopeVersions } from "@/lib/api/hooks/use-scope-api";
+import { useScope, useScopeMetadata, useScopeVersions } from "@/lib/api/hooks/use-scope-api";
 import { scopeApi } from "@/lib/api/services/scopes";
 
 export default function ScopeDetailPage() {
@@ -15,18 +15,27 @@ export default function ScopeDetailPage() {
 
   const { data: scopeResponse, isLoading: loadingScope, error: scopeError, mutate } = useScope(scopeId);
   const { data: versionsResponse, isLoading: loadingVersions, mutate: mutateVersions } = useScopeVersions(scopeId);
+  const { data: metadataResponse, isLoading: loadingMetadata } = useScopeMetadata();
 
-  const loading = loadingScope || loadingVersions;
-  const draft = scopeResponse?.draft ?? null;
-  const status = scopeResponse?.status ?? "draft";
+  const loading = loadingScope || loadingVersions || loadingMetadata;
   const versions = versionsResponse ?? [];
 
+  const draft = scopeResponse?.draft
+    ? {
+        ...scopeResponse.draft,
+        informacoesFixas: metadataResponse?.informacoesFixas ?? scopeResponse.draft.informacoesFixas,
+      }
+    : null;
+
+  const status = scopeResponse?.status ?? "draft";
+  const responsaveis = metadataResponse?.responsaveis ?? [];
+
   const handleSave = useCallback(
-  async (nextData: EscopoForm) => {
-    await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
-  },
-  [scopeId]
-);
+    async (nextData: EscopoForm) => {
+      await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
+    },
+    [scopeId]
+  );
 
   const handlePublish = useCallback(async () => {
     await scopeApi.publishScope(scopeId);
@@ -45,17 +54,11 @@ export default function ScopeDetailPage() {
         </SecondaryButton>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 2fr) minmax(320px, 1fr)",
-          gap: 20,
-          alignItems: "start",
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) minmax(320px, 1fr)", gap: 20, alignItems: "start" }}>
         <div>
           <ScopeWizard
             initialData={draft}
+            responsaveis={responsaveis}
             onSave={handleSave}
             onPublish={handlePublish}
             title={`Escopo ${scopeId}`}
