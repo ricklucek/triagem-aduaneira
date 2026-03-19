@@ -35,12 +35,13 @@ function emptyImportacaoServicos(): NonNullable<EscopoForm["servicos"]["importac
     freteInternacional: {
       habilitado: false,
       ptaxNegociado: "",
-      percentualSobreCfr: null,
       responsavel: undefined,
     },
     seguroInternacional: {
       habilitado: false,
       valorNegociado: null,
+      percentualSobreCfr: null,
+      dataInclusaoApolice: null,
       descricaoComplementar: "",
       responsavel: undefined,
     },
@@ -90,11 +91,13 @@ export default function StepServicosImportacao({
         <Grid columns={2}>
           <Field label="Tipo de valor" required>
             <Select
+              defaultValue={""}
               value={data.despachoAduaneiroImportacao.tipoValor as string | undefined}
               onChange={(e) =>
                 update("despachoAduaneiroImportacao.tipoValor", e.target.value)
               }
             >
+              <option value="">Selecione uma opção</option>
               <option value="SALARIO_MINIMO">Um salário mínimo vigente</option>
               <option value="OUTRO">Outro</option>
             </Select>
@@ -225,29 +228,18 @@ export default function StepServicosImportacao({
           update("freteInternacional.habilitado", checked)
         }
       >
-        <Grid columns={2}>
-          <Field
-            label="PTAX negociado"
-            required
-            error={errors["freteInternacional.ptaxNegociado"]}
-          >
-            <TextInput
-              value={data.freteInternacional.ptaxNegociado ?? ""}
-              onChange={(e) =>
-                update("freteInternacional.ptaxNegociado", e.target.value)
-              }
-            />
-          </Field>
-
-          <Field label="% sobre CFR" required error={errors["freteInternacional.percentualSobreCfr"]}>
-            <NumberInput
-              value={data.freteInternacional.percentualSobreCfr ?? ""}
-              onChange={(e) =>
-                update("freteInternacional.percentualSobreCfr", Number(e.target.value))
-              }
-            />
-          </Field>
-        </Grid>
+        <Field
+          label="PTAX negociado"
+          required
+          error={errors["freteInternacional.ptaxNegociado"]}
+        >
+          <TextInput
+            value={data.freteInternacional.ptaxNegociado ?? ""}
+            onChange={(e) =>
+              update("freteInternacional.ptaxNegociado", e.target.value)
+            }
+          />
+        </Field>
 
         <ResponsiblePicker label="Responsável" value={data.freteInternacional.responsavel} onChange={(value) => update("freteInternacional.responsavel", value)} options={responsaveis} error={errors["freteInternacional.responsavel"]} />
       </ServicoToggleCard>
@@ -259,18 +251,45 @@ export default function StepServicosImportacao({
           update("seguroInternacional.habilitado", checked)
         }
       >
+        <Grid columns={2}>
+          <Field
+            label="Valor negociado"
+            required
+            error={errors["seguroInternacional.valorNegociado"]}
+          >
+            <NumberInput
+              value={data.seguroInternacional.valorNegociado ?? ""}
+              onChange={(e) =>
+                update("seguroInternacional.valorNegociado", Number(e.target.value))
+              }
+            />
+          </Field>
+
+          <Field label="% sobre CFR" required error={errors["seguroInternacional.percentualSobreCfr"]}>
+            <NumberInput
+              value={data.seguroInternacional.percentualSobreCfr ?? ""}
+              onChange={(e) =>
+                update("seguroInternacional.percentualSobreCfr", Number(e.target.value))
+              }
+            />
+          </Field>
+        </Grid>
+
         <Field
-          label="Valor negociado"
-          required
-          error={errors["seguroInternacional.valorNegociado"]}
+          label="Data de inclusão da apólice"
+          hint="Campo opcional"
+          error={errors["seguroInternacional.dataInclusaoApolice"]}
         >
-          <NumberInput
-            value={data.seguroInternacional.valorNegociado ?? ""}
+          <TextInput
+            type="date"
+            invalid={Boolean(errors["seguroInternacional.dataInclusaoApolice"])}
+            value={data.seguroInternacional.dataInclusaoApolice ?? ""}
             onChange={(e) =>
-              update("seguroInternacional.valorNegociado", Number(e.target.value))
+              update("seguroInternacional.dataInclusaoApolice", e.target.value)
             }
           />
         </Field>
+
 
         <Field
           label="Descrição complementar"

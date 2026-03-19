@@ -156,11 +156,12 @@ function makeSeed(): SeedRecord[] {
             freteInternacional: {
               habilitado: true,
               ptaxNegociado: "PTAX + 8%",
-              percentualSobreCfr: 8,
             },
             seguroInternacional: {
               habilitado: true,
               valorNegociado: 0.99,
+              percentualSobreCfr: 8,
+              dataInclusaoApolice: "",
               descricaoComplementar: "0,99% do CIF",
               responsavel: "EVERTON",
             },

@@ -361,7 +361,6 @@ const ServicoFreteInternacionalSchema = z
   .object({
     habilitado: z.boolean(),
     ptaxNegociado: z.string().trim().optional().nullable(),
-    percentualSobreCfr: z.number().optional().nullable(),
     responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
@@ -372,14 +371,6 @@ const ServicoFreteInternacionalSchema = z
         code: z.ZodIssueCode.custom,
         path: ["ptaxNegociado"],
         message: "PTAX negociado é obrigatório",
-      });
-    }
-
-    if (value.percentualSobreCfr == null) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["percentualSobreCfr"],
-        message: "% sobre CFR é obrigatório",
       });
     }
 
@@ -396,6 +387,8 @@ const ServicoSeguroSchema = z
   .object({
     habilitado: z.boolean(),
     valorNegociado: z.number().optional().nullable(),
+    percentualSobreCfr: z.number().optional().nullable(),
+    dataInclusaoApolice: z.string().trim().optional().nullable(),
     descricaoComplementar: z.string().trim().optional().nullable(),
     responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
@@ -407,6 +400,14 @@ const ServicoSeguroSchema = z
         code: z.ZodIssueCode.custom,
         path: ["valorNegociado"],
         message: "Valor negociado é obrigatório",
+      });
+    }
+
+    if (value.percentualSobreCfr == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["percentualSobreCfr"],
+        message: "% sobre CFR é obrigatório",
       });
     }
 

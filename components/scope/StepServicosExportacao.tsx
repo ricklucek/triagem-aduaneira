@@ -40,12 +40,13 @@ function emptyExportacaoServicos(): NonNullable<EscopoForm["servicos"]["exportac
     freteInternacional: {
       habilitado: false,
       ptaxNegociado: "",
-      percentualSobreCfr: null,
       responsavel: undefined,
     },
     seguroInternacional: {
       habilitado: false,
       valorNegociado: null,
+      percentualSobreCfr: null,
+      dataInclusaoApolice: null,
       descricaoComplementar: "",
       responsavel: undefined,
     },
@@ -283,25 +284,14 @@ export default function StepServicosExportacao({
           update("freteInternacional.habilitado", checked)
         }
       >
-        <Grid columns={2}>
-          <Field label="PTAX negociado" required>
-            <TextInput
-              value={data.freteInternacional.ptaxNegociado ?? ""}
-              onChange={(e) =>
-                update("freteInternacional.ptaxNegociado", e.target.value)
-              }
-            />
-          </Field>
-
-          <Field label="% sobre CFR" required error={errors["freteInternacional.percentualSobreCfr"]}>
-            <NumberInput
-              value={data.freteInternacional.percentualSobreCfr ?? ""}
-              onChange={(e) =>
-                update("freteInternacional.percentualSobreCfr", Number(e.target.value))
-              }
-            />
-          </Field>
-        </Grid>
+        <Field label="PTAX negociado" required>
+          <TextInput
+            value={data.freteInternacional.ptaxNegociado ?? ""}
+            onChange={(e) =>
+              update("freteInternacional.ptaxNegociado", e.target.value)
+            }
+          />
+        </Field>
 
         <ResponsiblePicker label="Responsável" value={data.freteInternacional.responsavel} onChange={(value) => update("freteInternacional.responsavel", value)} options={responsaveis} error={errors["freteInternacional.responsavel"]} />
       </ServicoToggleCard>
@@ -313,11 +303,37 @@ export default function StepServicosExportacao({
           update("seguroInternacional.habilitado", checked)
         }
       >
-        <Field label="Valor negociado" required>
-          <NumberInput
-            value={data.seguroInternacional.valorNegociado ?? ""}
+        <Grid columns={2}>
+          <Field label="Valor negociado" required>
+            <NumberInput
+              value={data.seguroInternacional.valorNegociado ?? ""}
+              onChange={(e) =>
+                update("seguroInternacional.valorNegociado", Number(e.target.value))
+              }
+            />
+          </Field>
+
+          <Field label="% sobre CFR" required error={errors["seguroInternacional.percentualSobreCfr"]}>
+            <NumberInput
+              value={data.seguroInternacional.percentualSobreCfr ?? ""}
+              onChange={(e) =>
+                update("seguroInternacional.percentualSobreCfr", Number(e.target.value))
+              }
+            />
+          </Field>
+        </Grid>
+
+        <Field
+          label="Data de inclusão da apólice"
+          hint="Campo opcional"
+          error={errors["seguroInternacional.dataInclusaoApolice"]}
+        >
+          <TextInput
+            type="date"
+            invalid={Boolean(errors["seguroInternacional.dataInclusaoApolice"])}
+            value={data.seguroInternacional.dataInclusaoApolice ?? ""}
             onChange={(e) =>
-              update("seguroInternacional.valorNegociado", Number(e.target.value))
+              update("seguroInternacional.dataInclusaoApolice", e.target.value)
             }
           />
         </Field>
