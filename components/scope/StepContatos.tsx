@@ -43,10 +43,7 @@ export default function StepContatos({ form, errors, onChange }: Props) {
   }
 
   return (
-    <Section
-      title="Contatos"
-      description="Cadastre os contatos principais do cliente."
-    >
+    <main className="gap-5 flex flex-col">
       <Toolbar
         right={<PrimaryButton type="button" onClick={addContato}>+ Adicionar contato</PrimaryButton>}
       />
@@ -123,6 +120,6 @@ export default function StepContatos({ form, errors, onChange }: Props) {
       {errors ? <div className="text-sm font-medium text-destructive">{errors['cargoDepartamento']}</div> : null}
       {errors ? <div className="text-sm font-medium text-destructive">{errors['email']}</div> : null}
       {errors ? <div className="text-sm font-medium text-destructive">{errors['telefone']}</div> : null}
-    </Section>
+    </main>
   );
 }

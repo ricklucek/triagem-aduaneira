@@ -3,7 +3,6 @@
 import { ToggleHeader } from "@/components/ui/form-fields";
 import { Card, Divider, Stack } from "@/components/ui/form-layout";
 import React from "react";
-
 export default function ServicoToggleCard({
   title,
   checked,
@@ -16,14 +15,20 @@ export default function ServicoToggleCard({
   children?: React.ReactNode;
 }) {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <ToggleHeader title={title} checked={checked} onChange={onToggle} />
-      {checked ? (
-        <>
+
+      <div
+        className={[
+          "grid transition-all duration-300 ease-in-out",
+          checked ? "grid-rows-[1fr] opacity-100 mt-4" : "grid-rows-[0fr] opacity-0 mt-0"
+        ].join(" ")}
+      >
+        <div className="overflow-hidden">
           <Divider />
           <Stack>{children}</Stack>
-        </>
-      ) : null}
+        </div>
+      </div>
     </Card>
   );
 }

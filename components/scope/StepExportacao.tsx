@@ -65,8 +65,8 @@ export default function StepExportacao({ form, errors, onChange, responsaveis }:
   }
 
   return (
-    <Stack>
-      <Section title="Exportação" description="Regras e parâmetros da operação de exportação.">
+    <main className="gap-10 flex flex-col">
+      <div className="gap-5 flex flex-col">
         <Grid columns={2}>
           <ResponsiblePicker label="Analista DA" value={data.analistaDA} onChange={(value) => update("analistaDA", value)} options={responsaveis} error={errors["analistaDA"]} />
 
@@ -83,7 +83,7 @@ export default function StepExportacao({ form, errors, onChange, responsaveis }:
             onChange={(e) => update("produtosExportados", e.target.value)}
           />
         </Field>
-      </Section>
+      </div>
 
       <NcmListBlock
         items={data.ncms}
@@ -91,42 +91,44 @@ export default function StepExportacao({ form, errors, onChange, responsaveis }:
         error={errors["ncms"]}
       />
 
-      <Section title="Portos e fronteiras de liberação">
-        <Stack gap={10}>
-          {PORTOS.map(([value, label]) => (
-            <Checkbox
-              key={value}
-              label={label}
-              checked={data.portosFronteiras.includes(value)}
-              onChange={(checked) => togglePorto(value, checked)}
-            />
-          ))}
+      <div className="gap-5 flex flex-col">
+        <h2 className="text-xl font-semibold tracking-tight">Portos e fronteiras de liberação</h2>
 
-          <Grid columns={2}>
-            <Field label="Outro porto">
-              <TextInput
-                value={data.outroPorto ?? ""}
-                onChange={(e) => update("outroPorto", e.target.value)}
+          <Stack gap={10}>
+            {PORTOS.map(([value, label]) => (
+              <Checkbox
+                key={value}
+                label={label}
+                checked={data.portosFronteiras.includes(value)}
+                onChange={(checked) => togglePorto(value, checked)}
               />
-            </Field>
+            ))}
 
-            <Field label="Outra fronteira">
-              <TextInput
-                value={data.outraFronteira ?? ""}
-                onChange={(e) => update("outraFronteira", e.target.value)}
-              />
-            </Field>
-          </Grid>
+            <Grid columns={2}>
+              <Field label="Outro porto">
+                <TextInput
+                  value={data.outroPorto ?? ""}
+                  onChange={(e) => update("outroPorto", e.target.value)}
+                />
+              </Field>
 
-          {errors["portosFronteiras"] ? (
-            <div style={{ color: "#b42318", fontSize: 12 }}>
-              {errors["portosFronteiras"]}
-            </div>
-          ) : null}
-        </Stack>
-      </Section>
+              <Field label="Outra fronteira">
+                <TextInput
+                  value={data.outraFronteira ?? ""}
+                  onChange={(e) => update("outraFronteira", e.target.value)}
+                />
+              </Field>
+            </Grid>
 
-      <Section title="Destinação">
+            {errors["portosFronteiras"] ? (
+              <div style={{ color: "#b42318", fontSize: 12 }}>
+                {errors["portosFronteiras"]}
+              </div>
+            ) : null}
+          </Stack>
+      </div>
+
+      <div className="gap-5 flex flex-col">
         <Grid columns={2}>
           <Field label="Destinação" required>
             <Select
@@ -160,7 +162,7 @@ export default function StepExportacao({ form, errors, onChange, responsaveis }:
             </Field>
           ) : null}
         </Grid>
-      </Section>
-    </Stack>
+      </div>
+    </main>
   );
 }

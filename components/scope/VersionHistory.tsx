@@ -7,8 +7,8 @@ export default function VersionHistory({ versions }: { versions: ScopeVersion[] 
   if (versions.length === 0) {
     return (
       <Card>
-        <h3 style={{ marginTop: 0 }}>Histórico de versões</h3>
-        <p style={{ marginBottom: 0, color: "#667085" }}>
+        <h3 className="font-semibold">Versões</h3>
+        <p style={{ color: "#667085" }}>
           Nenhuma versão publicada ainda.
         </p>
       </Card>
@@ -17,7 +17,7 @@ export default function VersionHistory({ versions }: { versions: ScopeVersion[] 
 
   return (
     <Card>
-      <h3 style={{ marginTop: 0 }}>Histórico de versões</h3>
+      <h3 className="font-semibold">Versões</h3>
       <Stack gap={12}>
         {versions.map((version) => (
           <div

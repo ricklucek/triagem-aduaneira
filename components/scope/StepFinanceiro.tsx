@@ -13,48 +13,43 @@ type Props = {
 
 export default function StepFinanceiro({ form, errors, onChange }: Props) {
   return (
-    <Section
-      title="Financeiro"
-      description="Dados bancários do cliente para devolução de saldo e observações financeiras."
-    >
-      <Stack>
-        <ContaBancariaBlock
-          title="Dados bancários do cliente para devolução de saldo"
-          value={form.financeiro.dadosBancariosClienteDevolucaoSaldo}
-          onChange={(nextConta) =>
+    <main className="gap-10 flex flex-col">
+      <h2 className="text-xl font-semibold tracking-tight">Dados bancários do cliente para devolução de saldo</h2>
+      <ContaBancariaBlock
+        value={form.financeiro.dadosBancariosClienteDevolucaoSaldo}
+        onChange={(nextConta) =>
+          onChange({
+            ...form,
+            financeiro: {
+              ...form.financeiro,
+              dadosBancariosClienteDevolucaoSaldo: nextConta,
+            },
+          })
+        }
+        errors={{
+          banco: errors["financeiro.dadosBancariosClienteDevolucaoSaldo.banco"],
+          agencia: errors["financeiro.dadosBancariosClienteDevolucaoSaldo.agencia"],
+          conta: errors["financeiro.dadosBancariosClienteDevolucaoSaldo.conta"],
+        }}
+      />
+
+      <Field
+        label="Observações do financeiro"
+        hint="Campo opcional"
+      >
+        <TextArea
+          value={form.financeiro.observacoesFinanceiro ?? ""}
+          onChange={(e) =>
             onChange({
               ...form,
               financeiro: {
                 ...form.financeiro,
-                dadosBancariosClienteDevolucaoSaldo: nextConta,
+                observacoesFinanceiro: e.target.value,
               },
             })
           }
-          errors={{
-            banco: errors["financeiro.dadosBancariosClienteDevolucaoSaldo.banco"],
-            agencia: errors["financeiro.dadosBancariosClienteDevolucaoSaldo.agencia"],
-            conta: errors["financeiro.dadosBancariosClienteDevolucaoSaldo.conta"],
-          }}
         />
-
-        <Field
-          label="Observações do financeiro"
-          hint="Campo opcional"
-        >
-          <TextArea
-            value={form.financeiro.observacoesFinanceiro ?? ""}
-            onChange={(e) =>
-              onChange({
-                ...form,
-                financeiro: {
-                  ...form.financeiro,
-                  observacoesFinanceiro: e.target.value,
-                },
-              })
-            }
-          />
-        </Field>
-      </Stack>
-    </Section>
+      </Field>
+    </main>
   );
 }

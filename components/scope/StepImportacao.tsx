@@ -7,6 +7,7 @@ import { Card, Grid, Section, Stack } from "@/components/ui/form-layout";
 
 import { ResponsiblePicker } from "./ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+import { Button } from "../ui/button";
 
 type Props = {
   form: EscopoForm;
@@ -132,8 +133,9 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
   const icmsData = data.icms ?? { ...DEFAULT_ICMS };
 
   return (
-    <Stack>
-      <Section title="Importação" description="Regras e parâmetros da operação de importação.">
+    <main className="gap-10 flex flex-col">
+      <div className="gap-5 flex flex-col">
+        <p className="text-sm text-muted-foreground sm:text-base">Regras e parâmetros da operação de importação.</p>
         <Grid columns={2}>
           <ResponsiblePicker label="Analista DA" value={data.analistaDA} onChange={(value) => update("analistaDA", value)} options={responsaveis} error={errors["analistaDA"]} filterSetores={["Operação", "operacao", "Despacho Aduaneiro"]} />
 
@@ -149,15 +151,15 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
             onChange={(e) => update("produtosImportados", e.target.value)}
           />
         </Field>
-      </Section>
+      </div>
 
-      <Section title="NCMs">
-        <button
-          type="button"
+      <div className="gap-5 flex flex-col">
+        <Button
+          variant="outline"
           onClick={() => update("ncms", [...data.ncms, { codigo: "", possuiNve: undefined }])}
         >
           + Adicionar NCM
-        </button>
+        </Button>
 
         <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
           {data.ncms.map((item, index: number) => (
@@ -197,8 +199,8 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
               </Grid>
 
               {data.ncms.length > 1 ? (
-                <button
-                  type="button"
+                <Button
+                  variant="destructive"
                   onClick={() =>
                     update(
                       "ncms",
@@ -207,14 +209,14 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
                   }
                 >
                   Remover
-                </button>
+                </Button>
               ) : null}
             </div>
           ))}
         </div>
-      </Section>
+      </div>
 
-      <Section title="Parâmetros operacionais">
+      <div className="gap-5 flex flex-col">
         <Grid columns={2}>
           <Field
             label="Importador tem vínculo com o exportador"
@@ -245,9 +247,10 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
             </Select>
           </Field>
         </Grid>
-      </Section>
+      </div>
 
-      <Section title="Locais de entrada">
+      <div className="gap-5 flex flex-col">
+        <h2 className="text-xl font-semibold tracking-tight">Locais de entrada</h2>
         <Stack gap={10}>
           {ARMAZENS.map(([value, label]) => (
             <Checkbox
@@ -260,9 +263,24 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
             />
           ))}
         </Stack>
-      </Section>
 
-      <Section title="Armazéns de liberação">
+        <Field
+          label="Outro local de entrada"
+          error={
+            errors["locaisEntrada"] || errors["outroLocalEntrada"]
+          }
+        >
+          <TextInput
+            value={data.outroLocalEntrada ?? ""}
+            onChange={(e) =>
+              update("outroLocalEntrada", e.target.value)
+            }
+          />
+        </Field>
+      </div>
+
+      <div className="gap-5 flex flex-col">
+        <h2 className="text-xl font-semibold tracking-tight">Armazéns de liberação</h2>
         <Stack gap={10}>
           {ARMAZENS.map(([value, label]) => (
             <Checkbox
@@ -289,9 +307,9 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
             />
           </Field>
         </Stack>
-      </Section>
+      </div>
 
-      <Section title="LI / LPCO">
+      <div className="gap-5 flex flex-col">
         <Field
           label="Necessidade de LI/LPCO"
           required
@@ -325,9 +343,10 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
             ) : null}
           </Stack>
         ) : null}
-      </Section>
+      </div>
 
-      <Section title="Impostos Federais">
+      <div className="gap-5 flex flex-col">
+        <h2 className="text-xl font-semibold tracking-tight">Impostos Federais</h2>
         <Grid columns={2}>
           <Field label="Conta para pagamento" required>
             <Select
@@ -395,9 +414,10 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
             </Grid>
           </Card>
         ))}
-      </Section>
+      </div>
 
-      <Section title="AFRMM" description="Configure a conta de pagamento e o enquadramento do AFRMM.">
+      <div className="gap-5 flex flex-col">
+        <h2 className="text-xl font-semibold tracking-tight">AFRMM</h2>
         <Grid columns={2}>
           <Field label="Conta para pagamento" required error={errors["afrmm.contaPagamento"]}>
             <Select
@@ -458,9 +478,11 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
             />
           </Field>
         ) : null}
-      </Section>
+      </div>
 
-      <Section title="ICMS" description="Configure a conta de pagamento e o enquadramento do ICMS.">
+      <div className="gap-5 flex flex-col">
+        <h2 className="text-xl font-semibold tracking-tight">ICMS</h2>
+
         <Grid columns={2}>
           <Field label="Conta para pagamento" required error={errors["icms.contaPagamento"]}>
             <Select
@@ -532,10 +554,10 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
             </Field>
           </Grid>
         ) : null}
-      </Section>
+      </div>
 
 
-      <Section title="Destinação">
+      <div className="gap-5 flex flex-col">
         <Grid columns={2}>
           <Field label="Destinação" required>
             <Select
@@ -569,7 +591,7 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
             </Field>
           ) : null}
         </Grid>
-      </Section>
-    </Stack>
+      </div>
+    </main >
   );
 }

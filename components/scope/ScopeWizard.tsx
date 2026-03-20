@@ -49,7 +49,7 @@ type Props = {
   onPublish?: () => Promise<void> | void;
   title?: string;
   subtitle?: string;
-  status?: "draft" | "published" | "archived";
+  status?: string;
 };
 
 export default function ScopeWizard({
@@ -58,8 +58,6 @@ export default function ScopeWizard({
   onSave,
   onPublish,
   title = "Escopos",
-  subtitle = "Formulário de montagem de escopo comercial e operacional.",
-  status = "draft",
 }: Props) {
   const [form, setForm] = useState<EscopoForm>(initialData ?? escopoFormDefault);
   const [indiceEtapa, setIndiceEtapa] = useState(0);
@@ -130,8 +128,6 @@ export default function ScopeWizard({
     }
   }
 
-  console.log("Form errors:", errors);
-
   function renderEtapa() {
     switch (etapaAtual) {
       case "SOBRE_EMPRESA":
@@ -157,8 +153,8 @@ export default function ScopeWizard({
 
 
   return (
-    <PageShell>
-      <PageHeader title={title} subtitle={`${subtitle} • Status: ${status} • ${saving ? "Salvando..." : savedMessage}`} />
+    <div>
+      <PageHeader title={title} subtitle={`${saving ? "Salvando..." : savedMessage}`} />
       <StepPills steps={etapas.map((e) => STEP_LABELS[e])} currentIndex={indiceEtapa} />
 
       <div style={{ marginBottom: 20 }}>{renderEtapa()}</div>
@@ -168,16 +164,16 @@ export default function ScopeWizard({
         right={
           <div style={{ display: "flex", gap: 8 }}>
             {indiceEtapa === etapas.length - 1 ? (
+              <PrimaryButton type="button" onClick={publicar} disabled={saving}>Publicar</PrimaryButton>
+            ) : (
               <>
                 <SecondaryButton type="button" onClick={finalizar} disabled={saving}>Salvar rascunho</SecondaryButton>
-                <PrimaryButton type="button" onClick={publicar} disabled={saving}>Publicar</PrimaryButton>
+                <PrimaryButton type="button" onClick={proximaEtapa} disabled={saving}>Próximo</PrimaryButton>
               </>
-            ) : (
-              <PrimaryButton type="button" onClick={proximaEtapa} disabled={saving}>Próximo</PrimaryButton>
             )}
           </div>
         }
       />
-    </PageShell>
+    </div>
   );
 }

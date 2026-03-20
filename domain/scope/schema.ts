@@ -155,6 +155,14 @@ export const ImportacaoSchema = z
       });
     }
 
+    if (value.armazensLiberacao.length === 0 && !value.outroLocalEntrada) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["outroLocalEntrada"],
+        message: "Selecione ao menos um local de entrada ou informe outro",
+      });
+    }
+
     if (value.necessidadeLiLpco === "SIM" && value.anuencias.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

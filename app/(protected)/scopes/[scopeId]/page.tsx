@@ -8,6 +8,8 @@ import { EscopoForm } from "@/domain/scope/types";
 import { Card, PageShell, SecondaryButton, Stack } from "@/components/ui/form-layout";
 import { useScope, useScopeMetadata, useScopeVersions } from "@/lib/api/hooks/use-scope-api";
 import { scopeApi } from "@/lib/api/services/scopes";
+import { Badge } from "@/components/ui/badge";
+import { formatCNPJ } from "@/utils/format";
 
 export default function ScopeDetailPage() {
   const { scopeId } = useParams<{ scopeId: string }>();
@@ -22,12 +24,15 @@ export default function ScopeDetailPage() {
 
   const draft = scopeResponse?.draft
     ? {
-        ...scopeResponse.draft,
-        informacoesFixas: metadataResponse?.informacoesFixas ?? scopeResponse.draft.informacoesFixas,
-      }
+      ...scopeResponse.draft,
+      informacoesFixas: metadataResponse?.informacoesFixas ?? scopeResponse.draft.informacoesFixas,
+    }
     : null;
 
-  const status = scopeResponse?.status ?? "draft";
+  const statusCode = scopeResponse?.status ?? "draft";
+
+  const status = statusCode === "draft" ? "Rascunho" : statusCode === "published" ? "Publicado" : "Arquivado";
+
   const responsaveis = metadataResponse?.responsaveis ?? [];
 
   const handleSave = useCallback(async (nextData: EscopoForm) => {
@@ -45,10 +50,6 @@ export default function ScopeDetailPage() {
 
   return (
     <PageShell className="space-y-4">
-      <div className="mb-4">
-        <SecondaryButton type="button" onClick={() => router.push("/dashboard")}>Voltar ao dashboard</SecondaryButton>
-      </div>
-
       <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] xl:items-start">
         <div className="min-w-0">
           <ScopeWizard
@@ -56,7 +57,7 @@ export default function ScopeDetailPage() {
             responsaveis={responsaveis}
             onSave={handleSave}
             onPublish={handlePublish}
-            title={`Escopo ${scopeId}`}
+            title={scopeId}
             subtitle="Edite, valide e publique o escopo."
             status={status}
           />
@@ -64,11 +65,11 @@ export default function ScopeDetailPage() {
 
         <Stack>
           <VersionHistory versions={versions} />
-          <Card className="rounded-[1.75rem] border-border/80 p-5 shadow-sm sm:p-6">
-            <h3 className="text-xl font-semibold tracking-tight">Resumo</h3>
-            <p><strong>Status:</strong> {status}</p>
-            <p><strong>Razão social:</strong> {draft.sobreEmpresa.razaoSocial || "-"}</p>
-            <p><strong>CNPJ:</strong> {draft.sobreEmpresa.cnpj || "-"}</p>
+          <Card>
+            <Badge variant={statusCode === "draft" ? "secondary" : "default"}>
+              {status}
+            </Badge>
+            <p className="text-sm">{`${draft.sobreEmpresa.razaoSocial || "-"} • ${formatCNPJ(draft.sobreEmpresa.cnpj) || "-"}`}</p>
           </Card>
         </Stack>
       </div>

@@ -35,10 +35,8 @@ export default function StepOperacao({ form, errors, onChange }: Props) {
   }
 
   return (
-    <Section
-      title="Operação"
-      description="Selecione uma ou mais operações para abrir os blocos correspondentes."
-    >
+    <main className="gap-5 flex flex-col">
+      <p className="text-sm text-muted-foreground sm:text-base">Selecione uma ou mais operações para abrir os blocos correspondentes.</p>
       <Stack>
         <Checkbox
           label="Importação"
@@ -57,6 +55,6 @@ export default function StepOperacao({ form, errors, onChange }: Props) {
           </div>
         ) : null}
       </Stack>
-    </Section>
+    </main>
   );
 }

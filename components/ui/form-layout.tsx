@@ -4,6 +4,7 @@ import React from "react";
 import { Button } from "./button";
 import { Card } from "./card";
 import { cn } from "@/lib/utils";
+import { ListFilter, Search } from "lucide-react";
 
 export function PageShell({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -17,7 +18,7 @@ export function PageHeader({ title, subtitle, right }: { title: string; subtitle
   return (
     <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
         {subtitle ? <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">{subtitle}</p> : null}
       </div>
       {right ? <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-end">{right}</div> : null}
@@ -48,11 +49,108 @@ export function Stack({ children, gap = 16 }: { children: React.ReactNode; gap?:
 
 export function Divider() { return <div className="my-4 h-px bg-border" />; }
 
-export function Toolbar({ left, right }: { left?: React.ReactNode; right?: React.ReactNode; }) {
+export function Toolbar({
+  title,
+  description,
+  left,
+  right,
+  sticky = false,
+  className,
+}: {
+  title?: string;
+  description?: string;
+  left?: React.ReactNode;
+  right?: React.ReactNode;
+  sticky?: boolean;
+  className?: string;
+}) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">{left}</div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">{right}</div>
+    <div
+      className={cn(
+        "rounded-2xl border border-border bg-background/80 p-4 shadow-sm backdrop-blur-sm",
+        "transition-all duration-300",
+        sticky && "sticky top-4 z-20",
+        className
+      )}
+    >
+      {(title || description) && (
+        <div className="mb-4 flex items-start gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <ListFilter className="size-4" />
+          </div>
+
+          <div className="min-w-0">
+            {title ? (
+              <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+            ) : null}
+            {description ? (
+              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          {left}
+        </div>
+
+        {right ? (
+          <div className="h-px w-full bg-border lg:hidden" />
+        ) : null}
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
+          {right}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ToolbarGroup({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function ToolbarField({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("w-full sm:w-auto", className)}>
+      {children}
+    </div>
+  );
+}
+
+export function ToolbarSearchField({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("relative w-full sm:min-w-[20rem] sm:flex-1", className)}>
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {children}
     </div>
   );
 }

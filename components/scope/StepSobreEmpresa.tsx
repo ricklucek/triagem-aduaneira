@@ -2,9 +2,10 @@
 
 import { EscopoForm } from "@/domain/scope/types";
 import { Field, Select, TextInput } from "@/components/ui/form-fields";
-import { Grid, Section } from "@/components/ui/form-layout";
+import { Grid } from "@/components/ui/form-layout";
 import { ResponsiblePicker } from "@/components/scope/ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+import { formatCNPJ } from "@/utils/format";
 
 type Props = {
   form: EscopoForm;
@@ -24,13 +25,19 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
   }
 
   return (
-    <Section title="Sobre a empresa" description="Dados cadastrais principais do cliente.">
+    <main className="gap-5 flex flex-col">
       <Grid columns={2}>
         <Field label="Razão Social" required error={errors["razaoSocial"]}>
           <TextInput invalid={Boolean(errors["razaoSocial"])} value={s.razaoSocial} onChange={(e) => patch({ razaoSocial: e.target.value })} />
         </Field>
         <Field label="CNPJ" required error={errors["cnpj"]}>
-          <TextInput invalid={Boolean(errors["cnpj"])} value={s.cnpj} onChange={(e) => patch({ cnpj: e.target.value })} />
+          <TextInput invalid={Boolean(errors["cnpj"])}
+            value={formatCNPJ(s.cnpj)}
+            onChange={(e) => {
+              const raw = e.target.value.replace(/\D/g, "");
+              patch({ cnpj: raw });
+            }}
+          />
         </Field>
         <Field label="Inscrição Estadual" required error={errors["inscricaoEstadual"]}>
           <TextInput invalid={Boolean(errors["inscricaoEstadual"])} value={s.inscricaoEstadual} onChange={(e) => patch({ inscricaoEstadual: e.target.value })} />
@@ -67,6 +74,6 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
           error={errors["responsavelComercial"]}
         />
       </Grid>
-    </Section>
+    </main>
   );
 }

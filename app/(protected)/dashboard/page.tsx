@@ -4,11 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { RotateCw } from "lucide-react";
 import CompletenessBadge from "@/components/ui/completeness-badge";
-import { PageHeader, PageShell, PrimaryButton, SecondaryButton, Toolbar } from "@/components/ui/form-layout";
+import { PageHeader, PageShell, PrimaryButton, SecondaryButton, Toolbar, ToolbarField, ToolbarGroup, ToolbarSearchField } from "@/components/ui/form-layout";
 import { Card } from "@/components/ui/card";
 import { TextInput, Select } from "@/components/ui/form-fields";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useScopes } from "@/lib/api/hooks/use-scope-api";
+import { formatCNPJ } from "@/utils/format";
+import { Badge } from "@/components/ui/badge";
 
 type StatusFilter = "todos" | "draft" | "published" | "archived";
 
@@ -43,37 +45,49 @@ export default function DashboardPage() {
   return (
     <PageShell>
       <PageHeader
-        title="Dashboard de Escopos"
-        subtitle="Acompanhe rascunhos, publicações e completude do formulário."
+        title="Dashboard"
+        subtitle="Acompanhe seus formulários de escopos."
         right={<Link href="/scopes/new"><PrimaryButton>Novo Escopo</PrimaryButton></Link>}
       />
 
-      <Card className="rounded-[1.75rem] border-border/80 p-4 shadow-sm sm:p-5">
-        <Toolbar
-          left={
-            <>
-              <div className="w-full sm:w-55">
-                <Select value={status} onChange={(e) => { setStatus(e.target.value as StatusFilter); setPage(1); }}>
-                  <option value="todos">Todos</option>
-                  <option value="draft">Draft</option>
-                  <option value="published">Publicado</option>
-                  <option value="archived">Arquivado</option>
-                </Select>
-              </div>
-              <div className="w-full sm:min-w-70 sm:flex-1">
-                <TextInput placeholder="Buscar por razão social ou CNPJ" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
-              </div>
-              <div className="w-full sm:w-55">
-                <TextInput placeholder="CNPJ exato" value={cnpj} onChange={(e) => { setCnpj(e.target.value); setPage(1); }} />
-              </div>
-            </>
-          }
-        />
-      </Card>
+      <Toolbar
+        title="Filtros"
+        description="Refine os resultados da tabela por status ou por texto."
+        left={
+          <ToolbarGroup>
+            <ToolbarField className="sm:w-55">
+              <Select
+                value={status}
+                onChange={(e) => {
+                  setStatus(e.target.value as StatusFilter);
+                  setPage(1);
+                }}
+              >
+                <option value="todos">Todos</option>
+                <option value="draft">Draft</option>
+                <option value="published">Publicado</option>
+                <option value="archived">Arquivado</option>
+              </Select>
+            </ToolbarField>
+
+            <ToolbarSearchField>
+              <TextInput
+                placeholder="Buscar por razão social ou CNPJ"
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-10"
+              />
+            </ToolbarSearchField>
+          </ToolbarGroup>
+        }
+      />
 
       <div className="h-4" />
 
-      <Card className="overflow-hidden rounded-[1.75rem] border-border/80 p-0 shadow-sm">
+      <Card className="overflow-hidden border-border/80 p-0 shadow-sm">
         {isLoading ? (
           <div className="flex items-center gap-2 p-5 text-sm text-muted-foreground">
             <RotateCw className="h-4 w-4 animate-spin" /> Carregando...
@@ -101,9 +115,13 @@ export default function DashboardPage() {
                 <TableBody>
                   {items.map((x) => (
                     <TableRow key={x.id}>
-                      <TableCell className="px-5 py-4">{x.cnpj}</TableCell>
+                      <TableCell className="px-5 py-4">{formatCNPJ(x.cnpj)}</TableCell>
                       <TableCell className="px-5 py-4 font-medium whitespace-normal">{x.razao_social}</TableCell>
-                      <TableCell className="px-5 py-4">{x.status}</TableCell>
+                      <TableCell className="px-5 py-4">
+                        <Badge variant={x.status === "draft" ? "secondary" : "default"}>
+                          {x.status === "draft" ? "Rascunho" : x.status === "published" ? "Publicado" : "Arquivado"}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="px-5 py-4"><CompletenessBadge value={x.completeness_score} /></TableCell>
                       <TableCell className="px-5 py-4">{formatDate(x.updated_at)}</TableCell>
                       <TableCell className="px-5 py-4">{formatDate(x.last_published_at)}</TableCell>

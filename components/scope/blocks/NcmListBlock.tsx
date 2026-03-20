@@ -36,9 +36,8 @@ export default function NcmListBlock({
   }
 
   return (
-    <Card>
+    <div>
       <Toolbar
-        left={<h3 style={{ margin: 0 }}>{title}</h3>}
         right={<PrimaryButton type="button" onClick={addItem}>+ Adicionar NCM</PrimaryButton>}
       />
 
@@ -66,6 +65,6 @@ export default function NcmListBlock({
           </Grid>
         ))}
       </Stack>
-    </Card>
+    </div>
   );
 }
