@@ -38,13 +38,13 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
           ...form,
           sobreEmpresa: {
             ...form.sobreEmpresa,
-            razaoSocial: data.razaoSocial ?? form.sobreEmpresa.razaoSocial,
+            razaoSocial: data.razao_social ?? form.sobreEmpresa.razaoSocial,
             inscricaoEstadual: data.inscricaoEstadual ?? form.sobreEmpresa.inscricaoEstadual,
             inscricaoMunicipal: data.inscricaoMunicipal ?? form.sobreEmpresa.inscricaoMunicipal,
             enderecoCompletoEscritorio: data.enderecoCompletoEscritorio ?? form.sobreEmpresa.enderecoCompletoEscritorio,
             enderecoCompletoArmazem: data.enderecoCompletoArmazem ?? form.sobreEmpresa.enderecoCompletoArmazem,
             cnaePrincipal: data.cnaePrincipal ?? form.sobreEmpresa.cnaePrincipal,
-            cnaeSecundario: data.cnaesSecundarios?.join(", ") ?? form.sobreEmpresa.cnaeSecundario,
+            cnaeSecundario: data.cnaes_secundarios?.map((c) => c.descricao).join(", ") ?? form.sobreEmpresa.cnaeSecundario,
             regimeTributacao: data.regimeTributacao ?? form.sobreEmpresa.regimeTributacao,
           },
         });
@@ -55,7 +55,7 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
       }
     }
     void lookup();
-  }, [form, onChange, s.cnpj]);
+  }, [s.cnpj]);
 
   return (
     <main className="flex flex-col gap-5">

@@ -4,9 +4,7 @@ import type { PrepostoLookupResponse, PublicCompanyLookupResponse } from "@/lib/
 
 export const publicApi = {
   async lookupCompanyByCnpj(cnpj: string): Promise<PublicCompanyLookupResponse> {
-    const { data } = await http.get<PublicCompanyLookupResponse>(API_ROUTES.public.cnpjLookup, {
-      params: { cnpj },
-    });
+    const { data } = await http.get<PublicCompanyLookupResponse>(API_ROUTES.public.cnpjLookup(cnpj));
     return data;
   },
 

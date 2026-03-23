@@ -1,13 +1,18 @@
 export interface PublicCompanyLookupResponse {
   cnpj: string;
-  razaoSocial: string;
-  nomeFantasia?: string | null;
+  razao_social: string;
+  nome_fantasia?: string | null;
   inscricaoEstadual?: string | null;
   inscricaoMunicipal?: string | null;
   enderecoCompletoEscritorio?: string | null;
   enderecoCompletoArmazem?: string | null;
   cnaePrincipal?: string | null;
-  cnaesSecundarios?: string[];
+  cnae_fiscal?: string | null;
+  cnae_fiscal_descricao?: string | null;
+  cnaes_secundarios?: {
+    codigo: string;
+    descricao: string;
+  }[];
   regimeTributacao?: "SIMPLES_NACIONAL" | "LUCRO_PRESUMIDO" | "LUCRO_REAL" | null;
 }
 

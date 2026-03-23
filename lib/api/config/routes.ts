@@ -37,7 +37,9 @@ export const API_ROUTES = {
     comercialAveragePrice: "/analytics/comercial/average-price",
   },
   public: {
-    cnpjLookup: "/public/receita-federal/cnpj",
+    cnpjLookup(cnpj: string) {
+      return `https://minhareceita.org/${cnpj}`;
+    },
     prepostosLookup: "/public/prepostos",
   },
 } as const;
