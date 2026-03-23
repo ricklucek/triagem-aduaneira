@@ -1,13 +1,15 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { EscopoForm } from "@/domain/scope/types";
 import { Field, Select, TextInput } from "@/components/ui/form-fields";
 import { Grid } from "@/components/ui/form-layout";
 import { ResponsiblePicker } from "@/components/scope/ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { formatCNPJ } from "@/utils/format";
+import { publicApi } from "@/lib/api/services/public";
 
-type Props = {
+ type Props = {
   form: EscopoForm;
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
@@ -16,25 +18,58 @@ type Props = {
 
 export default function StepSobreEmpresa({ form, errors, onChange, responsaveis }: Props) {
   const s = form.sobreEmpresa;
+  const [loadingCnpj, setLoadingCnpj] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const lastFetchedRef = useRef<string>("");
 
   function patch(patchData: Partial<typeof s>) {
-    onChange({
-      ...form,
-      sobreEmpresa: { ...s, ...patchData },
-    });
+    onChange({ ...form, sobreEmpresa: { ...s, ...patchData } });
   }
 
+  useEffect(() => {
+    async function lookup() {
+      if (s.cnpj.length !== 14 || lastFetchedRef.current === s.cnpj) return;
+      setLoadingCnpj(true);
+      setLookupError(null);
+      try {
+        const data = await publicApi.lookupCompanyByCnpj(s.cnpj);
+        lastFetchedRef.current = s.cnpj;
+        onChange({
+          ...form,
+          sobreEmpresa: {
+            ...form.sobreEmpresa,
+            razaoSocial: data.razaoSocial ?? form.sobreEmpresa.razaoSocial,
+            inscricaoEstadual: data.inscricaoEstadual ?? form.sobreEmpresa.inscricaoEstadual,
+            inscricaoMunicipal: data.inscricaoMunicipal ?? form.sobreEmpresa.inscricaoMunicipal,
+            enderecoCompletoEscritorio: data.enderecoCompletoEscritorio ?? form.sobreEmpresa.enderecoCompletoEscritorio,
+            enderecoCompletoArmazem: data.enderecoCompletoArmazem ?? form.sobreEmpresa.enderecoCompletoArmazem,
+            cnaePrincipal: data.cnaePrincipal ?? form.sobreEmpresa.cnaePrincipal,
+            cnaeSecundario: data.cnaesSecundarios?.join(", ") ?? form.sobreEmpresa.cnaeSecundario,
+            regimeTributacao: data.regimeTributacao ?? form.sobreEmpresa.regimeTributacao,
+          },
+        });
+      } catch {
+        setLookupError("Não foi possível consultar os dados públicos do CNPJ agora.");
+      } finally {
+        setLoadingCnpj(false);
+      }
+    }
+    void lookup();
+  }, [form, onChange, s.cnpj]);
+
   return (
-    <main className="gap-5 flex flex-col">
+    <main className="flex flex-col gap-5">
       <Grid columns={2}>
         <Field label="Razão Social" required error={errors["razaoSocial"]}>
           <TextInput invalid={Boolean(errors["razaoSocial"])} value={s.razaoSocial} onChange={(e) => patch({ razaoSocial: e.target.value })} />
         </Field>
-        <Field label="CNPJ" required error={errors["cnpj"]}>
-          <TextInput invalid={Boolean(errors["cnpj"])}
+        <Field label="CNPJ" required error={errors["cnpj"]} hint={loadingCnpj ? "Consultando Receita Federal..." : lookupError ?? "Ao concluir 14 dígitos, os dados serão buscados automaticamente."}>
+          <TextInput
+            invalid={Boolean(errors["cnpj"])}
             value={formatCNPJ(s.cnpj)}
             onChange={(e) => {
               const raw = e.target.value.replace(/\D/g, "");
+              if (raw.length < 14) lastFetchedRef.current = "";
               patch({ cnpj: raw });
             }}
           />
@@ -51,7 +86,7 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
         <Field label="Endereço completo — armazém" hint="Campo opcional">
           <TextInput value={s.enderecoCompletoArmazem ?? ""} onChange={(e) => patch({ enderecoCompletoArmazem: e.target.value })} />
         </Field>
-        <Field label="CNAE secundário" hint="Campo opcional">
+        <Field label="CNAEs secundários" hint="Campo opcional">
           <TextInput value={s.cnaeSecundario ?? ""} onChange={(e) => patch({ cnaeSecundario: e.target.value })} />
         </Field>
         <Field label="CNAE principal" required error={errors["cnaePrincipal"]}>

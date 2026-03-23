@@ -1,3 +1,14 @@
+export interface PrepostoAdminContact {
+  id: string;
+  nome: string;
+  telefone: string;
+  email?: string;
+  atendeImportacao: boolean;
+  atendeExportacao: boolean;
+  valor: number;
+  observacoes?: string;
+}
+
 export interface AdminSettingsResponse {
   salarioMinimoVigente: number;
   dadosBancariosCasco: {
@@ -5,6 +16,7 @@ export interface AdminSettingsResponse {
     agencia: string;
     conta: string;
   };
+  prepostosContatos?: PrepostoAdminContact[];
 }
 
 export interface ScopeResponsible {
