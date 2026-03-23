@@ -21,7 +21,7 @@ type Props = {
 export default function SearchableCheckboxMenu({
   title,
   searchLabel,
-  value = [],
+  value,
   options,
   onChange,
   customValue = "",
