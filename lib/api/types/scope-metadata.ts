@@ -1,3 +1,15 @@
+export interface PrepostoAdminContact {
+  id: string;
+  nome: string;
+  localidade: string;
+  operacao: "IMPORTACAO" | "EXPORTACAO";
+  contatoNome?: string;
+  telefone?: string;
+  email?: string;
+  valor: number;
+  observacoes?: string;
+}
+
 export interface AdminSettingsResponse {
   salarioMinimoVigente: number;
   dadosBancariosCasco: {
@@ -5,6 +17,7 @@ export interface AdminSettingsResponse {
     agencia: string;
     conta: string;
   };
+  prepostosContatos?: PrepostoAdminContact[];
 }
 
 export interface ScopeResponsible {

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { escopoFormDefault } from "@/domain/scope/defaults";
 import { EtapaFormulario, EscopoForm } from "@/domain/scope/types";
 import { validarEtapa, validarFormularioCompleto } from "@/domain/scope/validate";
@@ -12,7 +14,7 @@ import StepServicosImportacao from "./StepServicosImportacao";
 import StepExportacao from "./StepExportacao";
 import StepServicosExportacao from "./StepServicosExportacao";
 import StepFinanceiro from "./StepFinanceiro";
-import { PageHeader, PageShell, PrimaryButton, SecondaryButton, StepPills, Toolbar } from "@/components/ui/form-layout";
+import { PageHeader, PrimaryButton, SecondaryButton, StepPills, Toolbar } from "@/components/ui/form-layout";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 
 function buildEtapas(data: EscopoForm): EtapaFormulario[] {
@@ -64,6 +66,7 @@ export default function ScopeWizard({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState("Não salvo");
+  const [errorSheetOpen, setErrorSheetOpen] = useState(false);
 
   useEffect(() => {
     if (initialData) setForm(initialData);
@@ -93,7 +96,7 @@ export default function ScopeWizard({
   async function proximaEtapa() {
     const result = validarEtapa(etapaAtual, form);
     setErrors(result.errors);
-    if (!result.ok) return;
+    if (!result.ok) { setErrorSheetOpen(true); return; }
 
     setErrors({});
     setIndiceEtapa((prev) => Math.min(prev + 1, etapas.length - 1));
@@ -108,7 +111,7 @@ export default function ScopeWizard({
   async function finalizar() {
     const result = validarFormularioCompleto(form);
     setErrors(result.errors);
-    if (!result.ok) return;
+    if (!result.ok) { setErrorSheetOpen(true); return; }
 
     const ok = await persist(form);
     if (ok) alert("Formulário válido. Rascunho salvo com sucesso.");
@@ -117,7 +120,7 @@ export default function ScopeWizard({
   async function publicar() {
     const result = validarFormularioCompleto(form);
     setErrors(result.errors);
-    if (!result.ok) return;
+    if (!result.ok) { setErrorSheetOpen(true); return; }
 
     const ok = await persist(form);
     if (!ok) return;
@@ -127,6 +130,20 @@ export default function ScopeWizard({
       setSavedMessage("Publicado");
     }
   }
+
+
+
+  function focusErrorAt(index: number) {
+    const invalidElements = Array.from(document.querySelectorAll<HTMLElement>("[aria-invalid='true']"));
+    const target = invalidElements[index] ?? invalidElements[0];
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.focus();
+      setErrorSheetOpen(false);
+    }
+  }
+
+  const errorEntries = Object.entries(errors);
 
   function renderEtapa() {
     switch (etapaAtual) {
@@ -158,6 +175,31 @@ export default function ScopeWizard({
       <StepPills steps={etapas.map((e) => STEP_LABELS[e])} currentIndex={indiceEtapa} />
 
       <div style={{ marginBottom: 20 }}>{renderEtapa()}</div>
+
+      <Sheet open={errorSheetOpen} onOpenChange={setErrorSheetOpen}>
+        <SheetContent side="right" className="w-full max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Erros desta etapa</SheetTitle>
+            <SheetDescription>Revise os campos abaixo e use o botão para navegar até o ponto com erro.</SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-6 grid gap-3">
+            {errorEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum erro encontrado no momento.</p>
+            ) : (
+              errorEntries.map(([path, message], index) => (
+                <div key={path} className="rounded-xl border p-4">
+                  <p className="text-sm font-semibold">{path}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{message}</p>
+                  <Button type="button" variant="outline" className="mt-3" onClick={() => focusErrorAt(index)}>
+                    Ir para o campo
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Toolbar
         left={indiceEtapa > 0 ? <SecondaryButton type="button" onClick={etapaAnterior} disabled={saving}>Anterior</SecondaryButton> : <div />}

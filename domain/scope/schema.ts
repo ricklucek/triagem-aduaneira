@@ -11,15 +11,9 @@ export const RegimeTributacaoSchema = z.enum([
 ]);
 
 export const ResponsavelComercialSchema = z.string().trim().min(1, "Responsável comercial é obrigatório");
-
 export const TipoOperacaoSchema = z.enum(["IMPORTACAO", "EXPORTACAO"]);
-
 export const AnalistaDAImportacaoSchema = z.string().trim().min(1, "Analista DA é obrigatório");
-
-export const AnalistaAEImportacaoSchema = z.string().trim().min(1, "Analista AE é obrigatório");
-
 export const DtcDtaSchema = z.enum(["DTC", "DTA", "NAO"]);
-
 export const AnuenciaImportacaoSchema = z.enum([
   "ANVISA",
   "MAPA",
@@ -37,18 +31,12 @@ export const AnuenciaImportacaoSchema = z.enum([
   "ANP",
   "ANTT_ANTAQ_ANAC",
 ]);
-
-export const LocalEntradaImportacaoSchema = z.string().trim().min(1);
-
-export const ArmazemLiberacaoImportacaoSchema = z.string().trim().min(1);
-
 export const DestinacaoSchema = z.enum(["CONSUMO", "REVENDA"]);
 export const SubtipoConsumoSchema = z.enum([
   "ATIVO_IMOBILIZADO_FIXO",
   "INSUMOS_PARA_INDUSTRIALIZACAO",
   "USO_E_CONSUMO",
 ]);
-
 export const PortoFronteiraExportacaoSchema = z.enum([
   "FOZ_DO_IGUACU",
   "URUGUAIANA",
@@ -75,8 +63,6 @@ export const NcmItemSchema = z.object({
   possuiNve: z.enum(["SIM", "NAO"]).optional().nullable(),
 });
 
-export const ResponsavelServicoSchema = z.string().trim().min(1, "Responsável é obrigatório");
-
 const BeneficioTributoSchema = z
   .object({
     regime: IntegralBeneficioSchema,
@@ -92,235 +78,29 @@ const BeneficioTributoSchema = z
     }
   });
 
-export const ImportacaoSchema = z
-  .object({
-    analistaDA: AnalistaDAImportacaoSchema,
-    analistaAE: AnalistaAEImportacaoSchema,
-    produtosImportados: z.string().trim().optional().nullable(),
-    ncms: z.array(NcmItemSchema).min(1, "Informe ao menos 1 NCM"),
-    vinculoComExportador: SimNaoSchema,
-
-    locaisEntrada: z.array(LocalEntradaImportacaoSchema).default([]),
-    outroLocalEntrada: z.string().trim().optional().nullable(),
-
-    armazensLiberacao: z.array(ArmazemLiberacaoImportacaoSchema).default([]),
-    outroArmazemLiberacao: z.string().trim().optional().nullable(),
-
-    necessidadeDtcDta: DtcDtaSchema,
-
-    necessidadeLiLpco: SimNaoSchema,
-    anuencias: z.array(AnuenciaImportacaoSchema).default([]),
-
-    impostosFederais: z.object({
-      contaPagamento: ContaPagamentoSchema,
-      dadosContaCliente: ContaBancariaSchema.optional(),
-      ii: BeneficioTributoSchema,
-      ipi: BeneficioTributoSchema,
-      pis: BeneficioTributoSchema,
-      cofins: BeneficioTributoSchema,
-    }),
-
-    afrmm: z.object({
-      contaPagamento: ContaPagamentoSchema.optional(),
-      dadosContaCliente: ContaBancariaSchema.optional(),
-      regime: IntegralBeneficioSchema.optional(),
-      detalheBeneficio: z.string().trim().optional().nullable(),
-    }).optional(),
-
-    icms: z.object({
-      contaPagamento: ContaPagamentoSchema.optional(),
-      dadosContaCliente: ContaBancariaSchema.optional(),
-      regime: IntegralBeneficioSchema.optional(),
-      recolhida: z.string().trim().optional().nullable(),
-      efetiva: z.string().trim().optional().nullable(),
-    }).optional(),
-
-    destinacao: DestinacaoSchema,
-    subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
-  })
-  .superRefine((value, ctx) => {
-    if (value.locaisEntrada.length === 0 && !value.outroLocalEntrada) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["locaisEntrada"],
-        message: "Selecione ao menos um local de entrada ou informe outro local",
-      });
-    }
-
-    if (value.armazensLiberacao.length === 0 && !value.outroArmazemLiberacao) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["armazensLiberacao"],
-        message: "Selecione ao menos um armazém de liberação ou informe outro",
-      });
-    }
-
-    if (value.armazensLiberacao.length === 0 && !value.outroLocalEntrada) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["outroLocalEntrada"],
-        message: "Selecione ao menos um local de entrada ou informe outro",
-      });
-    }
-
-    if (value.necessidadeLiLpco === "SIM" && value.anuencias.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["anuencias"],
-        message: "Selecione ao menos uma anuência",
-      });
-    }
-
-    if (
-      value.impostosFederais.contaPagamento === "CLIENTE" &&
-      !value.impostosFederais.dadosContaCliente
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["impostosFederais", "dadosContaCliente"],
-        message: "Dados da conta do cliente são obrigatórios",
-      });
-    }
-
-    if (value.afrmm?.contaPagamento === "CLIENTE") {
-      if (!value.afrmm.dadosContaCliente) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["afrmm", "dadosContaCliente"],
-          message: "Dados da conta do cliente são obrigatórios",
-        });
-      } else {
-        if (!value.afrmm.dadosContaCliente.banco?.trim()) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["afrmm", "dadosContaCliente", "banco"],
-            message: "Banco é obrigatório",
-          });
-        }
-        if (!value.afrmm.dadosContaCliente.agencia?.trim()) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["afrmm", "dadosContaCliente", "agencia"],
-            message: "Agência é obrigatória",
-          });
-        }
-        if (!value.afrmm.dadosContaCliente.conta?.trim()) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["afrmm", "dadosContaCliente", "conta"],
-            message: "Conta é obrigatória",
-          });
-        }
-      }
-    }
-
-    if (value.icms?.contaPagamento === "CLIENTE") {
-      if (!value.icms.dadosContaCliente) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["icms", "dadosContaCliente"],
-          message: "Dados da conta do cliente são obrigatórios",
-        });
-      } else {
-        if (!value.icms.dadosContaCliente.banco?.trim()) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["icms", "dadosContaCliente", "banco"],
-            message: "Banco é obrigatório",
-          });
-        }
-        if (!value.icms.dadosContaCliente.agencia?.trim()) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["icms", "dadosContaCliente", "agencia"],
-            message: "Agência é obrigatória",
-          });
-        }
-        if (!value.icms.dadosContaCliente.conta?.trim()) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["icms", "dadosContaCliente", "conta"],
-            message: "Conta é obrigatória",
-          });
-        }
-      }
-    }
-
-    if (value.destinacao === "CONSUMO" && !value.subtipoConsumo) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["subtipoConsumo"],
-        message: "Subtipo de consumo é obrigatório",
-      });
-    }
-  });
-
-export const ExportacaoSchema = z
-  .object({
-    analistaDA: z.string().trim().min(1, "Analista DA é obrigatório"),
-    analistaAE: z.string().trim().min(1, "Analista AE é obrigatório"),
-    produtosExportados: z.string().trim().min(1, "Produtos exportados é obrigatório"),
-    ncms: z.array(z.string().trim().min(1)).min(1, "Informe ao menos 1 NCM"),
-    portosFronteiras: z.array(PortoFronteiraExportacaoSchema).default([]),
-    outroPorto: z.string().trim().optional().nullable(),
-    outraFronteira: z.string().trim().optional().nullable(),
-    destinacao: DestinacaoSchema,
-    subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
-  })
-  .superRefine((value, ctx) => {
-    if (
-      value.portosFronteiras.length === 0 &&
-      !value.outroPorto &&
-      !value.outraFronteira
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["portosFronteiras"],
-        message: "Selecione ao menos um porto/fronteira ou informe um complemento",
-      });
-    }
-
-    if (value.destinacao === "CONSUMO" && !value.subtipoConsumo) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["subtipoConsumo"],
-        message: "Subtipo de consumo é obrigatório",
-      });
-    }
-  });
+const ServicoDataSchema = z.string().trim().optional().nullable();
 
 const ServicoValorOuSalarioSchema = z
   .object({
     habilitado: z.boolean(),
     tipoValor: z.enum(["SALARIO_MINIMO", "OUTRO"]).optional().nullable(),
     valor: z.number().optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional().nullable(),
+    responsavel: z.string().trim().optional().nullable(),
+    ultimaAtualizacao: ServicoDataSchema,
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
 
     if (!value.tipoValor) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["tipoValor"],
-        message: "Tipo de valor é obrigatório",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["tipoValor"], message: "Tipo de valor é obrigatório" });
     }
 
     if (value.tipoValor === "OUTRO" && (!value.valor || value.valor <= 0)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["valor"],
-        message: "Valor é obrigatório",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["valor"], message: "Valor é obrigatório" });
     }
 
     if (!value.responsavel) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["responsavel"],
-        message: "Responsável é obrigatório",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["responsavel"], message: "Responsável é obrigatório" });
     }
   });
 
@@ -331,37 +111,46 @@ const ServicoValorSimplesSchema = z
   })
   .superRefine((value, ctx) => {
     if (value.habilitado && (!value.valor || value.valor <= 0)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["valor"],
-        message: "Valor é obrigatório",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["valor"], message: "Valor é obrigatório" });
     }
   });
+
+const PrepostoEscolhaSchema = z.object({
+  id: z.string().trim().optional().nullable(),
+  nome: z.string().trim().min(1, "Nome é obrigatório"),
+  contatoNome: z.string().trim().optional().nullable(),
+  telefone: z.string().trim().optional().nullable(),
+  email: z.string().trim().optional().nullable(),
+  valor: z.number().positive("Valor do preposto é obrigatório"),
+  valorDescricao: z.string().trim().optional().nullable(),
+  descricaoLocal: z.string().trim().optional().nullable(),
+  origem: z.enum(["API", "MANUAL"]).default("MANUAL"),
+});
 
 const ServicoPrepostoSchema = z
   .object({
     habilitado: z.boolean(),
     valor: z.number().optional().nullable(),
     inclusoNoDesembaracoCasco: SimNaoSchema.optional().nullable(),
+    cidadesLiberacao: z.array(z.string().trim().min(1)).default([]),
+    outroPorto: z.string().trim().optional().nullable(),
+    outraFronteira: z.string().trim().optional().nullable(),
+    prepostoSelecionado: PrepostoEscolhaSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
 
-    if (!value.valor || value.valor <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["valor"],
-        message: "Valor é obrigatório",
-      });
+    if (!value.inclusoNoDesembaracoCasco) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["inclusoNoDesembaracoCasco"], message: "Campo obrigatório" });
     }
 
-    if (!value.inclusoNoDesembaracoCasco) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["inclusoNoDesembaracoCasco"],
-        message: "Campo obrigatório",
-      });
+    const cidadeInformada = value.cidadesLiberacao.length > 0 || value.outroPorto || value.outraFronteira;
+    if (!cidadeInformada) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["cidadesLiberacao"], message: "Informe ao menos uma cidade/porto/fronteira" });
+    }
+
+    if (!value.prepostoSelecionado) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["prepostoSelecionado"], message: "Selecione ou preencha um preposto" });
     }
   });
 
@@ -369,108 +158,45 @@ const ServicoFreteInternacionalSchema = z
   .object({
     habilitado: z.boolean(),
     ptaxNegociado: z.string().trim().optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
-
     if (!value.ptaxNegociado) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["ptaxNegociado"],
-        message: "PTAX negociado é obrigatório",
-      });
-    }
-
-    if (!value.responsavel) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["responsavel"],
-        message: "Responsável é obrigatório",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["ptaxNegociado"], message: "% PTAX negociada é obrigatória" });
     }
   });
 
 const ServicoSeguroSchema = z
   .object({
     habilitado: z.boolean(),
-    valorNegociado: z.number().optional().nullable(),
+    valorMinimo: z.number().optional().nullable(),
     percentualSobreCfr: z.number().optional().nullable(),
     dataInclusaoApolice: z.string().trim().optional().nullable(),
     descricaoComplementar: z.string().trim().optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
-
-    if (!value.valorNegociado || value.valorNegociado <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["valorNegociado"],
-        message: "Valor negociado é obrigatório",
-      });
-    }
-
     if (value.percentualSobreCfr == null) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["percentualSobreCfr"],
-        message: "% sobre CFR é obrigatório",
-      });
-    }
-
-    if (!value.responsavel) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["responsavel"],
-        message: "Responsável é obrigatório",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["percentualSobreCfr"], message: "% sobre CFR é obrigatório" });
     }
   });
-
 
 const ServicoFreteRodoviarioSchema = z
   .object({
     habilitado: z.boolean(),
     modalidade: z.enum(["SIM", "CASO_A_CASO"]).optional().nullable(),
-    responsavel: ResponsavelServicoSchema.optional().nullable(),
+    observacaoGeral: z.string().trim().optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
-
     if (!value.modalidade) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["modalidade"],
-        message: "Modalidade é obrigatória",
-      });
-    }
-
-    if (!value.responsavel) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["responsavel"],
-        message: "Responsável é obrigatório",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["modalidade"], message: "Modalidade é obrigatória" });
     }
   });
 
 const RegimeEspecialItemSchema = z.object({
   nomeRegime: z.string().trim().min(1, "Nome do regime é obrigatório"),
   valor: z.number().positive("Valor deve ser maior que zero"),
-});
-
-export const ServicosImportacaoSchema = z.object({
-  despachoAduaneiroImportacao: ServicoValorOuSalarioSchema,
-  preposto: ServicoPrepostoSchema,
-  emissaoLiLpco: ServicoValorSimplesSchema,
-  cadastroCatalogoProdutos: ServicoValorSimplesSchema,
-  assessoria: ServicoValorOuSalarioSchema,
-  freteInternacional: ServicoFreteInternacionalSchema,
-  seguroInternacional: ServicoSeguroSchema,
-  freteRodoviario: ServicoFreteRodoviarioSchema,
-  regimeEspecial: z.array(RegimeEspecialItemSchema).default([]),
-  emissaoNfe: ServicoValorSimplesSchema,
 });
 
 const OutroCertificadoItemSchema = z.object({
@@ -484,12 +210,98 @@ const ServicoOutrosCertificadosSchema = z.object({
 }).superRefine((value, ctx) => {
   if (!value.habilitado) return;
   if (value.itens.length === 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["itens"],
-      message: "Adicione ao menos um certificado",
-    });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["itens"], message: "Adicione ao menos um certificado" });
   }
+});
+
+export const ImportacaoSchema = z
+  .object({
+    analistaDA: AnalistaDAImportacaoSchema,
+    analistaAE: z.string().trim().optional().nullable(),
+    produtosImportados: z.string().trim().optional().nullable(),
+    ncms: z.array(z.object({ codigo: z.string().trim().optional().nullable(), possuiNve: z.enum(["SIM", "NAO"]).optional().nullable() })).default([]),
+    vinculoComExportador: SimNaoSchema,
+    locaisDesembaraco: z.array(z.string().trim().min(1)).default([]),
+    outroLocalDesembaraco: z.string().trim().optional().nullable(),
+    locaisDespacho: z.array(z.string().trim().min(1)).default([]),
+    outroLocalDespacho: z.string().trim().optional().nullable(),
+    necessidadeDtcDta: DtcDtaSchema,
+    necessidadeLiLpco: SimNaoSchema,
+    anuencias: z.array(AnuenciaImportacaoSchema).default([]),
+    outroOrgaoAnuente: z.string().trim().optional().nullable(),
+    impostosFederais: z.object({
+      contaPagamento: ContaPagamentoSchema,
+      dadosContaCliente: ContaBancariaSchema.optional(),
+      ii: BeneficioTributoSchema,
+      ipi: BeneficioTributoSchema,
+      pis: BeneficioTributoSchema,
+      cofins: BeneficioTributoSchema,
+    }),
+    afrmm: z.object({
+      contaPagamento: ContaPagamentoSchema.optional(),
+      dadosContaCliente: ContaBancariaSchema.optional(),
+      regime: IntegralBeneficioSchema.optional(),
+      detalheBeneficio: z.string().trim().optional().nullable(),
+    }).optional(),
+    icms: z.object({
+      contaPagamento: ContaPagamentoSchema.optional(),
+      dadosContaCliente: ContaBancariaSchema.optional(),
+      regime: IntegralBeneficioSchema.optional(),
+      recolhida: z.string().trim().optional().nullable(),
+      efetiva: z.string().trim().optional().nullable(),
+    }).optional(),
+    destinacao: DestinacaoSchema,
+    subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.locaisDesembaraco.length === 0 && !value.outroLocalDesembaraco) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["locaisDesembaraco"], message: "Selecione ao menos um local de desembaraço ou informe outro" });
+    }
+    if (value.locaisDespacho.length === 0 && !value.outroLocalDespacho) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["locaisDespacho"], message: "Selecione ao menos um local de despacho ou informe outro" });
+    }
+    if (value.necessidadeLiLpco === "SIM" && value.anuencias.length === 0 && !value.outroOrgaoAnuente) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["anuencias"], message: "Selecione ao menos uma anuência ou informe outro órgão anuente" });
+    }
+    if (value.impostosFederais.contaPagamento === "CLIENTE" && !value.impostosFederais.dadosContaCliente) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["impostosFederais", "dadosContaCliente"], message: "Dados da conta do cliente são obrigatórios" });
+    }
+    if (value.destinacao === "CONSUMO" && !value.subtipoConsumo) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["subtipoConsumo"], message: "Subtipo de consumo é obrigatório" });
+    }
+  });
+
+export const ExportacaoSchema = z
+  .object({
+    analistaDA: z.string().trim().min(1, "Analista DA é obrigatório"),
+    produtosExportados: z.string().trim().min(1, "Produtos exportados é obrigatório"),
+    ncms: z.array(z.string().trim()).default([]),
+    portosFronteiras: z.array(PortoFronteiraExportacaoSchema).default([]),
+    outroPorto: z.string().trim().optional().nullable(),
+    outraFronteira: z.string().trim().optional().nullable(),
+    destinacao: DestinacaoSchema,
+    subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.portosFronteiras.length === 0 && !value.outroPorto && !value.outraFronteira) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["portosFronteiras"], message: "Selecione ao menos um porto/fronteira ou informe um complemento" });
+    }
+    if (value.destinacao === "CONSUMO" && !value.subtipoConsumo) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["subtipoConsumo"], message: "Subtipo de consumo é obrigatório" });
+    }
+  });
+
+export const ServicosImportacaoSchema = z.object({
+  despachoAduaneiroImportacao: ServicoValorOuSalarioSchema,
+  preposto: ServicoPrepostoSchema,
+  emissaoLiLpco: ServicoValorSimplesSchema,
+  cadastroCatalogoProdutos: ServicoValorSimplesSchema,
+  assessoria: ServicoValorOuSalarioSchema,
+  freteInternacional: ServicoFreteInternacionalSchema,
+  seguroInternacional: ServicoSeguroSchema,
+  freteRodoviario: ServicoFreteRodoviarioSchema,
+  regimeEspecial: z.array(RegimeEspecialItemSchema).default([]),
+  emissaoNfe: ServicoValorSimplesSchema,
 });
 
 export const ServicosExportacaoSchema = z.object({
@@ -511,7 +323,6 @@ export const EscopoSchema = z
       salarioMinimoVigente: z.number().positive("Salário mínimo vigente é obrigatório"),
       dadosBancariosCasco: ContaBancariaSchema,
     }),
-
     sobreEmpresa: z.object({
       razaoSocial: z.string().trim().min(1, "Razão social é obrigatória"),
       cnpj: z.string().trim().min(14, "CNPJ é obrigatório"),
@@ -524,20 +335,16 @@ export const EscopoSchema = z
       regimeTributacao: RegimeTributacaoSchema,
       responsavelComercial: ResponsavelComercialSchema,
     }),
-
     contatos: z.array(ContatoSchema).min(1, "Informe ao menos um contato"),
-
     operacao: z.object({
       tipos: z.array(TipoOperacaoSchema).min(1, "Selecione ao menos uma operação"),
       importacao: ImportacaoSchema.optional(),
       exportacao: ExportacaoSchema.optional(),
     }),
-
     servicos: z.object({
       importacao: ServicosImportacaoSchema.optional(),
       exportacao: ServicosExportacaoSchema.optional(),
     }),
-
     financeiro: z.object({
       dadosBancariosClienteDevolucaoSaldo: ContaBancariaSchema,
       observacoesFinanceiro: z.string().trim().optional().nullable(),
@@ -548,34 +355,15 @@ export const EscopoSchema = z
     const temExportacao = value.operacao.tipos.includes("EXPORTACAO");
 
     if (temImportacao && !value.operacao.importacao) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["operacao", "importacao"],
-        message: "Bloco de importação é obrigatório",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["operacao", "importacao"], message: "Bloco de importação é obrigatório" });
     }
-
     if (temImportacao && !value.servicos.importacao) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["servicos", "importacao"],
-        message: "Serviços de importação são obrigatórios",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["servicos", "importacao"], message: "Serviços de importação são obrigatórios" });
     }
-
     if (temExportacao && !value.operacao.exportacao) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["operacao", "exportacao"],
-        message: "Bloco de exportação é obrigatório",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["operacao", "exportacao"], message: "Bloco de exportação é obrigatório" });
     }
-
     if (temExportacao && !value.servicos.exportacao) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["servicos", "exportacao"],
-        message: "Serviços de exportação são obrigatórios",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["servicos", "exportacao"], message: "Serviços de exportação são obrigatórios" });
     }
   });

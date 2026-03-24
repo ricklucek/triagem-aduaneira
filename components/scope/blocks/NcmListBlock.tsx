@@ -2,7 +2,6 @@
 
 import { Field, TextInput } from "@/components/ui/form-fields";
 import {
-  Card,
   DangerButton,
   Grid,
   PrimaryButton,
@@ -11,12 +10,10 @@ import {
 } from "@/components/ui/form-layout";
 
 export default function NcmListBlock({
-  title = "NCMs",
   items,
   onChange,
   error,
 }: {
-  title?: string;
   items: string[];
   onChange: (next: string[]) => void;
   error?: string;
@@ -45,7 +42,7 @@ export default function NcmListBlock({
         {items.map((item, index) => (
           <Grid key={index} columns={2}>
             <Field
-              label={`NCM ${index + 1}`}
+              label={index === 0 ? "NCM principal" : `NCM ${index + 1}`}
               required
               error={index === 0 ? error : undefined}
             >

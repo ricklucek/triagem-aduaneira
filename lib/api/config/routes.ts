@@ -36,4 +36,8 @@ export const API_ROUTES = {
   analytics: {
     comercialAveragePrice: "/analytics/comercial/average-price",
   },
+  public: {
+    cnpjLookup: "/public/receita-federal/cnpj",
+    prepostosLookup: "/prepostos/public/lookup",
+  },
 } as const;
