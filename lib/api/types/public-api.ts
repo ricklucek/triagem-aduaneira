@@ -6,7 +6,6 @@ export interface PublicCompanyLookupResponse {
   inscricaoMunicipal?: string | null;
   enderecoCompletoEscritorio?: string | null;
   enderecoCompletoArmazem?: string | null;
-  cnaePrincipal?: string | null;
   cnae_fiscal?: string | null;
   cnae_fiscal_descricao?: string | null;
   cnaes_secundarios?: {

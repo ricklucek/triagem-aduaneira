@@ -43,7 +43,7 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
             inscricaoMunicipal: data.inscricaoMunicipal ?? form.sobreEmpresa.inscricaoMunicipal,
             enderecoCompletoEscritorio: data.enderecoCompletoEscritorio ?? form.sobreEmpresa.enderecoCompletoEscritorio,
             enderecoCompletoArmazem: data.enderecoCompletoArmazem ?? form.sobreEmpresa.enderecoCompletoArmazem,
-            cnaePrincipal: data.cnaePrincipal ?? form.sobreEmpresa.cnaePrincipal,
+            cnaePrincipal: data.cnae_fiscal_descricao ?? form.sobreEmpresa.cnaePrincipal,
             cnaeSecundario: data.cnaes_secundarios?.map((c) => c.descricao).join(", ") ?? form.sobreEmpresa.cnaeSecundario,
             regimeTributacao: data.regimeTributacao ?? form.sobreEmpresa.regimeTributacao,
           },
