@@ -79,7 +79,7 @@ export default function StepImportacao({ form, errors, onChange, responsaveis }:
         {data.ncms.map((item, index) => <Card key={index} className="gap-4 p-4">
           <Grid columns={2}>
             <Field label={index === 0 ? "NCM principal" : `NCM ${index + 1}`} required error={index === 0 ? errors["ncms"] : undefined}>
-              <TextInput value={item.codigo} onChange={(e) => { const next = [...data.ncms]; next[index] = { ...next[index], codigo: e.target.value }; update("ncms", next); }} />
+              <TextInput value={item.codigo ?? ''} onChange={(e) => { const next = [...data.ncms]; next[index] = { ...next[index], codigo: e.target.value }; update("ncms", next); }} />
             </Field>
           </Grid>
           {data.ncms.length > 1 ? <Button type="button" variant="destructive" onClick={() => update("ncms", data.ncms.filter((_, i) => i !== index))}>Remover</Button> : null}
