@@ -1,10 +1,11 @@
 export interface PrepostoAdminContact {
   id: string;
   nome: string;
-  telefone: string;
+  localidade: string;
+  operacao: "IMPORTACAO" | "EXPORTACAO";
+  contatoNome?: string;
+  telefone?: string;
   email?: string;
-  atendeImportacao: boolean;
-  atendeExportacao: boolean;
   valor: number;
   observacoes?: string;
 }

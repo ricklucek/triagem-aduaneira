@@ -17,15 +17,21 @@ export interface PublicCompanyLookupResponse {
 
 export interface PrepostoLookupItem {
   id: string;
-  nome: string;
-  telefone: string;
-  valor: number | null;
   cidade: string;
-  operacao: "IMPORTACAO" | "EXPORTACAO";
+  contatoNome: string | null;
+  descricaoLocal: string | null;
+  email: string | null;
+  moeda: string | null;
+  nome: string;
+  observacoes: string | null;
+  operacao: "IMPORTACAO" | "EXPORTACAO" | null;
+  telefone: string | null;
+  uf: string | null;
+  valor: string | null;
+  valorDescricao: string | null;
 }
 
 export interface PrepostoLookupResponse {
-  cidadeConsultada: string;
-  operacao: "IMPORTACAO" | "EXPORTACAO";
-  resultados: PrepostoLookupItem[];
+  items: PrepostoLookupItem[];
+  total: number;
 }

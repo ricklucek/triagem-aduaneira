@@ -12,9 +12,7 @@ export const publicApi = {
   },
 
   async lookupPrepostos(params: { cidade: string; operacao: "IMPORTACAO" | "EXPORTACAO" }): Promise<PrepostoLookupResponse> {
-    const { data } = await http.get<PrepostoLookupResponse>(API_ROUTES.public.prepostosLookup, {
-      params,
-    });
+    const { data } = await http.get<PrepostoLookupResponse>(API_ROUTES.public.prepostosLookup, { params });
     return data;
   },
 };

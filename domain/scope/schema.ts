@@ -118,8 +118,12 @@ const ServicoValorSimplesSchema = z
 const PrepostoEscolhaSchema = z.object({
   id: z.string().trim().optional().nullable(),
   nome: z.string().trim().min(1, "Nome é obrigatório"),
-  telefone: z.string().trim().min(1, "Telefone é obrigatório"),
+  contatoNome: z.string().trim().optional().nullable(),
+  telefone: z.string().trim().optional().nullable(),
+  email: z.string().trim().optional().nullable(),
   valor: z.number().positive("Valor do preposto é obrigatório"),
+  valorDescricao: z.string().trim().optional().nullable(),
+  descricaoLocal: z.string().trim().optional().nullable(),
   origem: z.enum(["API", "MANUAL"]).default("MANUAL"),
 });
 
@@ -136,10 +140,6 @@ const ServicoPrepostoSchema = z
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
 
-    if (!value.valor || value.valor <= 0) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["valor"], message: "Valor é obrigatório" });
-    }
-
     if (!value.inclusoNoDesembaracoCasco) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["inclusoNoDesembaracoCasco"], message: "Campo obrigatório" });
     }
@@ -149,9 +149,8 @@ const ServicoPrepostoSchema = z
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["cidadesLiberacao"], message: "Informe ao menos uma cidade/porto/fronteira" });
     }
 
-    if (value.prepostoSelecionado) {
-      if (!value.prepostoSelecionado.nome) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["prepostoSelecionado", "nome"], message: "Nome é obrigatório" });
-      if (!value.prepostoSelecionado.telefone) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["prepostoSelecionado", "telefone"], message: "Telefone é obrigatório" });
+    if (!value.prepostoSelecionado) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["prepostoSelecionado"], message: "Selecione ou preencha um preposto" });
     }
   });
 
@@ -220,7 +219,7 @@ export const ImportacaoSchema = z
     analistaDA: AnalistaDAImportacaoSchema,
     analistaAE: z.string().trim().optional().nullable(),
     produtosImportados: z.string().trim().optional().nullable(),
-    ncms: z.array(NcmItemSchema).min(1, "Informe ao menos 1 NCM"),
+    ncms: z.array(z.object({ codigo: z.string().trim().optional().nullable(), possuiNve: z.enum(["SIM", "NAO"]).optional().nullable() })).default([]),
     vinculoComExportador: SimNaoSchema,
     locaisDesembaraco: z.array(z.string().trim().min(1)).default([]),
     outroLocalDesembaraco: z.string().trim().optional().nullable(),
@@ -276,7 +275,7 @@ export const ExportacaoSchema = z
   .object({
     analistaDA: z.string().trim().min(1, "Analista DA é obrigatório"),
     produtosExportados: z.string().trim().min(1, "Produtos exportados é obrigatório"),
-    ncms: z.array(z.string().trim().min(1)).min(1, "Informe ao menos 1 NCM"),
+    ncms: z.array(z.string().trim()).default([]),
     portosFronteiras: z.array(PortoFronteiraExportacaoSchema).default([]),
     outroPorto: z.string().trim().optional().nullable(),
     outraFronteira: z.string().trim().optional().nullable(),
