@@ -1,10 +1,13 @@
 import { API_ROUTES } from "@/lib/api/config/routes";
 import { http } from "@/lib/api/config/http";
 import type { PrepostoLookupResponse, PublicCompanyLookupResponse } from "@/lib/api/types/public-api";
+import axios from "axios";
 
 export const publicApi = {
   async lookupCompanyByCnpj(cnpj: string): Promise<PublicCompanyLookupResponse> {
-    const { data } = await http.get<PublicCompanyLookupResponse>(API_ROUTES.public.cnpjLookup(cnpj));
+
+    const { data } = await axios.create({}).get<PublicCompanyLookupResponse>(API_ROUTES.public.cnpjLookup(cnpj));
+      
     return data;
   },
 
