@@ -14,13 +14,43 @@ export default function ComercialPage() {
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Metric title="Escopos com você como responsável" value={data.responsibleScopes} />
-      <Metric title="Média de venda dos serviços" value={data.salesAveragePrice} prefix="R$ " />
-      <Metric title="Escopos criados no último mês com você responsável" value={data.createdLastMonthAsResponsible} />
+      <Metric
+        title="Escopos com você como responsável"
+        value={data.responsibleScopes}
+      />
+      <Metric
+        title="Média de venda dos serviços"
+        value={data.salesAveragePrice}
+        prefix="R$ "
+      />
+      <Metric
+        title="Escopos criados no último mês com você responsável"
+        value={data.createdLastMonthAsResponsible}
+      />
     </div>
   );
 }
 
-function Metric({ title, value, prefix = "" }: { title: string; value: number; prefix?: string }) {
-  return <Card><CardHeader><CardTitle className="text-sm">{title}</CardTitle></CardHeader><CardContent><p className="text-3xl font-semibold">{prefix}{value}</p></CardContent></Card>;
+function Metric({
+  title,
+  value,
+  prefix = "",
+}: {
+  title: string;
+  value: number;
+  prefix?: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-3xl font-semibold">
+          {prefix}
+          {value}
+        </p>
+      </CardContent>
+    </Card>
+  );
 }

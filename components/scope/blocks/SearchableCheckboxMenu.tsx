@@ -34,10 +34,16 @@ export default function SearchableCheckboxMenu({
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return options;
-    return options.filter((option) => option.label.toLowerCase().includes(normalized));
+    return options.filter((option) =>
+      option.label.toLowerCase().includes(normalized),
+    );
   }, [options, query]);
 
-  const showCustomOption = Boolean(query.trim()) && !options.some((option) => option.label.toLowerCase() === query.trim().toLowerCase());
+  const showCustomOption =
+    Boolean(query.trim()) &&
+    !options.some(
+      (option) => option.label.toLowerCase() === query.trim().toLowerCase(),
+    );
   const customOptionValue = query.trim();
   const mergedValue = value.filter(Boolean);
 
@@ -52,16 +58,24 @@ export default function SearchableCheckboxMenu({
     <Card className="gap-4 rounded-2xl border-border/80 p-4 shadow-none sm:p-5">
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">{title}</h3>
-        <p className="text-xs text-muted-foreground">Pesquise e selecione uma ou mais opções.</p>
+        <p className="text-xs text-muted-foreground">
+          Pesquise e selecione uma ou mais opções.
+        </p>
       </div>
 
       <Field label={searchLabel} error={error}>
-        <TextInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Digite para pesquisar" />
+        <TextInput
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Digite para pesquisar"
+        />
       </Field>
 
       <details className="rounded-xl border border-border bg-background px-4 py-3">
         <summary className="cursor-pointer text-sm font-medium">
-          {mergedValue.length > 0 ? `${mergedValue.length} opção(ões) selecionada(s)` : "Abrir lista de opções"}
+          {mergedValue.length > 0
+            ? `${mergedValue.length} opção(ões) selecionada(s)`
+            : "Abrir lista de opções"}
         </summary>
 
         <Stack gap={10}>
@@ -88,7 +102,10 @@ export default function SearchableCheckboxMenu({
 
       {onCustomValueChange ? (
         <Field label={customLabel ?? "Outra opção"} hint="Campo opcional">
-          <TextInput value={customValue} onChange={(e) => onCustomValueChange(e.target.value)} />
+          <TextInput
+            value={customValue}
+            onChange={(e) => onCustomValueChange(e.target.value)}
+          />
         </Field>
       ) : null}
     </Card>

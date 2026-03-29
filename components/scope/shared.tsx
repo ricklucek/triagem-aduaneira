@@ -87,7 +87,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
 }
 
 export function TextArea(
-  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>
+  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>,
 ) {
   return (
     <textarea
@@ -143,7 +143,14 @@ export function CheckboxRow({
 
 export function InlineActions({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+    <div
+      style={{
+        display: "flex",
+        gap: 8,
+        alignItems: "center",
+        flexWrap: "wrap",
+      }}
+    >
       {children}
     </div>
   );

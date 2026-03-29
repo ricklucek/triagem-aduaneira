@@ -32,8 +32,13 @@ export function ResponsiblePicker({
   const filtered = useMemo(() => {
     return options.filter((item) => {
       const byRole = !filterRoles?.length || filterRoles.includes(item.role);
-      const bySetor = !filterSetores?.length || filterSetores.includes(item.setor);
-      const byQuery = !query || `${item.nome} ${item.email} ${item.setor}`.toLowerCase().includes(query.toLowerCase());
+      const bySetor =
+        !filterSetores?.length || filterSetores.includes(item.setor);
+      const byQuery =
+        !query ||
+        `${item.nome} ${item.email} ${item.setor}`
+          .toLowerCase()
+          .includes(query.toLowerCase());
       return byRole && bySetor && byQuery;
     });
   }, [filterRoles, filterSetores, options, query]);
@@ -42,19 +47,41 @@ export function ResponsiblePicker({
 
   return (
     <div className="space-y-2">
-      <span className={cn("text-sm font-medium text-foreground", error && "text-destructive")}>{label}</span>
-      <div className={cn("rounded-xl border bg-background", error && "border-destructive bg-destructive/5") }>
+      <span
+        className={cn(
+          "text-sm font-medium text-foreground",
+          error && "text-destructive",
+        )}
+      >
+        {label}
+      </span>
+      <div
+        className={cn(
+          "rounded-xl border bg-background",
+          error && "border-destructive bg-destructive/5",
+        )}
+      >
         <button
           type="button"
           className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm"
           onClick={() => setOpen((prev) => !prev)}
         >
-          <span className={cn(!selected && "text-muted-foreground")}>{selected ? `${selected.nome} • ${selected.setor}` : "Selecione um responsável"}</span>
-          <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
+          <span className={cn(!selected && "text-muted-foreground")}>
+            {selected
+              ? `${selected.nome} • ${selected.setor}`
+              : "Selecione um responsável"}
+          </span>
+          <ChevronDown
+            className={cn("size-4 transition-transform", open && "rotate-180")}
+          />
         </button>
         {open ? (
           <div className="space-y-2 border-t p-3">
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar responsável" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar responsável"
+            />
             <div className="max-h-60 space-y-2 overflow-auto">
               {filtered.map((item) => (
                 <Button
@@ -70,11 +97,17 @@ export function ResponsiblePicker({
                 >
                   <div>
                     <div className="font-medium">{item.nome}</div>
-                    <div className="text-xs opacity-80">{item.email} • {item.role} • {item.setor}</div>
+                    <div className="text-xs opacity-80">
+                      {item.email} • {item.role} • {item.setor}
+                    </div>
                   </div>
                 </Button>
               ))}
-              {filtered.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum responsável encontrado.</p> : null}
+              {filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum responsável encontrado.
+                </p>
+              ) : null}
             </div>
           </div>
         ) : null}

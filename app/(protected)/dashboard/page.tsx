@@ -4,10 +4,26 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { RotateCw } from "lucide-react";
 import CompletenessBadge from "@/components/ui/completeness-badge";
-import { PageHeader, PageShell, PrimaryButton, SecondaryButton, Toolbar, ToolbarField, ToolbarGroup, ToolbarSearchField } from "@/components/ui/form-layout";
+import {
+  PageHeader,
+  PageShell,
+  PrimaryButton,
+  SecondaryButton,
+  Toolbar,
+  ToolbarField,
+  ToolbarGroup,
+  ToolbarSearchField,
+} from "@/components/ui/form-layout";
 import { Card } from "@/components/ui/card";
 import { TextInput, Select } from "@/components/ui/form-fields";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useScopes } from "@/lib/api/hooks/use-scope-api";
 import { formatCNPJ } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +50,7 @@ export default function DashboardPage() {
       limit: pageSize,
       offset: (page - 1) * pageSize,
     }),
-    [cnpj, page, q, status]
+    [cnpj, page, q, status],
   );
 
   const { data, error, isLoading } = useScopes(params);
@@ -47,7 +63,11 @@ export default function DashboardPage() {
       <PageHeader
         title="Dashboard"
         subtitle="Acompanhe seus formulários de escopos."
-        right={<Link href="/scopes/new"><PrimaryButton>Novo Escopo</PrimaryButton></Link>}
+        right={
+          <Link href="/scopes/new">
+            <PrimaryButton>Novo Escopo</PrimaryButton>
+          </Link>
+        }
       />
 
       <Toolbar
@@ -93,7 +113,9 @@ export default function DashboardPage() {
             <RotateCw className="h-4 w-4 animate-spin" /> Carregando...
           </div>
         ) : error ? (
-          <div className="p-5 text-sm text-destructive">Falha ao carregar dados.</div>
+          <div className="p-5 text-sm text-destructive">
+            Falha ao carregar dados.
+          </div>
         ) : items.length === 0 ? (
           <div className="p-5 text-sm">Nenhum escopo encontrado.</div>
         ) : (
@@ -109,26 +131,56 @@ export default function DashboardPage() {
                     <TableHead className="px-5 py-4">Atualizado em</TableHead>
                     <TableHead className="px-5 py-4">Últ. publicação</TableHead>
                     <TableHead className="px-5 py-4">Versões</TableHead>
-                    <TableHead className="px-5 py-4 text-right">Ações</TableHead>
+                    <TableHead className="px-5 py-4 text-right">
+                      Ações
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.map((x) => (
                     <TableRow key={x.id}>
-                      <TableCell className="px-5 py-4">{formatCNPJ(x.cnpj)}</TableCell>
-                      <TableCell className="px-5 py-4 font-medium whitespace-normal">{x.razao_social}</TableCell>
                       <TableCell className="px-5 py-4">
-                        <Badge variant={x.status === "draft" ? "secondary" : "default"}>
-                          {x.status === "draft" ? "Rascunho" : x.status === "published" ? "Publicado" : "Arquivado"}
+                        {formatCNPJ(x.cnpj)}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 font-medium whitespace-normal">
+                        {x.razao_social}
+                      </TableCell>
+                      <TableCell className="px-5 py-4">
+                        <Badge
+                          variant={
+                            x.status === "draft" ? "secondary" : "default"
+                          }
+                        >
+                          {x.status === "draft"
+                            ? "Rascunho"
+                            : x.status === "published"
+                              ? "Publicado"
+                              : "Arquivado"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="px-5 py-4"><CompletenessBadge value={x.completeness_score} /></TableCell>
-                      <TableCell className="px-5 py-4">{formatDate(x.updated_at)}</TableCell>
-                      <TableCell className="px-5 py-4">{formatDate(x.last_published_at)}</TableCell>
-                      <TableCell className="px-5 py-4">{x.version_count}</TableCell>
+                      <TableCell className="px-5 py-4">
+                        <CompletenessBadge value={x.completeness_score} />
+                      </TableCell>
+                      <TableCell className="px-5 py-4">
+                        {formatDate(x.updated_at)}
+                      </TableCell>
+                      <TableCell className="px-5 py-4">
+                        {formatDate(x.last_published_at)}
+                      </TableCell>
+                      <TableCell className="px-5 py-4">
+                        {x.version_count}
+                      </TableCell>
                       <TableCell className="px-5 py-4 text-right">
-                        <Link href={x.status === "published" ? `/clients/${x.cnpj}/scopes/view/${x.id}` : `/scopes/${x.id}`}>
-                          <SecondaryButton>{x.status === "published" ? "Visualizar" : "Abrir"}</SecondaryButton>
+                        <Link
+                          href={
+                            x.status === "published"
+                              ? `/clients/${x.cnpj}/scopes/view/${x.id}`
+                              : `/scopes/${x.id}`
+                          }
+                        >
+                          <SecondaryButton>
+                            {x.status === "published" ? "Visualizar" : "Abrir"}
+                          </SecondaryButton>
                         </Link>
                       </TableCell>
                     </TableRow>
@@ -139,25 +191,52 @@ export default function DashboardPage() {
 
             <div className="grid gap-4 p-4 md:hidden">
               {items.map((x) => (
-                <Card key={x.id} className="gap-4 rounded-2xl border-border/80 p-4 shadow-none">
+                <Card
+                  key={x.id}
+                  className="gap-4 rounded-2xl border-border/80 p-4 shadow-none"
+                >
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">CNPJ</p>
                     <p className="font-medium">{x.cnpj}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Razão Social</p>
+                    <p className="text-sm text-muted-foreground">
+                      Razão Social
+                    </p>
                     <p className="font-medium">{x.razao_social}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><p className="text-muted-foreground">Status</p><p>{x.status}</p></div>
-                    <div><p className="text-muted-foreground">Completude</p><CompletenessBadge value={x.completeness_score} /></div>
-                    <div><p className="text-muted-foreground">Atualizado</p><p>{formatDate(x.updated_at)}</p></div>
-                    <div><p className="text-muted-foreground">Últ. publicação</p><p>{formatDate(x.last_published_at)}</p></div>
+                    <div>
+                      <p className="text-muted-foreground">Status</p>
+                      <p>{x.status}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Completude</p>
+                      <CompletenessBadge value={x.completeness_score} />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Atualizado</p>
+                      <p>{formatDate(x.updated_at)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Últ. publicação</p>
+                      <p>{formatDate(x.last_published_at)}</p>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">Versões: {x.version_count}</span>
-                    <Link href={x.status === "published" ? `/clients/${x.cnpj}/scopes/view/${x.id}` : `/scopes/${x.id}`}>
-                      <SecondaryButton>{x.status === "published" ? "Visualizar" : "Abrir"}</SecondaryButton>
+                    <span className="text-sm text-muted-foreground">
+                      Versões: {x.version_count}
+                    </span>
+                    <Link
+                      href={
+                        x.status === "published"
+                          ? `/clients/${x.cnpj}/scopes/view/${x.id}`
+                          : `/scopes/${x.id}`
+                      }
+                    >
+                      <SecondaryButton>
+                        {x.status === "published" ? "Visualizar" : "Abrir"}
+                      </SecondaryButton>
                     </Link>
                   </div>
                 </Card>
@@ -170,8 +249,27 @@ export default function DashboardPage() {
       <div className="h-4" />
 
       <Toolbar
-        left={<SecondaryButton onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>Anterior</SecondaryButton>}
-        right={<div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center"><span>Página {page} de {totalPages} — Total: {total}</span><SecondaryButton onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Próxima</SecondaryButton></div>}
+        left={
+          <SecondaryButton
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+          >
+            Anterior
+          </SecondaryButton>
+        }
+        right={
+          <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center">
+            <span>
+              Página {page} de {totalPages} — Total: {total}
+            </span>
+            <SecondaryButton
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Próxima
+            </SecondaryButton>
+          </div>
+        }
       />
     </PageShell>
   );

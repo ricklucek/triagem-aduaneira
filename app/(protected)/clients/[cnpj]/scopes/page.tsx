@@ -10,7 +10,14 @@ import { useScopes } from "@/lib/api/hooks/use-scope-api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 
 function formatISO(iso: string) {
@@ -23,11 +30,21 @@ function formatISO(iso: string) {
 
 export default function ScopesPage() {
   const { cnpj } = useParams<{ cnpj: string }>();
-  const { data, error, isLoading, mutate } = useScopes({ cnpj, limit: 500, offset: 0 });
+  const { data, error, isLoading, mutate } = useScopes({
+    cnpj,
+    limit: 500,
+    offset: 0,
+  });
 
   const items = useMemo(() => data?.items ?? [], [data]);
-  const drafts = useMemo(() => items.filter((r) => r.status === "draft"), [items]);
-  const published = useMemo(() => items.filter((r) => r.status === "published"), [items]);
+  const drafts = useMemo(
+    () => items.filter((r) => r.status === "draft"),
+    [items],
+  );
+  const published = useMemo(
+    () => items.filter((r) => r.status === "published"),
+    [items],
+  );
 
   async function cloneFromPublished(scopeId: string) {
     try {
@@ -51,8 +68,12 @@ export default function ScopesPage() {
       <Card className="rounded-2xl border bg-card p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-lg font-semibold tracking-tight">Escopos • {cnpj}</div>
-            <div className="text-sm text-muted-foreground">Gestão de rascunhos e documentos publicados.</div>
+            <div className="text-lg font-semibold tracking-tight">
+              Escopos • {cnpj}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Gestão de rascunhos e documentos publicados.
+            </div>
           </div>
 
           <Button asChild className="rounded-xl">
@@ -67,7 +88,9 @@ export default function ScopesPage() {
             <RotateCw className="h-4 w-4 animate-spin" /> Carregando...
           </div>
         ) : error ? (
-          <div className="text-sm text-destructive">Falha ao carregar escopos.</div>
+          <div className="text-sm text-destructive">
+            Falha ao carregar escopos.
+          </div>
         ) : (
           <div className="grid gap-6">
             <section>
@@ -88,17 +111,32 @@ export default function ScopesPage() {
                 <TableBody>
                   {drafts.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-sm text-muted-foreground">Nenhum draft ainda.</TableCell>
+                      <TableCell
+                        colSpan={4}
+                        className="text-sm text-muted-foreground"
+                      >
+                        Nenhum draft ainda.
+                      </TableCell>
                     </TableRow>
                   ) : (
                     drafts.map((r) => (
                       <TableRow key={r.id}>
-                        <TableCell className="font-medium">{r.razao_social || "(sem razão social)"}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{r.id}</TableCell>
+                        <TableCell className="font-medium">
+                          {r.razao_social || "(sem razão social)"}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {r.id}
+                        </TableCell>
                         <TableCell>{formatISO(r.updated_at)}</TableCell>
                         <TableCell className="text-right">
-                          <Button asChild variant="outline" className="rounded-xl">
-                            <Link href={`/clients/${cnpj}/scopes/edit/${r.id}`}>Editar</Link>
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="rounded-xl"
+                          >
+                            <Link href={`/clients/${cnpj}/scopes/edit/${r.id}`}>
+                              Editar
+                            </Link>
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -127,20 +165,39 @@ export default function ScopesPage() {
                 <TableBody>
                   {published.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-sm text-muted-foreground">Nenhuma versão publicada ainda.</TableCell>
+                      <TableCell
+                        colSpan={5}
+                        className="text-sm text-muted-foreground"
+                      >
+                        Nenhuma versão publicada ainda.
+                      </TableCell>
                     </TableRow>
                   ) : (
                     published.map((r) => (
                       <TableRow key={r.id}>
-                        <TableCell>{r.razao_social || "(sem razão social)"}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{r.id}</TableCell>
+                        <TableCell>
+                          {r.razao_social || "(sem razão social)"}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {r.id}
+                        </TableCell>
                         <TableCell>{formatISO(r.updated_at)}</TableCell>
                         <TableCell>v{r.version_count}</TableCell>
                         <TableCell className="space-x-2 text-right">
-                          <Button asChild variant="secondary" className="rounded-xl">
-                            <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>Visualizar</Link>
+                          <Button
+                            asChild
+                            variant="secondary"
+                            className="rounded-xl"
+                          >
+                            <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>
+                              Visualizar
+                            </Link>
                           </Button>
-                          <Button variant="outline" className="rounded-xl" onClick={() => cloneFromPublished(r.id)}>
+                          <Button
+                            variant="outline"
+                            className="rounded-xl"
+                            onClick={() => cloneFromPublished(r.id)}
+                          >
                             Clonar
                           </Button>
                         </TableCell>

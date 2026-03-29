@@ -7,7 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+} from "@/components/ui/sidebar";
 import { logoutSession } from "@/lib/api/hooks/use-auth";
 import { useAuthSession } from "@/lib/auth/session-storage";
 import { cn } from "@/lib/utils";
@@ -35,13 +41,26 @@ const navByRole = {
   ],
 } as const;
 
-function NavLinks({ items, pathname }: { items: readonly { href: string; label: string }[]; pathname: string }) {
+function NavLinks({
+  items,
+  pathname,
+}: {
+  items: readonly { href: string; label: string }[];
+  pathname: string;
+}) {
   return (
     <SidebarMenu>
       {items.map((item) => {
         const active = pathname.startsWith(item.href);
         return (
-          <Link key={item.href} href={item.href} className={cn("rounded-lg px-3 py-2.5 text-sm transition hover:bg-muted", active && "bg-muted font-medium") }>
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "rounded-lg px-3 py-2.5 text-sm transition hover:bg-muted",
+              active && "bg-muted font-medium",
+            )}
+          >
             {item.label}
           </Link>
         );
@@ -69,13 +88,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {isAuthenticated ? (
           <Sidebar>
             <SidebarHeader>
-              <div className="flex items-center justify-between gap-3"><div className="text-sm font-semibold tracking-tight">ScopeDesk</div><Badge variant="secondary">MVP</Badge></div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold tracking-tight">
+                  ScopeDesk
+                </div>
+                <Badge variant="secondary">MVP</Badge>
+              </div>
               <Separator className="mt-4" />
             </SidebarHeader>
-            <SidebarContent><NavLinks items={nav} pathname={pathname} /></SidebarContent>
+            <SidebarContent>
+              <NavLinks items={nav} pathname={pathname} />
+            </SidebarContent>
             <SidebarFooter>
-              <p className="mb-2 text-xs text-muted-foreground">Perfil: {session?.user.role}</p>
-              <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>Sair</Button>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Perfil: {session?.user.role}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={handleLogout}
+              >
+                Sair
+              </Button>
             </SidebarFooter>
           </Sidebar>
         ) : null}
@@ -86,14 +121,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {isAuthenticated ? (
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon-sm" className="md:hidden"><Menu /></Button>
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      className="md:hidden"
+                    >
+                      <Menu />
+                    </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-72 p-0">
                     <div className="p-4">
-                      <div className="flex items-center justify-between gap-3"><div className="text-sm font-semibold tracking-tight">ScopeDesk</div><Badge variant="secondary">MVP</Badge></div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold tracking-tight">
+                          ScopeDesk
+                        </div>
+                        <Badge variant="secondary">MVP</Badge>
+                      </div>
                       <Separator className="mt-4" />
                     </div>
-                    <div className="px-4 pb-6"><NavLinks items={nav} pathname={pathname} /></div>
+                    <div className="px-4 pb-6">
+                      <NavLinks items={nav} pathname={pathname} />
+                    </div>
                   </SheetContent>
                 </Sheet>
               ) : null}
@@ -101,7 +149,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex items-center gap-2 self-start sm:self-auto">
               <Badge variant="outline">PT-BR</Badge>
-              {isAuthenticated ? <Badge variant="outline">Enterprise</Badge> : <Button variant="outline" size="sm" onClick={() => router.push("/login")}>Entrar</Button>}
+              {isAuthenticated ? (
+                <Badge variant="outline">Enterprise</Badge>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push("/login")}
+                >
+                  Entrar
+                </Button>
+              )}
             </div>
           </header>
           <div className="p-4 md:p-6">{children}</div>

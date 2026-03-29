@@ -9,14 +9,19 @@ import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { formatCNPJ } from "@/utils/format";
 import { publicApi } from "@/lib/api/services/public";
 
- type Props = {
+type Props = {
   form: EscopoForm;
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
   responsaveis: ScopeResponsible[];
 };
 
-export default function StepSobreEmpresa({ form, errors, onChange, responsaveis }: Props) {
+export default function StepSobreEmpresa({
+  form,
+  errors,
+  onChange,
+  responsaveis,
+}: Props) {
   const s = form.sobreEmpresa;
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
@@ -39,17 +44,29 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
           sobreEmpresa: {
             ...form.sobreEmpresa,
             razaoSocial: data.razao_social ?? form.sobreEmpresa.razaoSocial,
-            inscricaoEstadual: data.inscricaoEstadual ?? form.sobreEmpresa.inscricaoEstadual,
-            inscricaoMunicipal: data.inscricaoMunicipal ?? form.sobreEmpresa.inscricaoMunicipal,
-            enderecoCompletoEscritorio: data.enderecoCompletoEscritorio ?? form.sobreEmpresa.enderecoCompletoEscritorio,
-            enderecoCompletoArmazem: data.enderecoCompletoArmazem ?? form.sobreEmpresa.enderecoCompletoArmazem,
-            cnaePrincipal: data.cnae_fiscal_descricao ?? form.sobreEmpresa.cnaePrincipal,
-            cnaeSecundario: data.cnaes_secundarios?.map((c) => c.descricao).join(", ") ?? form.sobreEmpresa.cnaeSecundario,
-            regimeTributacao: data.regimeTributacao ?? form.sobreEmpresa.regimeTributacao,
+            inscricaoEstadual:
+              data.inscricaoEstadual ?? form.sobreEmpresa.inscricaoEstadual,
+            inscricaoMunicipal:
+              data.inscricaoMunicipal ?? form.sobreEmpresa.inscricaoMunicipal,
+            enderecoCompletoEscritorio:
+              data.enderecoCompletoEscritorio ??
+              form.sobreEmpresa.enderecoCompletoEscritorio,
+            enderecoCompletoArmazem:
+              data.enderecoCompletoArmazem ??
+              form.sobreEmpresa.enderecoCompletoArmazem,
+            cnaePrincipal:
+              data.cnae_fiscal_descricao ?? form.sobreEmpresa.cnaePrincipal,
+            cnaeSecundario:
+              data.cnaes_secundarios?.map((c) => c.descricao).join(", ") ??
+              form.sobreEmpresa.cnaeSecundario,
+            regimeTributacao:
+              data.regimeTributacao ?? form.sobreEmpresa.regimeTributacao,
           },
         });
       } catch {
-        setLookupError("Não foi possível consultar os dados públicos do CNPJ agora.");
+        setLookupError(
+          "Não foi possível consultar os dados públicos do CNPJ agora.",
+        );
       } finally {
         setLoadingCnpj(false);
       }
@@ -61,9 +78,23 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
     <main className="flex flex-col gap-5">
       <Grid columns={2}>
         <Field label="Razão Social" required error={errors["razaoSocial"]}>
-          <TextInput invalid={Boolean(errors["razaoSocial"])} value={s.razaoSocial} onChange={(e) => patch({ razaoSocial: e.target.value })} />
+          <TextInput
+            invalid={Boolean(errors["razaoSocial"])}
+            value={s.razaoSocial}
+            onChange={(e) => patch({ razaoSocial: e.target.value })}
+          />
         </Field>
-        <Field label="CNPJ" required error={errors["cnpj"]} hint={loadingCnpj ? "Consultando Receita Federal..." : lookupError ?? "Ao concluir 14 dígitos, os dados serão buscados automaticamente."}>
+        <Field
+          label="CNPJ"
+          required
+          error={errors["cnpj"]}
+          hint={
+            loadingCnpj
+              ? "Consultando Receita Federal..."
+              : (lookupError ??
+                "Ao concluir 14 dígitos, os dados serão buscados automaticamente.")
+          }
+        >
           <TextInput
             invalid={Boolean(errors["cnpj"])}
             value={formatCNPJ(s.cnpj)}
@@ -74,26 +105,69 @@ export default function StepSobreEmpresa({ form, errors, onChange, responsaveis 
             }}
           />
         </Field>
-        <Field label="Inscrição Estadual" required error={errors["inscricaoEstadual"]}>
-          <TextInput invalid={Boolean(errors["inscricaoEstadual"])} value={s.inscricaoEstadual} onChange={(e) => patch({ inscricaoEstadual: e.target.value })} />
+        <Field
+          label="Inscrição Estadual"
+          required
+          error={errors["inscricaoEstadual"]}
+        >
+          <TextInput
+            invalid={Boolean(errors["inscricaoEstadual"])}
+            value={s.inscricaoEstadual}
+            onChange={(e) => patch({ inscricaoEstadual: e.target.value })}
+          />
         </Field>
         <Field label="Inscrição Municipal" hint="Campo opcional">
-          <TextInput value={s.inscricaoMunicipal ?? ""} onChange={(e) => patch({ inscricaoMunicipal: e.target.value })} />
+          <TextInput
+            value={s.inscricaoMunicipal ?? ""}
+            onChange={(e) => patch({ inscricaoMunicipal: e.target.value })}
+          />
         </Field>
-        <Field label="Endereço completo — escritório" required error={errors["enderecoCompletoEscritorio"]}>
-          <TextInput invalid={Boolean(errors["enderecoCompletoEscritorio"])} value={s.enderecoCompletoEscritorio} onChange={(e) => patch({ enderecoCompletoEscritorio: e.target.value })} />
+        <Field
+          label="Endereço completo — escritório"
+          required
+          error={errors["enderecoCompletoEscritorio"]}
+        >
+          <TextInput
+            invalid={Boolean(errors["enderecoCompletoEscritorio"])}
+            value={s.enderecoCompletoEscritorio}
+            onChange={(e) =>
+              patch({ enderecoCompletoEscritorio: e.target.value })
+            }
+          />
         </Field>
         <Field label="Endereço completo — armazém" hint="Campo opcional">
-          <TextInput value={s.enderecoCompletoArmazem ?? ""} onChange={(e) => patch({ enderecoCompletoArmazem: e.target.value })} />
+          <TextInput
+            value={s.enderecoCompletoArmazem ?? ""}
+            onChange={(e) => patch({ enderecoCompletoArmazem: e.target.value })}
+          />
         </Field>
         <Field label="CNAEs secundários" hint="Campo opcional">
-          <TextInput value={s.cnaeSecundario ?? ""} onChange={(e) => patch({ cnaeSecundario: e.target.value })} />
+          <TextInput
+            value={s.cnaeSecundario ?? ""}
+            onChange={(e) => patch({ cnaeSecundario: e.target.value })}
+          />
         </Field>
         <Field label="CNAE principal" required error={errors["cnaePrincipal"]}>
-          <TextInput invalid={Boolean(errors["cnaePrincipal"])} value={s.cnaePrincipal} onChange={(e) => patch({ cnaePrincipal: e.target.value })} />
+          <TextInput
+            invalid={Boolean(errors["cnaePrincipal"])}
+            value={s.cnaePrincipal}
+            onChange={(e) => patch({ cnaePrincipal: e.target.value })}
+          />
         </Field>
-        <Field label="Regime de tributação" required error={errors["regimeTributacao"]}>
-          <Select invalid={Boolean(errors["regimeTributacao"])} value={s.regimeTributacao} onChange={(e) => patch({ regimeTributacao: e.target.value as typeof s.regimeTributacao })}>
+        <Field
+          label="Regime de tributação"
+          required
+          error={errors["regimeTributacao"]}
+        >
+          <Select
+            invalid={Boolean(errors["regimeTributacao"])}
+            value={s.regimeTributacao}
+            onChange={(e) =>
+              patch({
+                regimeTributacao: e.target.value as typeof s.regimeTributacao,
+              })
+            }
+          >
             <option value="">Selecione</option>
             <option value="SIMPLES_NACIONAL">Simples Nacional</option>
             <option value="LUCRO_PRESUMIDO">Lucro Presumido</option>

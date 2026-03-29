@@ -26,7 +26,8 @@ export default function NewScopePage({ params }: { params: { cnpj: string } }) {
           },
         });
 
-        if (!cancelled) router.replace(`/clients/${params.cnpj}/scopes/edit/${id}`);
+        if (!cancelled)
+          router.replace(`/clients/${params.cnpj}/scopes/edit/${id}`);
       } catch {
         if (!cancelled) router.replace(`/clients/${params.cnpj}/scopes`);
       }

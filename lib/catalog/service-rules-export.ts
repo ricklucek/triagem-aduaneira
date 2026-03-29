@@ -16,4 +16,4 @@ export const ExportServiceRules = [
   },
 ] as const;
 
-export type ExportServiceCode = typeof ExportServiceRules[number]["code"];
+export type ExportServiceCode = (typeof ExportServiceRules)[number]["code"];

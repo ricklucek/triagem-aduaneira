@@ -2,7 +2,11 @@
 
 import useSWR from "swr";
 import { authApi } from "@/lib/api/services/auth";
-import { clearAuthSession, getAuthSession, setAuthSession } from "@/lib/auth/session-storage";
+import {
+  clearAuthSession,
+  getAuthSession,
+  setAuthSession,
+} from "@/lib/auth/session-storage";
 import type { LoginPayload } from "@/lib/api/types/auth-api";
 
 export function useCurrentUser() {

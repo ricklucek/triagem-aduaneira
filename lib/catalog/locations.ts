@@ -11,7 +11,11 @@ export const EntryLocations = [
 export const ReleaseWarehouses = [
   { id: "ZP", label: "Zona Primária", code: "ZP" },
   { id: "ZA", label: "Zona Secundária (Armazém)", code: "ZA" },
-  { id: "MESMO_LOCAL_ENTRADA", label: "Normalmente no local de entrada", code: "AUTO" },
+  {
+    id: "MESMO_LOCAL_ENTRADA",
+    label: "Normalmente no local de entrada",
+    code: "AUTO",
+  },
 ] as const;
 
 // Export
@@ -21,4 +25,3 @@ export const ExportPortsAndBorders = [
   { id: "FRONTEIRA_FOZ", label: "Foz do Iguaçu", code: "BRFZI" },
   { id: "AEROPORTO_GRU", label: "Aeroporto de Guarulhos (GRU)", code: "BRGRU" },
 ] as const;
-

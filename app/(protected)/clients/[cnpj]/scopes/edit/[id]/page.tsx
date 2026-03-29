@@ -10,7 +10,11 @@ import { RotateCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export default function EditDraftPage({ params }: { params: { cnpj: string; id: string } }) {
+export default function EditDraftPage({
+  params,
+}: {
+  params: { cnpj: string; id: string };
+}) {
   const { data, isLoading, error, mutate } = useScope(params.id);
 
   async function handleSave(nextData: EscopoForm) {
@@ -38,7 +42,9 @@ export default function EditDraftPage({ params }: { params: { cnpj: string; id: 
     return (
       <Card className="rounded-2xl p-4">
         <div className="text-sm font-semibold">Draft não encontrado</div>
-        <div className="mt-2 text-sm text-muted-foreground">ID: {params.id}</div>
+        <div className="mt-2 text-sm text-muted-foreground">
+          ID: {params.id}
+        </div>
         <Button asChild variant="outline" className="mt-4 rounded-xl">
           <Link href={`/clients/${params.cnpj}/scopes`}>Voltar</Link>
         </Button>

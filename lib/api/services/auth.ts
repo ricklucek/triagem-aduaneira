@@ -1,15 +1,25 @@
 import { API_ROUTES } from "@/lib/api/config/routes";
 import { http } from "@/lib/api/config/http";
-import type { AuthUser, LoginPayload, LoginResponse, RefreshResponse } from "@/lib/api/types/auth-api";
+import type {
+  AuthUser,
+  LoginPayload,
+  LoginResponse,
+  RefreshResponse,
+} from "@/lib/api/types/auth-api";
 
 export const authApi = {
   async login(payload: LoginPayload): Promise<LoginResponse> {
-    const { data } = await http.post<LoginResponse>(API_ROUTES.auth.login, payload);
+    const { data } = await http.post<LoginResponse>(
+      API_ROUTES.auth.login,
+      payload,
+    );
     return data;
   },
 
   async refresh(refreshToken: string): Promise<RefreshResponse> {
-    const { data } = await http.post<RefreshResponse>(API_ROUTES.auth.refresh, { refreshToken });
+    const { data } = await http.post<RefreshResponse>(API_ROUTES.auth.refresh, {
+      refreshToken,
+    });
     return data;
   },
 

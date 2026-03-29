@@ -11,7 +11,11 @@ type Props = {
   onChange: (next: EscopoForm) => void;
 };
 
-export default function StepInformacoesFixas({ form, errors, onChange }: Props) {
+export default function StepInformacoesFixas({
+  form,
+  errors,
+  onChange,
+}: Props) {
   return (
     <Stack>
       <Section

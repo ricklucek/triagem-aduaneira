@@ -12,7 +12,11 @@ export interface PublicCompanyLookupResponse {
     codigo: string;
     descricao: string;
   }[];
-  regimeTributacao?: "SIMPLES_NACIONAL" | "LUCRO_PRESUMIDO" | "LUCRO_REAL" | null;
+  regimeTributacao?:
+    | "SIMPLES_NACIONAL"
+    | "LUCRO_PRESUMIDO"
+    | "LUCRO_REAL"
+    | null;
 }
 
 export interface PrepostoLookupItem {

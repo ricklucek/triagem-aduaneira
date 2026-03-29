@@ -19,9 +19,16 @@ export class AxiosError extends Error {
   }
 }
 
-function buildUrl(baseURL: string | undefined, url: string, params?: AxiosRequestConfig["params"]) {
+function buildUrl(
+  baseURL: string | undefined,
+  url: string,
+  params?: AxiosRequestConfig["params"],
+) {
   const full = `${baseURL ?? ""}${url}`;
-  const parsed = new URL(full, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+  const parsed = new URL(
+    full,
+    typeof window !== "undefined" ? window.location.origin : "http://localhost",
+  );
   if (params) {
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined) parsed.searchParams.set(k, String(v));
@@ -30,7 +37,12 @@ function buildUrl(baseURL: string | undefined, url: string, params?: AxiosReques
   return parsed.toString();
 }
 
-async function request<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", baseURL: string | undefined, url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+async function request<T>(
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+  baseURL: string | undefined,
+  url: string,
+  config?: AxiosRequestConfig,
+): Promise<AxiosResponse<T>> {
   const target = buildUrl(baseURL, url, config?.params);
   const res = await fetch(target, {
     method,
@@ -52,9 +64,10 @@ async function request<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", b
   }
 
   if (!res.ok) {
-    const message = typeof payload === "object" && payload && "message" in payload
-      ? String((payload as { message?: unknown }).message)
-      : `HTTP ${res.status}`;
+    const message =
+      typeof payload === "object" && payload && "message" in payload
+        ? String((payload as { message?: unknown }).message)
+        : `HTTP ${res.status}`;
     throw new AxiosError(message, res.status);
   }
 
@@ -63,21 +76,41 @@ async function request<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", b
 
 export type AxiosInstance = {
   get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
-  post<T>(url: string, body?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
-  put<T>(url: string, body?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
-  patch<T>(url: string, body?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
-  delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  post<T>(
+    url: string,
+    body?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<AxiosResponse<T>>;
+  put<T>(
+    url: string,
+    body?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<AxiosResponse<T>>;
+  patch<T>(
+    url: string,
+    body?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<AxiosResponse<T>>;
+  delete<T>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<AxiosResponse<T>>;
 };
 
 function create(config?: AxiosRequestConfig): AxiosInstance {
   const baseURL = config?.baseURL;
 
   return {
-    get: <T>(url: string, cfg?: AxiosRequestConfig) => request<T>("GET", baseURL, url, cfg),
-    post: <T>(url: string, body?: unknown, cfg?: AxiosRequestConfig) => request<T>("POST", baseURL, url, { ...cfg, body }),
-    put: <T>(url: string, body?: unknown, cfg?: AxiosRequestConfig) => request<T>("PUT", baseURL, url, { ...cfg, body }),
-    patch: <T>(url: string, body?: unknown, cfg?: AxiosRequestConfig) => request<T>("PATCH", baseURL, url, { ...cfg, body }),
-    delete: <T>(url: string, cfg?: AxiosRequestConfig) => request<T>("DELETE", baseURL, url, cfg),
+    get: <T>(url: string, cfg?: AxiosRequestConfig) =>
+      request<T>("GET", baseURL, url, cfg),
+    post: <T>(url: string, body?: unknown, cfg?: AxiosRequestConfig) =>
+      request<T>("POST", baseURL, url, { ...cfg, body }),
+    put: <T>(url: string, body?: unknown, cfg?: AxiosRequestConfig) =>
+      request<T>("PUT", baseURL, url, { ...cfg, body }),
+    patch: <T>(url: string, body?: unknown, cfg?: AxiosRequestConfig) =>
+      request<T>("PATCH", baseURL, url, { ...cfg, body }),
+    delete: <T>(url: string, cfg?: AxiosRequestConfig) =>
+      request<T>("DELETE", baseURL, url, cfg),
   };
 }
 

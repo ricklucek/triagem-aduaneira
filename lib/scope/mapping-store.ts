@@ -2,9 +2,9 @@
 
 export type MappingTemplate = {
   id: string;
-  cnpj: string;                // chave
+  cnpj: string; // chave
   docType: "DOCX" | "PDF" | "XLSX" | "UNKNOWN";
-  mapping: Record<string, string>;  // extractedKey -> targetPath
+  mapping: Record<string, string>; // extractedKey -> targetPath
   updatedAt: string;
 };
 
@@ -47,7 +47,10 @@ export function inferDocType(filename: string): MappingTemplate["docType"] {
   return "UNKNOWN";
 }
 
-export function loadTemplate(cnpj: string, docType: MappingTemplate["docType"]): MappingTemplate | null {
+export function loadTemplate(
+  cnpj: string,
+  docType: MappingTemplate["docType"],
+): MappingTemplate | null {
   const store = readStore();
   // pega o mais recente
   const list = store.templates
@@ -57,7 +60,11 @@ export function loadTemplate(cnpj: string, docType: MappingTemplate["docType"]):
   return list[0] ?? null;
 }
 
-export function saveTemplate(cnpj: string, docType: MappingTemplate["docType"], mapping: Record<string, string>) {
+export function saveTemplate(
+  cnpj: string,
+  docType: MappingTemplate["docType"],
+  mapping: Record<string, string>,
+) {
   const store = readStore();
 
   const tpl: MappingTemplate = {

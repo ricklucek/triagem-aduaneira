@@ -19,7 +19,10 @@ type Props = {
 };
 
 export default function StepContatos({ form, errors, onChange }: Props) {
-  function updateContato(index: number, patch: Partial<(typeof form.contatos)[number]>) {
+  function updateContato(
+    index: number,
+    patch: Partial<(typeof form.contatos)[number]>,
+  ) {
     const next = [...form.contatos];
     next[index] = { ...next[index], ...patch };
     onChange({ ...form, contatos: next });
@@ -45,7 +48,11 @@ export default function StepContatos({ form, errors, onChange }: Props) {
   return (
     <main className="gap-5 flex flex-col">
       <Toolbar
-        right={<PrimaryButton type="button" onClick={addContato}>+ Adicionar contato</PrimaryButton>}
+        right={
+          <PrimaryButton type="button" onClick={addContato}>
+            + Adicionar contato
+          </PrimaryButton>
+        }
       />
 
       <Stack gap={12}>
@@ -55,7 +62,10 @@ export default function StepContatos({ form, errors, onChange }: Props) {
               left={<strong>Contato {index + 1}</strong>}
               right={
                 form.contatos.length > 1 ? (
-                  <DangerButton type="button" onClick={() => removeContato(index)}>
+                  <DangerButton
+                    type="button"
+                    onClick={() => removeContato(index)}
+                  >
                     Remover
                   </DangerButton>
                 ) : null
@@ -70,7 +80,9 @@ export default function StepContatos({ form, errors, onChange }: Props) {
               >
                 <TextInput
                   value={contato.nome}
-                  onChange={(e) => updateContato(index, { nome: e.target.value })}
+                  onChange={(e) =>
+                    updateContato(index, { nome: e.target.value })
+                  }
                 />
               </Field>
 
@@ -94,7 +106,9 @@ export default function StepContatos({ form, errors, onChange }: Props) {
               >
                 <TextInput
                   value={contato.email}
-                  onChange={(e) => updateContato(index, { email: e.target.value })}
+                  onChange={(e) =>
+                    updateContato(index, { email: e.target.value })
+                  }
                 />
               </Field>
 
@@ -115,11 +129,31 @@ export default function StepContatos({ form, errors, onChange }: Props) {
         ))}
       </Stack>
 
-      {errors ? <div className="text-sm font-medium text-destructive">{errors['contatos']}</div> : null}
-      {errors ? <div className="text-sm font-medium text-destructive">{errors['nome']}</div> : null}
-      {errors ? <div className="text-sm font-medium text-destructive">{errors['cargoDepartamento']}</div> : null}
-      {errors ? <div className="text-sm font-medium text-destructive">{errors['email']}</div> : null}
-      {errors ? <div className="text-sm font-medium text-destructive">{errors['telefone']}</div> : null}
+      {errors ? (
+        <div className="text-sm font-medium text-destructive">
+          {errors["contatos"]}
+        </div>
+      ) : null}
+      {errors ? (
+        <div className="text-sm font-medium text-destructive">
+          {errors["nome"]}
+        </div>
+      ) : null}
+      {errors ? (
+        <div className="text-sm font-medium text-destructive">
+          {errors["cargoDepartamento"]}
+        </div>
+      ) : null}
+      {errors ? (
+        <div className="text-sm font-medium text-destructive">
+          {errors["email"]}
+        </div>
+      ) : null}
+      {errors ? (
+        <div className="text-sm font-medium text-destructive">
+          {errors["telefone"]}
+        </div>
+      ) : null}
     </main>
   );
 }

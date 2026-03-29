@@ -23,7 +23,11 @@ function scoreMatch(candidate: CatalogOption, token: string): number {
   return 0;
 }
 
-export function resolveCatalogId(token: string, catalog: readonly CatalogOption[], minScore = 60): string | null {
+export function resolveCatalogId(
+  token: string,
+  catalog: readonly CatalogOption[],
+  minScore = 60,
+): string | null {
   let best: { id: string; score: number } | null = null;
 
   for (const opt of catalog) {
@@ -38,7 +42,7 @@ export function resolveCatalogId(token: string, catalog: readonly CatalogOption[
 export function resolveCatalogIdsList(
   input: string,
   catalog: readonly CatalogOption[],
-  minScore = 60
+  minScore = 60,
 ): { ids: string[]; unmatched: string[] } {
   const tokens = splitList(input);
 

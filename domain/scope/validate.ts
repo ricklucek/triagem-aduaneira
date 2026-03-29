@@ -21,17 +21,21 @@ function zodErrorToMap(error: ZodError): Record<string, string> {
 
 export function validarEtapa(
   etapa: EtapaFormulario,
-  data: EscopoForm
+  data: EscopoForm,
 ): ResultadoValidacaoEtapa {
   try {
     switch (etapa) {
       case "INFORMACOES_FIXAS":
         ContaBancariaSchema.parse(data.informacoesFixas.dadosBancariosCasco);
-        if (!data.informacoesFixas.salarioMinimoVigente || data.informacoesFixas.salarioMinimoVigente <= 0) {
+        if (
+          !data.informacoesFixas.salarioMinimoVigente ||
+          data.informacoesFixas.salarioMinimoVigente <= 0
+        ) {
           return {
             ok: false,
             errors: {
-              "informacoesFixas.salarioMinimoVigente": "Salário mínimo vigente é obrigatório",
+              "informacoesFixas.salarioMinimoVigente":
+                "Salário mínimo vigente é obrigatório",
             },
           };
         }
@@ -64,56 +68,71 @@ export function validarEtapa(
         return { ok: true, errors: {} };
 
       case "IMPORTACAO":
-        if (!data.operacao.tipos.includes("IMPORTACAO")) return { ok: true, errors: {} };
+        if (!data.operacao.tipos.includes("IMPORTACAO"))
+          return { ok: true, errors: {} };
         if (!data.operacao.importacao) {
           return {
             ok: false,
-            errors: { "operacao.importacao": "Bloco de importação é obrigatório" },
+            errors: {
+              "operacao.importacao": "Bloco de importação é obrigatório",
+            },
           };
         }
         ImportacaoSchema.parse(data.operacao.importacao);
         return { ok: true, errors: {} };
 
       case "SERVICOS_IMPORTACAO":
-        if (!data.operacao.tipos.includes("IMPORTACAO")) return { ok: true, errors: {} };
+        if (!data.operacao.tipos.includes("IMPORTACAO"))
+          return { ok: true, errors: {} };
         if (!data.servicos.importacao) {
           return {
             ok: false,
-            errors: { "servicos.importacao": "Serviços de importação são obrigatórios" },
+            errors: {
+              "servicos.importacao": "Serviços de importação são obrigatórios",
+            },
           };
         }
         ServicosImportacaoSchema.parse(data.servicos.importacao);
         return { ok: true, errors: {} };
 
       case "EXPORTACAO":
-        if (!data.operacao.tipos.includes("EXPORTACAO")) return { ok: true, errors: {} };
+        if (!data.operacao.tipos.includes("EXPORTACAO"))
+          return { ok: true, errors: {} };
         if (!data.operacao.exportacao) {
           return {
             ok: false,
-            errors: { "operacao.exportacao": "Bloco de exportação é obrigatório" },
+            errors: {
+              "operacao.exportacao": "Bloco de exportação é obrigatório",
+            },
           };
         }
         ExportacaoSchema.parse(data.operacao.exportacao);
         return { ok: true, errors: {} };
 
       case "SERVICOS_EXPORTACAO":
-        if (!data.operacao.tipos.includes("EXPORTACAO")) return { ok: true, errors: {} };
+        if (!data.operacao.tipos.includes("EXPORTACAO"))
+          return { ok: true, errors: {} };
         if (!data.servicos.exportacao) {
           return {
             ok: false,
-            errors: { "servicos.exportacao": "Serviços de exportação são obrigatórios" },
+            errors: {
+              "servicos.exportacao": "Serviços de exportação são obrigatórios",
+            },
           };
         }
         ServicosExportacaoSchema.parse(data.servicos.exportacao);
         return { ok: true, errors: {} };
 
       case "FINANCEIRO":
-        ContaBancariaSchema.parse(data.financeiro.dadosBancariosClienteDevolucaoSaldo);
+        ContaBancariaSchema.parse(
+          data.financeiro.dadosBancariosClienteDevolucaoSaldo,
+        );
         if (!data.financeiro.observacoesFinanceiro?.trim()) {
           return {
             ok: false,
             errors: {
-              "financeiro.observacoesFinanceiro": "Observações do financeiro são obrigatórias",
+              "financeiro.observacoesFinanceiro":
+                "Observações do financeiro são obrigatórias",
             },
           };
         }
@@ -130,7 +149,9 @@ export function validarEtapa(
   }
 }
 
-export function validarFormularioCompleto(data: EscopoForm): ResultadoValidacaoEtapa {
+export function validarFormularioCompleto(
+  data: EscopoForm,
+): ResultadoValidacaoEtapa {
   try {
     EscopoSchema.parse(data);
     return { ok: true, errors: {} };

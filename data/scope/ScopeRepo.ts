@@ -40,7 +40,13 @@ export type PublishResult = {
 
 export interface ScopeRepo {
   createScope(initial?: Partial<EscopoForm>): Promise<{ id: string }>;
-  getScope(id: string): Promise<{ id: string; draft: EscopoForm; status: "draft" | "published" | "archived" }>;
+  getScope(
+    id: string,
+  ): Promise<{
+    id: string;
+    draft: EscopoForm;
+    status: "draft" | "published" | "archived";
+  }>;
   saveDraft(id: string, draft: EscopoForm): Promise<void>;
   listScopes(params: ListScopesParams): Promise<ListScopesResult>;
   publish(id: string): Promise<PublishResult>;

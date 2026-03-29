@@ -10,7 +10,9 @@ export default function NewScopePage() {
   useEffect(() => {
     (async () => {
       const metadata = await scopeApi.getMetadata();
-      const { id } = await scopeApi.createScope({ informacoesFixas: metadata.informacoesFixas });
+      const { id } = await scopeApi.createScope({
+        informacoesFixas: metadata.informacoesFixas,
+      });
       router.replace(`/scopes/${id}`);
     })();
   }, [router]);

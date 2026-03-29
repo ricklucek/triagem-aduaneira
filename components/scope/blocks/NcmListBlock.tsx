@@ -35,7 +35,11 @@ export default function NcmListBlock({
   return (
     <div>
       <Toolbar
-        right={<PrimaryButton type="button" onClick={addItem}>+ Adicionar NCM</PrimaryButton>}
+        right={
+          <PrimaryButton type="button" onClick={addItem}>
+            + Adicionar NCM
+          </PrimaryButton>
+        }
       />
 
       <Stack gap={12}>

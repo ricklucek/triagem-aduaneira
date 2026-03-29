@@ -5,8 +5,17 @@ import { useParams, useRouter } from "next/navigation";
 import ScopeWizard from "@/components/scope/ScopeWizard";
 import VersionHistory from "@/components/scope/VersionHistory";
 import { EscopoForm } from "@/domain/scope/types";
-import { Card, PageShell, SecondaryButton, Stack } from "@/components/ui/form-layout";
-import { useScope, useScopeMetadata, useScopeVersions } from "@/lib/api/hooks/use-scope-api";
+import {
+  Card,
+  PageShell,
+  SecondaryButton,
+  Stack,
+} from "@/components/ui/form-layout";
+import {
+  useScope,
+  useScopeMetadata,
+  useScopeVersions,
+} from "@/lib/api/hooks/use-scope-api";
 import { scopeApi } from "@/lib/api/services/scopes";
 import { Badge } from "@/components/ui/badge";
 import { formatCNPJ } from "@/utils/format";
@@ -15,29 +24,49 @@ export default function ScopeDetailPage() {
   const { scopeId } = useParams<{ scopeId: string }>();
   const router = useRouter();
 
-  const { data: scopeResponse, isLoading: loadingScope, error: scopeError, mutate } = useScope(scopeId);
-  const { data: versionsResponse, isLoading: loadingVersions, mutate: mutateVersions } = useScopeVersions(scopeId);
-  const { data: metadataResponse, isLoading: loadingMetadata } = useScopeMetadata();
+  const {
+    data: scopeResponse,
+    isLoading: loadingScope,
+    error: scopeError,
+    mutate,
+  } = useScope(scopeId);
+  const {
+    data: versionsResponse,
+    isLoading: loadingVersions,
+    mutate: mutateVersions,
+  } = useScopeVersions(scopeId);
+  const { data: metadataResponse, isLoading: loadingMetadata } =
+    useScopeMetadata();
 
   const loading = loadingScope || loadingVersions || loadingMetadata;
   const versions = versionsResponse ?? [];
 
   const draft = scopeResponse?.draft
     ? {
-      ...scopeResponse.draft,
-      informacoesFixas: metadataResponse?.informacoesFixas ?? scopeResponse.draft.informacoesFixas,
-    }
+        ...scopeResponse.draft,
+        informacoesFixas:
+          metadataResponse?.informacoesFixas ??
+          scopeResponse.draft.informacoesFixas,
+      }
     : null;
 
   const statusCode = scopeResponse?.status ?? "draft";
 
-  const status = statusCode === "draft" ? "Rascunho" : statusCode === "published" ? "Publicado" : "Arquivado";
+  const status =
+    statusCode === "draft"
+      ? "Rascunho"
+      : statusCode === "published"
+        ? "Publicado"
+        : "Arquivado";
 
   const responsaveis = metadataResponse?.responsaveis ?? [];
 
-  const handleSave = useCallback(async (nextData: EscopoForm) => {
-    await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
-  }, [scopeId]);
+  const handleSave = useCallback(
+    async (nextData: EscopoForm) => {
+      await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
+    },
+    [scopeId],
+  );
 
   const handlePublish = useCallback(async () => {
     await scopeApi.publishScope(scopeId);
@@ -46,7 +75,8 @@ export default function ScopeDetailPage() {
   }, [mutate, mutateVersions, scopeId]);
 
   if (loading) return <div style={{ padding: 24 }}>Carregando escopo...</div>;
-  if (scopeError || !draft) return <div style={{ padding: 24 }}>Escopo não encontrado.</div>;
+  if (scopeError || !draft)
+    return <div style={{ padding: 24 }}>Escopo não encontrado.</div>;
 
   return (
     <PageShell className="space-y-4">

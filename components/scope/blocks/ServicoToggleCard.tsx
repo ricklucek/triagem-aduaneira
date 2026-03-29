@@ -21,7 +21,9 @@ export default function ServicoToggleCard({
       <div
         className={[
           "grid transition-all duration-300 ease-in-out",
-          checked ? "grid-rows-[1fr] opacity-100 mt-4" : "grid-rows-[0fr] opacity-0 mt-0"
+          checked
+            ? "grid-rows-[1fr] opacity-100 mt-4"
+            : "grid-rows-[0fr] opacity-0 mt-0",
         ].join(" ")}
       >
         <div className="overflow-hidden">

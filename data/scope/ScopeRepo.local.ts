@@ -48,7 +48,8 @@ export class ScopeRepoLocal implements ScopeRepo {
         ...escopoFormDefault.sobreEmpresa,
         ...(initial?.sobreEmpresa ?? {}),
       },
-      contatos: initial?.contatos ?? structuredClone(escopoFormDefault.contatos),
+      contatos:
+        initial?.contatos ?? structuredClone(escopoFormDefault.contatos),
       operacao: {
         ...escopoFormDefault.operacao,
         ...(initial?.operacao ?? {}),
@@ -103,10 +104,11 @@ export class ScopeRepoLocal implements ScopeRepo {
 
     let filtered = all;
 
-    if (params.status) filtered = filtered.filter((x) => x.status === params.status);
+    if (params.status)
+      filtered = filtered.filter((x) => x.status === params.status);
     if (cnpj) {
       filtered = filtered.filter(
-        (x) => (x.draft.sobreEmpresa.cnpj ?? "").replace(/\D/g, "") === cnpj
+        (x) => (x.draft.sobreEmpresa.cnpj ?? "").replace(/\D/g, "") === cnpj,
       );
     }
     if (q) {
@@ -120,7 +122,10 @@ export class ScopeRepoLocal implements ScopeRepo {
     filtered.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
 
     const total = filtered.length;
-    const itemsSlice = filtered.slice(params.offset, params.offset + params.limit);
+    const itemsSlice = filtered.slice(
+      params.offset,
+      params.offset + params.limit,
+    );
 
     const items: ScopeSummary[] = itemsSlice.map((x) => ({
       id: x.id,
@@ -179,6 +184,8 @@ export class ScopeRepoLocal implements ScopeRepo {
     const all = loadAll();
     const rec = all[id];
     if (!rec) throw new Error("Escopo não encontrado");
-    return [...rec.versions].sort((a, b) => b.version_number - a.version_number);
+    return [...rec.versions].sort(
+      (a, b) => b.version_number - a.version_number,
+    );
   }
 }

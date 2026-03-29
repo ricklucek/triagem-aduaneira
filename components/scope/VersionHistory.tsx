@@ -3,14 +3,16 @@
 import { ScopeVersion } from "@/data/scope/ScopeRepo";
 import { Card, Stack } from "@/components/ui/form-layout";
 
-export default function VersionHistory({ versions }: { versions: ScopeVersion[] }) {
+export default function VersionHistory({
+  versions,
+}: {
+  versions: ScopeVersion[];
+}) {
   if (versions.length === 0) {
     return (
       <Card>
         <h3 className="font-semibold">Versões</h3>
-        <p style={{ color: "#667085" }}>
-          Nenhuma versão publicada ainda.
-        </p>
+        <p style={{ color: "#667085" }}>Nenhuma versão publicada ainda.</p>
       </Card>
     );
   }
@@ -29,9 +31,12 @@ export default function VersionHistory({ versions }: { versions: ScopeVersion[] 
               background: "#fcfcfd",
             }}
           >
-            <div style={{ fontWeight: 700 }}>Versão {version.version_number}</div>
+            <div style={{ fontWeight: 700 }}>
+              Versão {version.version_number}
+            </div>
             <div style={{ color: "#667085", fontSize: 14 }}>
-              Publicada em {new Date(version.published_at).toLocaleString("pt-BR")}
+              Publicada em{" "}
+              {new Date(version.published_at).toLocaleString("pt-BR")}
             </div>
           </div>
         ))}

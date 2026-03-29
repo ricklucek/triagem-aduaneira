@@ -14,7 +14,10 @@ export function useComercialDashboard() {
 }
 
 export function useCredenciamentoDashboard() {
-  return useSWR("dashboard:credenciamento", dashboardApi.getCredenciamentoMetrics);
+  return useSWR(
+    "dashboard:credenciamento",
+    dashboardApi.getCredenciamentoMetrics,
+  );
 }
 
 export function useOperacaoDashboard() {

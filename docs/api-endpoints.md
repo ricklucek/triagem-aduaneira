@@ -3,50 +3,87 @@
 ## Autenticação
 
 ### `POST /auth/login`
+
 - **Request body**
+
 ```json
 { "email": "usuario@empresa.com", "password": "senha-segura" }
 ```
+
 - **Response 200**
+
 ```json
 {
-  "user": { "id": "u_1", "nome": "Fulano", "email": "usuario@empresa.com", "role": "admin", "setor": "TI" },
-  "tokens": { "accessToken": "jwt", "refreshToken": "jwt-refresh", "expiresIn": 3600 }
+  "user": {
+    "id": "u_1",
+    "nome": "Fulano",
+    "email": "usuario@empresa.com",
+    "role": "admin",
+    "setor": "TI"
+  },
+  "tokens": {
+    "accessToken": "jwt",
+    "refreshToken": "jwt-refresh",
+    "expiresIn": 3600
+  }
 }
 ```
 
 ### `POST /auth/refresh`
+
 - **Request body**
+
 ```json
 { "refreshToken": "jwt-refresh" }
 ```
+
 - **Response 200**
+
 ```json
-{ "tokens": { "accessToken": "novo-jwt", "refreshToken": "novo-refresh", "expiresIn": 3600 } }
+{
+  "tokens": {
+    "accessToken": "novo-jwt",
+    "refreshToken": "novo-refresh",
+    "expiresIn": 3600
+  }
+}
 ```
 
 ### `POST /auth/logout`
+
 - **Request body**: `{}`
 - **Response 204** sem conteúdo.
 
 ### `GET /auth/me`
+
 - **Response 200**
+
 ```json
-{ "id": "u_1", "nome": "Fulano", "email": "usuario@empresa.com", "role": "admin", "setor": "TI" }
+{
+  "id": "u_1",
+  "nome": "Fulano",
+  "email": "usuario@empresa.com",
+  "role": "admin",
+  "setor": "TI"
+}
 ```
 
 ## Escopos
 
 ### `POST /scopes`
+
 - **Request body**: parcial de `EscopoForm`.
 - **Response 201**
+
 ```json
 { "id": "scope_123" }
 ```
 
 ### `GET /scopes`
+
 - **Query params**: `status`, `cnpj`, `q`, `limit`, `offset`.
 - **Response 200**
+
 ```json
 {
   "items": [
@@ -68,30 +105,48 @@
 ```
 
 ### `GET /scopes/:scopeId`
+
 - **Response 200**
+
 ```json
 { "id": "scope_123", "status": "draft", "draft": { "...EscopoForm": true } }
 ```
 
 ### `PUT /scopes/:scopeId/draft`
+
 - **Request body**: `EscopoForm`.
 - **Response 204** sem conteúdo.
 
 ### `POST /scopes/:scopeId/publish`
+
 - **Response 200**
+
 ```json
-{ "scope_id": "scope_123", "version_number": 2, "published_at": "2026-01-11T11:00:00Z" }
+{
+  "scope_id": "scope_123",
+  "version_number": 2,
+  "published_at": "2026-01-11T11:00:00Z"
+}
 ```
 
 ### `GET /scopes/:scopeId/versions`
+
 - **Response 200**
+
 ```json
-[{ "version_number": 1, "published_at": "2026-01-01T00:00:00Z", "data": { "...EscopoForm": true } }]
+[
+  {
+    "version_number": 1,
+    "published_at": "2026-01-01T00:00:00Z",
+    "data": { "...EscopoForm": true }
+  }
+]
 ```
 
 ## Dashboards por perfil
 
 ### `GET /dashboards/admin`
+
 ```json
 {
   "createdLastMonth": 45,
@@ -104,16 +159,28 @@
 ```
 
 ### `GET /dashboards/comercial`
+
 ```json
-{ "responsibleScopes": 21, "salesAveragePrice": 17250, "createdLastMonthAsResponsible": 8 }
+{
+  "responsibleScopes": 21,
+  "salesAveragePrice": 17250,
+  "createdLastMonthAsResponsible": 8
+}
 ```
 
 ### `GET /dashboards/credenciamento`
+
 ```json
-{ "createdLastMonth": 33, "expiredScopes": 5, "createdByUser": 17, "waitingAdjustment": 6 }
+{
+  "createdLastMonth": 33,
+  "expiredScopes": 5,
+  "createdByUser": 17,
+  "waitingAdjustment": 6
+}
 ```
 
 ### `GET /dashboards/operacao`
+
 ```json
 { "responsibleScopes": 40, "createdLastMonth": 12, "waitingAdjustment": 7 }
 ```
@@ -121,18 +188,43 @@
 ## Gestão de usuários (somente admin)
 
 ### `GET /users`
+
 ```json
 [
-  { "id": "u_2", "nome": "Ana", "email": "ana@empresa.com", "role": "comercial", "setor": "Comercial", "ativo": true }
+  {
+    "id": "u_2",
+    "nome": "Ana",
+    "email": "ana@empresa.com",
+    "role": "comercial",
+    "setor": "Comercial",
+    "ativo": true
+  }
 ]
 ```
 
 ### `POST /users`
+
 - **Request body**
+
 ```json
-{ "nome": "Ana", "email": "ana@empresa.com", "password": "SenhaForte123", "role": "comercial", "setor": "Comercial" }
+{
+  "nome": "Ana",
+  "email": "ana@empresa.com",
+  "password": "SenhaForte123",
+  "role": "comercial",
+  "setor": "Comercial"
+}
 ```
+
 - **Response 201**
+
 ```json
-{ "id": "u_2", "nome": "Ana", "email": "ana@empresa.com", "role": "comercial", "setor": "Comercial", "ativo": true }
+{
+  "id": "u_2",
+  "nome": "Ana",
+  "email": "ana@empresa.com",
+  "role": "comercial",
+  "setor": "Comercial",
+  "ativo": true
+}
 ```

@@ -9,22 +9,30 @@ import type {
 
 export const dashboardApi = {
   async getAdminMetrics(): Promise<AdminDashboardResponse> {
-    const { data } = await http.get<AdminDashboardResponse>(API_ROUTES.dashboards.admin);
+    const { data } = await http.get<AdminDashboardResponse>(
+      API_ROUTES.dashboards.admin,
+    );
     return data;
   },
 
   async getComercialMetrics(): Promise<ComercialDashboardResponse> {
-    const { data } = await http.get<ComercialDashboardResponse>(API_ROUTES.dashboards.comercial);
+    const { data } = await http.get<ComercialDashboardResponse>(
+      API_ROUTES.dashboards.comercial,
+    );
     return data;
   },
 
   async getCredenciamentoMetrics(): Promise<CredenciamentoDashboardResponse> {
-    const { data } = await http.get<CredenciamentoDashboardResponse>(API_ROUTES.dashboards.credenciamento);
+    const { data } = await http.get<CredenciamentoDashboardResponse>(
+      API_ROUTES.dashboards.credenciamento,
+    );
     return data;
   },
 
   async getOperacaoMetrics(): Promise<OperacaoDashboardResponse> {
-    const { data } = await http.get<OperacaoDashboardResponse>(API_ROUTES.dashboards.operacao);
+    const { data } = await http.get<OperacaoDashboardResponse>(
+      API_ROUTES.dashboards.operacao,
+    );
     return data;
   },
 };

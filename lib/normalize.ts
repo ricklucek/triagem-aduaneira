@@ -27,7 +27,9 @@ export function parseCnpjLoose(input: string): string {
   return digits;
 }
 
-export function parseOperationTypes(input: string): ("IMPORTACAO" | "EXPORTACAO")[] {
+export function parseOperationTypes(
+  input: string,
+): ("IMPORTACAO" | "EXPORTACAO")[] {
   const v = normalizeText(input);
 
   const out = new Set<"IMPORTACAO" | "EXPORTACAO">();

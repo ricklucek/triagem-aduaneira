@@ -8,11 +8,11 @@ export type Currency = "BRL" | "USD" | "EUR";
  */
 export type ServiceUiMode =
   | "SALARY_MINIMUM_OR_FIXED" // dropdown: salário mínimo ou outro valor (amount)
-  | "YESNO_AMOUNT"           // dropdown sim/não; se sim -> amount
-  | "YESNO_AMOUNT_TEXT"      // dropdown sim/não; se sim -> text + amount
-  | "PTAX_PERCENT"           // texto "PTAX negociado" + percent
+  | "YESNO_AMOUNT" // dropdown sim/não; se sim -> amount
+  | "YESNO_AMOUNT_TEXT" // dropdown sim/não; se sim -> text + amount
+  | "PTAX_PERCENT" // texto "PTAX negociado" + percent
   | "NEGOTIATED_AMOUNT_TEXT" // amount + text (obs/critério)
-  | "YES_OR_CASE_BY_CASE"    // dropdown: sim / caso a caso
+  | "YES_OR_CASE_BY_CASE" // dropdown: sim / caso a caso
   | "NOTE_AND_AMOUNT_REPEATABLE"; // notes + amount, permite múltiplas ocorrências
 
 export type ServiceCatalogItem = {
@@ -31,7 +31,7 @@ export type ServiceCatalogItem = {
     // hints para o StepServices
     helpers?: {
       showIncludedInDesembaraço?: boolean; // Preposto
-      showPtaxLabel?: boolean;             // Frete Internacional
+      showPtaxLabel?: boolean; // Frete Internacional
     };
   };
 };
@@ -52,7 +52,11 @@ export const ServiceCatalog = [
     code: "PREPOSTO",
     label: "Preposto",
     operations: ["IMPORTACAO", "EXPORTACAO"],
-    ui: { mode: "YESNO_AMOUNT", defaultCurrency: "BRL", helpers: { showIncludedInDesembaraço: true } },
+    ui: {
+      mode: "YESNO_AMOUNT",
+      defaultCurrency: "BRL",
+      helpers: { showIncludedInDesembaraço: true },
+    },
   },
 
   {
@@ -73,7 +77,11 @@ export const ServiceCatalog = [
     code: "FRETE_INTERNACIONAL",
     label: "Frete Internacional",
     operations: ["IMPORTACAO", "EXPORTACAO"],
-    ui: { mode: "PTAX_PERCENT", defaultCurrency: "USD", helpers: { showPtaxLabel: true } },
+    ui: {
+      mode: "PTAX_PERCENT",
+      defaultCurrency: "USD",
+      helpers: { showPtaxLabel: true },
+    },
   },
 
   {
@@ -94,7 +102,11 @@ export const ServiceCatalog = [
     code: "REGIME_ESPECIAL",
     label: "Regime Especial",
     operations: ["IMPORTACAO", "EXPORTACAO"],
-    ui: { mode: "NOTE_AND_AMOUNT_REPEATABLE", defaultCurrency: "BRL", repeatable: true },
+    ui: {
+      mode: "NOTE_AND_AMOUNT_REPEATABLE",
+      defaultCurrency: "BRL",
+      repeatable: true,
+    },
   },
 
   {
@@ -142,9 +154,11 @@ export const ServiceCatalog = [
 ] as const satisfies readonly ServiceCatalogItem[];
 
 // lista de codes para selects/validação auxiliar
-export const SERVICE_CODES = ServiceCatalog.map((s) => s.code) as unknown as readonly [
+export const SERVICE_CODES = ServiceCatalog.map(
+  (s) => s.code,
+) as unknown as readonly [
   (typeof ServiceCatalog)[number]["code"],
-  ...(typeof ServiceCatalog)[number]["code"][]
+  ...(typeof ServiceCatalog)[number]["code"][],
 ];
 
 /**

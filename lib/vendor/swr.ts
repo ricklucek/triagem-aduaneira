@@ -18,8 +18,8 @@ type SWRResponse<Data> = {
 export default function useSWR<Data>(
   key: SWRKey,
   fetcher: (key: string) => Promise<Data>,
-  options?: SWROptions
- ): SWRResponse<Data> {
+  options?: SWROptions,
+): SWRResponse<Data> {
   void options;
   const [data, setData] = useState<Data>();
   const [error, setError] = useState<Error>();

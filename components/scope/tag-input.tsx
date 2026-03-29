@@ -14,12 +14,18 @@ type Props = {
   className?: string;
 };
 
-export function TagInput({ label, placeholder, value, onChange, className }: Props) {
+export function TagInput({
+  label,
+  placeholder,
+  value,
+  onChange,
+  className,
+}: Props) {
   const [draft, setDraft] = useState("");
 
   const normalized = useMemo(
     () => value.map((v) => v.trim()).filter(Boolean),
-    [value]
+    [value],
   );
 
   function addFromText(text: string) {
@@ -68,10 +74,16 @@ export function TagInput({ label, placeholder, value, onChange, className }: Pro
 
       <div className="flex flex-wrap gap-2">
         {normalized.length === 0 ? (
-          <div className="text-xs text-muted-foreground">Nenhum item ainda.</div>
+          <div className="text-xs text-muted-foreground">
+            Nenhum item ainda.
+          </div>
         ) : (
           normalized.map((tag) => (
-            <Badge key={tag} variant="secondary" className="gap-2 rounded-xl py-1">
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="gap-2 rounded-xl py-1"
+            >
               {tag}
               <button
                 type="button"

@@ -1,6 +1,10 @@
 import { API_ROUTES } from "@/lib/api/config/routes";
 import { http } from "@/lib/api/config/http";
-import type { ListScopesParams, ListScopesResult, PublishResult } from "@/data/scope/ScopeRepo";
+import type {
+  ListScopesParams,
+  ListScopesResult,
+  PublishResult,
+} from "@/data/scope/ScopeRepo";
 import type { EscopoForm } from "@/domain/scope/types";
 import type {
   CreateScopeResponse,
@@ -12,37 +16,56 @@ import type {
 import type { ScopeMetadataResponse } from "@/lib/api/types/scope-metadata";
 
 export const scopeApi: ScopeApiClient = {
-  async createScope(initial?: Partial<EscopoForm>): Promise<CreateScopeResponse> {
-    const { data } = await http.post<CreateScopeResponse>(API_ROUTES.scopes.create, initial ?? {});
+  async createScope(
+    initial?: Partial<EscopoForm>,
+  ): Promise<CreateScopeResponse> {
+    const { data } = await http.post<CreateScopeResponse>(
+      API_ROUTES.scopes.create,
+      initial ?? {},
+    );
     return data;
   },
 
   async listScopes(params: ListScopesParams): Promise<ListScopesResult> {
-    const { data } = await http.get<ListScopesResult>(API_ROUTES.scopes.list, { params });
+    const { data } = await http.get<ListScopesResult>(API_ROUTES.scopes.list, {
+      params,
+    });
     return data;
   },
 
   async getScope(id: string): Promise<ScopeDetailResponse> {
-    const { data } = await http.get<ScopeDetailResponse>(API_ROUTES.scopes.detail(id));
+    const { data } = await http.get<ScopeDetailResponse>(
+      API_ROUTES.scopes.detail(id),
+    );
     return data;
   },
 
   async saveScopeDraft(payload: SaveScopeDraftPayload): Promise<void> {
-    await http.put<void>(API_ROUTES.scopes.saveDraft(payload.id), payload.draft);
+    await http.put<void>(
+      API_ROUTES.scopes.saveDraft(payload.id),
+      payload.draft,
+    );
   },
 
   async publishScope(id: string): Promise<PublishResult> {
-    const { data } = await http.post<PublishResult>(API_ROUTES.scopes.publish(id), {});
+    const { data } = await http.post<PublishResult>(
+      API_ROUTES.scopes.publish(id),
+      {},
+    );
     return data;
   },
 
   async listScopeVersions(id: string): Promise<ScopeVersionsResponse> {
-    const { data } = await http.get<ScopeVersionsResponse>(API_ROUTES.scopes.versions(id));
+    const { data } = await http.get<ScopeVersionsResponse>(
+      API_ROUTES.scopes.versions(id),
+    );
     return data;
   },
 
   async getMetadata(): Promise<ScopeMetadataResponse> {
-    const { data } = await http.get<ScopeMetadataResponse>(API_ROUTES.scopes.metadata);
+    const { data } = await http.get<ScopeMetadataResponse>(
+      API_ROUTES.scopes.metadata,
+    );
     return data;
   },
 };

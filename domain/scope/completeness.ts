@@ -11,7 +11,10 @@ function hasValue(value: unknown) {
 export function calculateCompleteness(data: EscopoForm): number {
   let total = 0;
   let done = 0;
-  const check = (condition: boolean) => { total += 1; if (condition) done += 1; };
+  const check = (condition: boolean) => {
+    total += 1;
+    if (condition) done += 1;
+  };
   check(hasValue(data.informacoesFixas.salarioMinimoVigente));
   check(hasValue(data.sobreEmpresa.razaoSocial));
   check(hasValue(data.sobreEmpresa.cnpj));
@@ -22,8 +25,38 @@ export function calculateCompleteness(data: EscopoForm): number {
   check(hasValue(data.sobreEmpresa.responsavelComercial));
   check(data.contatos.length > 0);
   check(data.operacao.tipos.length > 0);
-  if (data.operacao.tipos.includes("IMPORTACAO")) { const i = data.operacao.importacao; check(!!i); if (i) { check(i.ncms.length > 0 && i.ncms.every((x) => hasValue(x.codigo))); check(hasValue(i.vinculoComExportador)); check(i.locaisDesembaraco.length > 0 || hasValue(i.outroLocalDesembaraco)); check(i.locaisDespacho.length > 0 || hasValue(i.outroLocalDespacho)); check(hasValue(i.necessidadeDtcDta)); check(hasValue(i.necessidadeLiLpco)); check(i.necessidadeLiLpco === "NAO" || i.anuencias.length > 0 || hasValue(i.outroOrgaoAnuente)); check(hasValue(i.destinacao)); check(i.destinacao !== "CONSUMO" || hasValue(i.subtipoConsumo)); } }
-  if (data.operacao.tipos.includes("EXPORTACAO")) { const e = data.operacao.exportacao; check(!!e); if (e) { check(hasValue(e.analistaDA)); check(hasValue(e.produtosExportados)); check(e.ncms.length > 0 && e.ncms.every((x) => hasValue(x))); check(hasValue(e.destinacao)); check(e.destinacao !== "CONSUMO" || hasValue(e.subtipoConsumo)); } }
+  if (data.operacao.tipos.includes("IMPORTACAO")) {
+    const i = data.operacao.importacao;
+    check(!!i);
+    if (i) {
+      check(i.ncms.length > 0 && i.ncms.every((x) => hasValue(x.codigo)));
+      check(hasValue(i.vinculoComExportador));
+      check(
+        i.locaisDesembaraco.length > 0 || hasValue(i.outroLocalDesembaraco),
+      );
+      check(i.locaisDespacho.length > 0 || hasValue(i.outroLocalDespacho));
+      check(hasValue(i.necessidadeDtcDta));
+      check(hasValue(i.necessidadeLiLpco));
+      check(
+        i.necessidadeLiLpco === "NAO" ||
+          i.anuencias.length > 0 ||
+          hasValue(i.outroOrgaoAnuente),
+      );
+      check(hasValue(i.destinacao));
+      check(i.destinacao !== "CONSUMO" || hasValue(i.subtipoConsumo));
+    }
+  }
+  if (data.operacao.tipos.includes("EXPORTACAO")) {
+    const e = data.operacao.exportacao;
+    check(!!e);
+    if (e) {
+      check(hasValue(e.analistaDA));
+      check(hasValue(e.produtosExportados));
+      check(e.ncms.length > 0 && e.ncms.every((x) => hasValue(x)));
+      check(hasValue(e.destinacao));
+      check(e.destinacao !== "CONSUMO" || hasValue(e.subtipoConsumo));
+    }
+  }
   check(hasValue(data.financeiro.dadosBancariosClienteDevolucaoSaldo.banco));
   check(hasValue(data.financeiro.dadosBancariosClienteDevolucaoSaldo.agencia));
   check(hasValue(data.financeiro.dadosBancariosClienteDevolucaoSaldo.conta));

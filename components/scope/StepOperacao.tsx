@@ -23,20 +23,30 @@ export default function StepOperacao({ form, errors, onChange }: Props) {
       operacao: {
         ...form.operacao,
         tipos,
-        importacao: tipos.includes("IMPORTACAO") ? form.operacao.importacao : undefined,
-        exportacao: tipos.includes("EXPORTACAO") ? form.operacao.exportacao : undefined,
+        importacao: tipos.includes("IMPORTACAO")
+          ? form.operacao.importacao
+          : undefined,
+        exportacao: tipos.includes("EXPORTACAO")
+          ? form.operacao.exportacao
+          : undefined,
       },
       servicos: {
         ...form.servicos,
-        importacao: tipos.includes("IMPORTACAO") ? form.servicos.importacao : undefined,
-        exportacao: tipos.includes("EXPORTACAO") ? form.servicos.exportacao : undefined,
+        importacao: tipos.includes("IMPORTACAO")
+          ? form.servicos.importacao
+          : undefined,
+        exportacao: tipos.includes("EXPORTACAO")
+          ? form.servicos.exportacao
+          : undefined,
       },
     });
   }
 
   return (
     <main className="gap-5 flex flex-col">
-      <p className="text-sm text-muted-foreground sm:text-base">Selecione uma ou mais operações para abrir os blocos correspondentes.</p>
+      <p className="text-sm text-muted-foreground sm:text-base">
+        Selecione uma ou mais operações para abrir os blocos correspondentes.
+      </p>
       <Stack>
         <Checkbox
           label="Importação"

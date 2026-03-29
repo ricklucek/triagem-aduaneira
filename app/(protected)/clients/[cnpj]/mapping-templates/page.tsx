@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { listTemplates, deleteTemplatesForClient, type MappingTemplate } from "@/lib/scope/mapping-store";
+import {
+  listTemplates,
+  deleteTemplatesForClient,
+  type MappingTemplate,
+} from "@/lib/scope/mapping-store";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,9 +38,7 @@ export default function MappingTemplatesPage({ params }: Props) {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-lg font-semibold">Templates de Mapeamento</div>
-            <div className="text-sm text-muted-foreground">
-              Cliente: {cnpj}
-            </div>
+            <div className="text-sm text-muted-foreground">Cliente: {cnpj}</div>
           </div>
 
           <Button

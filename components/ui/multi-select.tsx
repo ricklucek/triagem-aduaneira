@@ -28,7 +28,9 @@ export function MultiSelect({
     <div className={cn("space-y-2", className)}>
       <div className="flex flex-wrap gap-2">
         {value.length === 0 ? (
-          <div className="text-xs text-muted-foreground">{placeholder ?? "Selecione..."}</div>
+          <div className="text-xs text-muted-foreground">
+            {placeholder ?? "Selecione..."}
+          </div>
         ) : (
           value.map((id) => {
             const opt = options.find((o) => o.id === id);
@@ -53,7 +55,9 @@ export function MultiSelect({
               onClick={() => toggle(o.id)}
             >
               {o.label}
-              {o.code ? <span className="ml-2 text-xs opacity-70">{o.code}</span> : null}
+              {o.code ? (
+                <span className="ml-2 text-xs opacity-70">{o.code}</span>
+              ) : null}
             </Button>
           );
         })}

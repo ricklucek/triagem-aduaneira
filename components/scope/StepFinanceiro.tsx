@@ -14,7 +14,9 @@ type Props = {
 export default function StepFinanceiro({ form, errors, onChange }: Props) {
   return (
     <main className="gap-10 flex flex-col">
-      <h2 className="text-xl font-semibold tracking-tight">Dados bancários do cliente para devolução de saldo</h2>
+      <h2 className="text-xl font-semibold tracking-tight">
+        Dados bancários do cliente para devolução de saldo
+      </h2>
       <ContaBancariaBlock
         value={form.financeiro.dadosBancariosClienteDevolucaoSaldo}
         onChange={(nextConta) =>
@@ -28,15 +30,13 @@ export default function StepFinanceiro({ form, errors, onChange }: Props) {
         }
         errors={{
           banco: errors["financeiro.dadosBancariosClienteDevolucaoSaldo.banco"],
-          agencia: errors["financeiro.dadosBancariosClienteDevolucaoSaldo.agencia"],
+          agencia:
+            errors["financeiro.dadosBancariosClienteDevolucaoSaldo.agencia"],
           conta: errors["financeiro.dadosBancariosClienteDevolucaoSaldo.conta"],
         }}
       />
 
-      <Field
-        label="Observações do financeiro"
-        hint="Campo opcional"
-      >
+      <Field label="Observações do financeiro" hint="Campo opcional">
         <TextArea
           value={form.financeiro.observacoesFinanceiro ?? ""}
           onChange={(e) =>

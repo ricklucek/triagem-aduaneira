@@ -16,4 +16,4 @@ export const ImportServiceRules = [
   },
 ] as const;
 
-export type ImportServiceCode = typeof ImportServiceRules[number]["code"];
+export type ImportServiceCode = (typeof ImportServiceRules)[number]["code"];
