@@ -276,16 +276,10 @@ export const ExportacaoSchema = z
     analistaDA: z.string().trim().min(1, "Analista DA é obrigatório"),
     produtosExportados: z.string().trim().min(1, "Produtos exportados é obrigatório"),
     ncms: z.array(z.string().trim()).default([]),
-    portosFronteiras: z.array(PortoFronteiraExportacaoSchema).default([]),
-    outroPorto: z.string().trim().optional().nullable(),
-    outraFronteira: z.string().trim().optional().nullable(),
     destinacao: DestinacaoSchema,
     subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
-    if (value.portosFronteiras.length === 0 && !value.outroPorto && !value.outraFronteira) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["portosFronteiras"], message: "Selecione ao menos um porto/fronteira ou informe um complemento" });
-    }
     if (value.destinacao === "CONSUMO" && !value.subtipoConsumo) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["subtipoConsumo"], message: "Subtipo de consumo é obrigatório" });
     }

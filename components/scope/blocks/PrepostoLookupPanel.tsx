@@ -100,15 +100,6 @@ export default function PrepostoLookupPanel({ title, cidade, loading, results, s
         <Field label="Nome" required error={errors?.nome}>
           <TextInput value={selected?.nome ?? ""} onChange={(e) => onChange({ id: selected?.id, nome: e.target.value, contatoNome: selected?.contatoNome, telefone: selected?.telefone, email: selected?.email, valor: selected?.valor ?? 0, valorDescricao: selected?.valorDescricao, descricaoLocal: selected?.descricaoLocal, origem: "MANUAL" })} />
         </Field>
-        <Field label="Contato" hint="Campo opcional">
-          <TextInput value={selected?.contatoNome ?? ""} onChange={(e) => onChange({ id: selected?.id, nome: selected?.nome ?? "", contatoNome: e.target.value, telefone: selected?.telefone, email: selected?.email, valor: selected?.valor ?? 0, valorDescricao: selected?.valorDescricao, descricaoLocal: selected?.descricaoLocal, origem: "MANUAL" })} />
-        </Field>
-        <Field label="Telefone" hint="Campo opcional" error={errors?.telefone}>
-          <TextInput value={selected?.telefone ?? ""} onChange={(e) => onChange({ id: selected?.id, nome: selected?.nome ?? "", contatoNome: selected?.contatoNome, telefone: e.target.value, email: selected?.email, valor: selected?.valor ?? 0, valorDescricao: selected?.valorDescricao, descricaoLocal: selected?.descricaoLocal, origem: "MANUAL" })} />
-        </Field>
-        <Field label="Email" hint="Campo opcional">
-          <TextInput value={selected?.email ?? ""} onChange={(e) => onChange({ id: selected?.id, nome: selected?.nome ?? "", contatoNome: selected?.contatoNome, telefone: selected?.telefone, email: e.target.value, valor: selected?.valor ?? 0, valorDescricao: selected?.valorDescricao, descricaoLocal: selected?.descricaoLocal, origem: "MANUAL" })} />
-        </Field>
         <Field label="Valor do preposto" required error={errors?.valor}>
           <NumberInput value={selected?.valor ?? ""} onChange={(e) => onChange({ id: selected?.id, nome: selected?.nome ?? "", contatoNome: selected?.contatoNome, telefone: selected?.telefone, email: selected?.email, valor: Number(e.target.value), valorDescricao: selected?.valorDescricao, descricaoLocal: selected?.descricaoLocal, origem: "MANUAL" })} />
         </Field>
