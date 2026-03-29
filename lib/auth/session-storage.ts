@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { AuthTokens, AuthUser } from "@/lib/api/types/auth-api";
 
 const AUTH_STORAGE_KEY = "triagem.auth.session";
+const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const AUTH_EVENT = "triagem.auth.session.changed";
 
 export interface AuthSession {
@@ -11,6 +12,17 @@ export interface AuthSession {
 
 let cachedRaw: string | null = null;
 let cachedSession: AuthSession | null = null;
+
+function syncCookie(raw: string | null) {
+  if (typeof document === "undefined") return;
+
+  if (!raw) {
+    document.cookie = `${AUTH_STORAGE_KEY}=; Max-Age=0; Path=/; SameSite=Lax`;
+    return;
+  }
+
+  document.cookie = `${AUTH_STORAGE_KEY}=${encodeURIComponent(raw)}; Max-Age=${AUTH_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+}
 
 function emitSessionChange() {
   if (typeof window === "undefined") return;
@@ -58,6 +70,7 @@ export function setAuthSession(session: AuthSession) {
 
   cachedRaw = raw;
   cachedSession = session;
+  syncCookie(raw);
 
   emitSessionChange();
 }
@@ -67,6 +80,7 @@ export function clearAuthSession() {
 
   localStorage.removeItem(AUTH_STORAGE_KEY);
   cachedRaw = null;
+  syncCookie(null);
   cachedSession = null;
 
   emitSessionChange();

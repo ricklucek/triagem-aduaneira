@@ -2,6 +2,7 @@ import { API_ROUTES } from "@/lib/api/config/routes";
 import { http } from "@/lib/api/config/http";
 import type {
   CreateUserPayload,
+  UpdateUserPayload,
   UserSummary,
 } from "@/lib/api/types/dashboard-api";
 
@@ -18,4 +19,14 @@ export const usersApi = {
     );
     return data;
   },
+
+  async updateUser(userId: string, payload: UpdateUserPayload): Promise<UserSummary> {
+    const { data } = await http.put<UserSummary>(API_ROUTES.users.update(userId), payload);
+    return data;
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    await http.delete(API_ROUTES.users.delete(userId));
+  },
+
 };

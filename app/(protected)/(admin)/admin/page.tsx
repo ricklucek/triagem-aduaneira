@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -73,17 +73,13 @@ export default function AdminDashboardPage() {
     ? form
     : { ...settings, prepostosContatos: settings.prepostosContatos ?? [] };
   const prepostos = currentForm.prepostosContatos ?? [];
-  const filteredPrepostos = useMemo(
-    () =>
-      prepostos.filter(
-        (item) =>
-          (operationFilter === "TODOS" || item.operacao === operationFilter) &&
-          (!localidadeFilter.trim() ||
-            item.localidade
-              .toLowerCase()
-              .includes(localidadeFilter.trim().toLowerCase())),
-      ),
-    [localidadeFilter, operationFilter, prepostos],
+  const filteredPrepostos = prepostos.filter(
+    (item) =>
+      (operationFilter === "TODOS" || item.operacao === operationFilter) &&
+      (!localidadeFilter.trim() ||
+        item.localidade
+          .toLowerCase()
+          .includes(localidadeFilter.trim().toLowerCase())),
   );
 
   async function saveSettings(nextForm?: AdminSettingsResponse) {

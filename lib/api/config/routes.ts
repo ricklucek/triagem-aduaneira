@@ -32,6 +32,8 @@ export const API_ROUTES = {
   users: {
     list: "/users",
     create: "/users",
+    update: (userId: string) => `/users/${userId}`,
+    delete: (userId: string) => `/users/${userId}`,
   },
   analytics: {
     comercialAveragePrice: "/analytics/comercial/average-price",

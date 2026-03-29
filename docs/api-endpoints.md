@@ -228,3 +228,54 @@
   "ativo": true
 }
 ```
+
+## Configurações e gestão administrativa
+
+### `PUT /admin/settings`
+
+- Endpoint já utilizado para salvar **Informações fixas** e também a coleção `prepostosContatos` após operações de criação/edição/exclusão na tela de **Contatos de prepostos**.
+
+### `GET /admin/settings/prepostos` _(novo sugerido)_
+
+- Sugestão para desacoplar a carga de prepostos da carga geral de configurações.
+- **Response 200**
+
+```json
+{
+  "items": [
+    {
+      "id": "preposto-1",
+      "nome": "Despachante Sul",
+      "localidade": "Itajaí",
+      "operacao": "IMPORTACAO",
+      "contatoNome": "Maria",
+      "telefone": "+55 47 99999-0000",
+      "email": "maria@empresa.com",
+      "valor": 350,
+      "observacoes": "Atendimento em horário comercial"
+    }
+  ]
+}
+```
+
+### `POST /admin/settings/prepostos` _(novo sugerido)_
+
+- Cria um registro de preposto.
+
+### `PUT /admin/settings/prepostos/:id` _(novo sugerido)_
+
+- Atualiza um registro existente.
+
+### `DELETE /admin/settings/prepostos/:id` _(novo sugerido)_
+
+- Remove um registro existente.
+
+### `PUT /users/:id` _(novo sugerido)_
+
+- Atualiza dados do usuário no fluxo de **Gerenciar usuários**.
+- **Request body**: `Partial<CreateUserPayload>` com `password` opcional.
+
+### `DELETE /users/:id` _(novo sugerido)_
+
+- Exclui usuário pelo `id`.
+- **Response 204** sem conteúdo.

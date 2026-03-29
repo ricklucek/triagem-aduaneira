@@ -1,28 +1,12 @@
-import Link from "next/link";
-import {
-  PageHeader,
-  PageShell,
-  PrimaryButton,
-  Stack,
-} from "@/components/ui/form-layout";
+import { redirect } from "next/navigation";
+import { getServerAuthSession } from "@/lib/auth/server-session";
 
-export default function HomePage() {
-  return (
-    <PageShell>
-      <PageHeader
-        title="Triagem Aduaneira"
-        subtitle="Acesse o login e os painéis por perfil para consumir dados via API."
-      />
+export default async function HomePage() {
+  const session = await getServerAuthSession();
 
-      <Stack>
-        <Link href="/login">
-          <PrimaryButton>Entrar com login e senha</PrimaryButton>
-        </Link>
+  if (session?.user) {
+    redirect("/dashboard");
+  }
 
-        <Link href="/dashboard">
-          <PrimaryButton>Ir para Dashboard de Escopos</PrimaryButton>
-        </Link>
-      </Stack>
-    </PageShell>
-  );
+  redirect("/login");
 }

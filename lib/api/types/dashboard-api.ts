@@ -53,3 +53,6 @@ export interface CreateUserPayload {
   role: "comercial" | "credenciamento" | "operacao";
   setor: string;
 }
+
+
+export type UpdateUserPayload = Partial<CreateUserPayload> & { password?: string };
