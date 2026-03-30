@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { RotateCw } from "lucide-react";
+import { Ellipsis, RotateCw } from "lucide-react";
 import CompletenessBadge from "@/components/ui/completeness-badge";
 import {
   PageHeader,
@@ -27,6 +27,8 @@ import {
 import { useScopes } from "@/lib/api/hooks/use-scope-api";
 import { formatCNPJ } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 type StatusFilter = "todos" | "draft" | "published" | "archived";
 
@@ -171,17 +173,48 @@ export default function DashboardPage() {
                         {x.version_count}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-right">
-                        <Link
-                          href={
-                            x.status === "published"
-                              ? `/clients/${x.cnpj}/scopes/view/${x.id}`
-                              : `/scopes/${x.id}`
-                          }
-                        >
-                          <SecondaryButton>
-                            {x.status === "published" ? "Visualizar" : "Abrir"}
-                          </SecondaryButton>
-                        </Link>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              className="inline-flex size-8 items-center justify-center rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/20"
+                              aria-label="Abrir menu de opções"
+                            >
+                              <Ellipsis className="h-5 w-5 text-white-light" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="right-0 w-56">
+                            {
+                              x.status === "published" ? (
+                                <div className="w-full flex flex-col gap-2">
+                                  <Link
+                                    href={`/clients/${x.cnpj}/scopes/view/${x.id}`}
+                                  >
+                                    <button className="w-full text-left">Visualizar</button>
+                                  </Link>
+                                  <Link
+                                    href={`/clients/${x.cnpj}/scopes/view/${x.id}`}
+                                  >
+                                    <button className="w-full text-left">Criar nova versão</button>
+                                  </Link>
+                                  <Button variant={"destructive"}>
+                                    <span>Excluir</span>
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="w-full flex flex-col gap-2">
+                                  <Link
+                                    href={`/scopes/${x.id}`}
+                                  >
+                                    <button className="w-full text-left">Abrir</button>
+                                  </Link>
+                                  <Button variant={"destructive"}>
+                                    <span>Excluir</span>
+                                  </Button>
+                                </div>
+                              )
+                            }
+                          </PopoverContent>
+                        </Popover>
                       </TableCell>
                     </TableRow>
                   ))}
