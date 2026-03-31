@@ -107,12 +107,11 @@ export default function StepSobreEmpresa({
         </Field>
         <Field
           label="Inscrição Estadual"
-          required
           error={errors["inscricaoEstadual"]}
         >
           <TextInput
             invalid={Boolean(errors["inscricaoEstadual"])}
-            value={s.inscricaoEstadual}
+            value={s.inscricaoEstadual ?? ""}
             onChange={(e) => patch({ inscricaoEstadual: e.target.value })}
           />
         </Field>

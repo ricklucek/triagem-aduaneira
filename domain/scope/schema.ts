@@ -285,6 +285,7 @@ export const ImportacaoSchema = z
         }),
       )
       .default([]),
+    observacaoNcms: z.string().trim().optional().nullable(),
     vinculoComExportador: SimNaoSchema,
     locaisDesembaraco: z.array(z.string().trim().min(1)).default([]),
     outroLocalDesembaraco: z.string().trim().optional().nullable(),
@@ -301,6 +302,7 @@ export const ImportacaoSchema = z
       ipi: BeneficioTributoSchema,
       pis: BeneficioTributoSchema,
       cofins: BeneficioTributoSchema,
+      observacao: z.string().trim().optional().nullable(),
     }),
     afrmm: z
       .object({
@@ -308,8 +310,8 @@ export const ImportacaoSchema = z
         dadosContaCliente: ContaBancariaSchema.optional(),
         regime: IntegralBeneficioSchema.optional(),
         detalheBeneficio: z.string().trim().optional().nullable(),
-      })
-      .optional(),
+        observacao: z.string().trim().optional().nullable(),
+      }),
     icms: z
       .object({
         contaPagamento: ContaPagamentoSchema.optional(),
@@ -317,8 +319,8 @@ export const ImportacaoSchema = z
         regime: IntegralBeneficioSchema.optional(),
         recolhida: z.string().trim().optional().nullable(),
         efetiva: z.string().trim().optional().nullable(),
-      })
-      .optional(),
+        observacao: z.string().trim().optional().nullable(),
+      }),
     destinacao: DestinacaoSchema,
     subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
   })
@@ -376,6 +378,7 @@ export const ExportacaoSchema = z
       .trim()
       .min(1, "Produtos exportados é obrigatório"),
     ncms: z.array(z.string().trim()).default([]),
+    observacaoNcms: z.string().trim().optional().nullable(),
     destinacao: DestinacaoSchema,
     subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
   })
@@ -426,10 +429,7 @@ export const EscopoSchema = z
     sobreEmpresa: z.object({
       razaoSocial: z.string().trim().min(1, "Razão social é obrigatória"),
       cnpj: z.string().trim().min(14, "CNPJ é obrigatório"),
-      inscricaoEstadual: z
-        .string()
-        .trim()
-        .min(1, "Inscrição Estadual é obrigatória"),
+      inscricaoEstadual: z.string().trim().optional().nullable(),
       inscricaoMunicipal: z.string().trim().optional().nullable(),
       enderecoCompletoEscritorio: z
         .string()

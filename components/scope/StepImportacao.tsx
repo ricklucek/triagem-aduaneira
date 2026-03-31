@@ -81,6 +81,7 @@ export default function StepImportacao({
     analistaAE: "",
     produtosImportados: "",
     ncms: [{ codigo: "", possuiNve: undefined }],
+    observacaoNcms: "",
     vinculoComExportador: "NAO",
     locaisDesembaraco: [],
     outroLocalDesembaraco: "",
@@ -96,9 +97,10 @@ export default function StepImportacao({
       ipi: { regime: "INTEGRAL", detalheBeneficio: "" },
       pis: { regime: "INTEGRAL", detalheBeneficio: "" },
       cofins: { regime: "INTEGRAL", detalheBeneficio: "" },
+      observacao: ""
     },
-    afrmm: undefined,
-    icms: { regime: "INTEGRAL", detalheBeneficio: "" } as never,
+    afrmm: { observacao: "" },
+    icms: { regime: "INTEGRAL", observacao: "" },
     destinacao: "REVENDA",
     subtipoConsumo: null,
   };
@@ -198,6 +200,12 @@ export default function StepImportacao({
               ) : null}
             </Card>
           ))}
+          <Field label="Observações" hint="Campo opcional">
+            <TextArea
+              value={data.observacaoNcms ?? ""}
+              onChange={(e) => update("observacaoNcms", e.target.value)}
+            />
+          </Field>
         </div>
       </div>
 
@@ -357,6 +365,13 @@ export default function StepImportacao({
             </Grid>
           </Card>
         ))}
+
+        <Field label="Observações" hint="Campo opcional">
+          <TextArea
+            value={data.impostosFederais.observacao ?? ""}
+            onChange={(e) => update("impostosFederais.observacao", e.target.value)}
+          />
+        </Field>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -414,6 +429,13 @@ export default function StepImportacao({
             />
           </Field>
         ) : null}
+
+        <Field label="Observações" hint="Campo opcional">
+          <TextArea
+            value={data.afrmm.observacao ?? ""}
+            onChange={(e) => update("afrmm.observacao", e.target.value)}
+          />
+        </Field>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -471,6 +493,12 @@ export default function StepImportacao({
             </Field>
           </Grid>
         ) : null}
+        <Field label="Observações" hint="Campo opcional">
+          <TextArea
+            value={data.icms.observacao ?? ""}
+            onChange={(e) => update("icms.observacao", e.target.value)}
+          />
+        </Field>
       </div>
 
       <Grid columns={2}>

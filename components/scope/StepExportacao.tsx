@@ -38,6 +38,7 @@ export default function StepExportacao({
     analistaDA: "",
     produtosExportados: "",
     ncms: [""],
+    observacaoNcms: "",
     portosFronteiras: [],
     outroPorto: "",
     outraFronteira: "",
@@ -88,6 +89,13 @@ export default function StepExportacao({
         error={errors["ncms"]}
       />
 
+      <Field label="Observações" hint="Campo opcional">
+        <TextArea
+          value={data.observacaoNcms ?? ""}
+          onChange={(e) => update("observacaoNcms", e.target.value)}
+        />
+      </Field>
+            
       <div className="flex flex-col gap-5">
         <Grid columns={2}>
           <Field label="Destinação" required>
