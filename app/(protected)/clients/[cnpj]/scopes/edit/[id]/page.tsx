@@ -18,7 +18,7 @@ export default function EditDraftPage({
   const { data, isLoading, error, mutate } = useScope(params.id);
 
   async function handleSave(nextData: EscopoForm) {
-    await scopeApi.saveScopeDraft({ id: params.id, draft: nextData });
+    await scopeApi.saveScope({ id: params.id, draft: nextData });
     await mutate();
   }
 

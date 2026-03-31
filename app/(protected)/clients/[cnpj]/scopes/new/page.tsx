@@ -15,7 +15,7 @@ export default function NewScopePage({ params }: { params: { cnpj: string } }) {
       try {
         const { id } = await scopeApi.createScope();
         const rec = await scopeApi.getScope(id);
-        await scopeApi.saveScopeDraft({
+        await scopeApi.saveScope({
           id,
           draft: {
             ...rec.draft,

@@ -10,7 +10,7 @@ export const API_ROUTES = {
     list: "/scopes",
     metadata: "/scopes/metadata",
     detail: (scopeId: string) => `/scopes/${scopeId}`,
-    saveDraft: (scopeId: string) => `/scopes/${scopeId}/draft`,
+    saveScope: (scopeId: string) => `/scopes/${scopeId}`,
     publish: (scopeId: string) => `/scopes/${scopeId}/publish`,
     versions: (scopeId: string) => `/scopes/${scopeId}/versions`,
     delete: (scopeId: string) => `/scopes/${scopeId}`,

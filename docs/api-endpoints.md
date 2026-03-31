@@ -112,7 +112,7 @@
 { "id": "scope_123", "status": "draft", "draft": { "...EscopoForm": true } }
 ```
 
-### `PUT /scopes/:scopeId/draft`
+### `PUT /scopes/:scopeId`
 
 - **Request body**: `EscopoForm`.
 - **Response 204** sem conteúdo.

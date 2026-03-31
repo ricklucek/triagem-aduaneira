@@ -40,9 +40,9 @@ export const scopeApi: ScopeApiClient = {
     return data;
   },
 
-  async saveScopeDraft(payload: SaveScopeDraftPayload): Promise<void> {
+  async saveScope(payload: SaveScopeDraftPayload): Promise<void> {
     await http.put<void>(
-      API_ROUTES.scopes.saveDraft(payload.id),
+      API_ROUTES.scopes.saveScope(payload.id),
       payload.draft,
     );
   },

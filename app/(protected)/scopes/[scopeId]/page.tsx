@@ -46,7 +46,7 @@ export default function ScopeDetailPage() {
 
   const handleSave = useCallback(
     async (nextData: EscopoForm) => {
-      await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
+      await scopeApi.saveScope({ id: scopeId, draft: nextData });
       await mutate();
     },
     [scopeId, mutate],
