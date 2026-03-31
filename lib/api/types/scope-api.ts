@@ -32,6 +32,7 @@ export interface ScopeApiClient {
   getScope(id: string): Promise<ScopeDetailResponse>;
   saveScopeDraft(payload: SaveScopeDraftPayload): Promise<void>;
   publishScope(id: string): Promise<PublishResult>;
+  deleteScope(id: string): Promise<void>;
   listScopeVersions(id: string): Promise<ScopeVersionsResponse>;
   getMetadata(): Promise<ScopeMetadataResponse>;
 }

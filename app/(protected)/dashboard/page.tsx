@@ -29,6 +29,15 @@ import { formatCNPJ } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { scopeApi } from "@/lib/api/services/scopes";
 
 type StatusFilter = "todos" | "draft" | "published" | "archived";
 
@@ -40,25 +49,43 @@ function formatDate(value?: string | null) {
 export default function DashboardPage() {
   const [status, setStatus] = useState<StatusFilter>("todos");
   const [q, setQ] = useState("");
-  const [cnpj, setCnpj] = useState("");
   const [page, setPage] = useState(1);
+  const [scopeToDelete, setScopeToDelete] = useState<{
+    id: string;
+    razaoSocial: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const pageSize = 10;
 
   const params = useMemo(
     () => ({
       status: status === "todos" ? undefined : status,
       q: q || undefined,
-      cnpj: cnpj || undefined,
       limit: pageSize,
       offset: (page - 1) * pageSize,
     }),
-    [cnpj, page, q, status],
+    [page, q, status],
   );
 
-  const { data, error, isLoading } = useScopes(params);
+  const { data, error, isLoading, mutate } = useScopes(params);
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  async function handleDeleteScope() {
+    if (!scopeToDelete) return;
+    try {
+      setDeleting(true);
+      await scopeApi.deleteScope(scopeToDelete.id);
+      await mutate();
+      setScopeToDelete(null);
+      alert("Escopo excluído com sucesso.");
+    } catch {
+      alert("Falha ao excluir escopo.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <PageShell>
@@ -131,11 +158,7 @@ export default function DashboardPage() {
                     <TableHead className="px-5 py-4">Status</TableHead>
                     <TableHead className="px-5 py-4">Completude</TableHead>
                     <TableHead className="px-5 py-4">Atualizado em</TableHead>
-                    <TableHead className="px-5 py-4">Últ. publicação</TableHead>
-                    <TableHead className="px-5 py-4">Versões</TableHead>
-                    <TableHead className="px-5 py-4 text-right">
-                      Ações
-                    </TableHead>
+                    <TableHead className="px-5 py-4 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -149,9 +172,7 @@ export default function DashboardPage() {
                       </TableCell>
                       <TableCell className="px-5 py-4">
                         <Badge
-                          variant={
-                            x.status === "draft" ? "secondary" : "default"
-                          }
+                          variant={x.status === "draft" ? "secondary" : "default"}
                         >
                           {x.status === "draft"
                             ? "Rascunho"
@@ -166,12 +187,6 @@ export default function DashboardPage() {
                       <TableCell className="px-5 py-4">
                         {formatDate(x.updated_at)}
                       </TableCell>
-                      <TableCell className="px-5 py-4">
-                        {formatDate(x.last_published_at)}
-                      </TableCell>
-                      <TableCell className="px-5 py-4">
-                        {x.version_count}
-                      </TableCell>
                       <TableCell className="px-5 py-4 text-right">
                         <Popover>
                           <PopoverTrigger asChild>
@@ -183,36 +198,25 @@ export default function DashboardPage() {
                             </button>
                           </PopoverTrigger>
                           <PopoverContent className="right-0 w-56">
-                            {
-                              x.status === "published" ? (
-                                <div className="w-full flex flex-col gap-2">
-                                  <Link
-                                    href={`/clients/${x.cnpj}/scopes/view/${x.id}`}
-                                  >
-                                    <button className="w-full text-left">Visualizar</button>
-                                  </Link>
-                                  <Link
-                                    href={`/clients/${x.cnpj}/scopes/view/${x.id}`}
-                                  >
-                                    <button className="w-full text-left">Criar nova versão</button>
-                                  </Link>
-                                  <Button variant={"destructive"}>
-                                    <span>Excluir</span>
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className="w-full flex flex-col gap-2">
-                                  <Link
-                                    href={`/scopes/${x.id}`}
-                                  >
-                                    <button className="w-full text-left">Abrir</button>
-                                  </Link>
-                                  <Button variant={"destructive"}>
-                                    <span>Excluir</span>
-                                  </Button>
-                                </div>
-                              )
-                            }
+                            <div className="flex w-full flex-col gap-2">
+                              <Link href={`/clients/${x.cnpj}/scopes/view/${x.id}`}>
+                                <button className="w-full text-left">Visualizar</button>
+                              </Link>
+                              <Link href={`/clients/${x.cnpj}/scopes/edit/${x.id}`}>
+                                <button className="w-full text-left">Editar</button>
+                              </Link>
+                              <Button
+                                variant="destructive"
+                                onClick={() =>
+                                  setScopeToDelete({
+                                    id: x.id,
+                                    razaoSocial: x.razao_social || x.id,
+                                  })
+                                }
+                              >
+                                <span>Excluir</span>
+                              </Button>
+                            </div>
                           </PopoverContent>
                         </Popover>
                       </TableCell>
@@ -233,9 +237,7 @@ export default function DashboardPage() {
                     <p className="font-medium">{x.cnpj}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                      Razão Social
-                    </p>
+                    <p className="text-sm text-muted-foreground">Razão Social</p>
                     <p className="font-medium">{x.razao_social}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
@@ -251,26 +253,25 @@ export default function DashboardPage() {
                       <p className="text-muted-foreground">Atualizado</p>
                       <p>{formatDate(x.updated_at)}</p>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Últ. publicação</p>
-                      <p>{formatDate(x.last_published_at)}</p>
-                    </div>
                   </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">
-                      Versões: {x.version_count}
-                    </span>
-                    <Link
-                      href={
-                        x.status === "published"
-                          ? `/clients/${x.cnpj}/scopes/view/${x.id}`
-                          : `/scopes/${x.id}`
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link href={`/clients/${x.cnpj}/scopes/view/${x.id}`}>
+                      <SecondaryButton>Visualizar</SecondaryButton>
+                    </Link>
+                    <Link href={`/clients/${x.cnpj}/scopes/edit/${x.id}`}>
+                      <SecondaryButton>Editar</SecondaryButton>
+                    </Link>
+                    <Button
+                      variant="destructive"
+                      onClick={() =>
+                        setScopeToDelete({
+                          id: x.id,
+                          razaoSocial: x.razao_social || x.id,
+                        })
                       }
                     >
-                      <SecondaryButton>
-                        {x.status === "published" ? "Visualizar" : "Abrir"}
-                      </SecondaryButton>
-                    </Link>
+                      Excluir
+                    </Button>
                   </div>
                 </Card>
               ))}
@@ -304,6 +305,39 @@ export default function DashboardPage() {
           </div>
         }
       />
+
+      <Dialog
+        open={Boolean(scopeToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setScopeToDelete(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir escopo</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir o escopo
+              {scopeToDelete ? ` "${scopeToDelete.razaoSocial}"` : ""}? Essa ação não poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setScopeToDelete(null)}
+              disabled={deleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteScope}
+              disabled={deleting}
+            >
+              {deleting ? "Excluindo..." : "Confirmar exclusão"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }

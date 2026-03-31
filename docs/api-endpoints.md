@@ -116,8 +116,16 @@
 
 - **Request body**: `EscopoForm`.
 - **Response 204** sem conteúdo.
+- **Observação funcional (frontend 2026-03-31)**: este endpoint deve aceitar atualização de escopos em qualquer status (`draft`, `published` ou `archived`), pois o fluxo de versionamento foi removido da interface e a edição agora ocorre diretamente no registro existente.
 
-### `POST /scopes/:scopeId/publish`
+### `DELETE /scopes/:scopeId` _(novo requerido)_
+
+- Remove o registro de escopo selecionado a partir das ações de **Excluir** no dashboard e na listagem por cliente.
+- **Response 204** sem conteúdo.
+- **Response 404** quando o `scopeId` não existir.
+- **Observação funcional (frontend 2026-03-31)**: endpoint usado com confirmação em modal antes da exclusão.
+
+### `POST /scopes/:scopeId/publish` _(legado / opcional)_
 
 - **Response 200**
 
@@ -129,7 +137,7 @@
 }
 ```
 
-### `GET /scopes/:scopeId/versions`
+### `GET /scopes/:scopeId/versions` _(legado / opcional)_
 
 - **Response 200**
 

@@ -1,23 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import { CheckCircle2, RotateCw, XCircle } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
-import { useScope, useScopeVersions } from "@/lib/api/hooks/use-scope-api";
+import { useScope } from "@/lib/api/hooks/use-scope-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { formatCNPJ } from "@/utils/format";
 
 const text = (v: unknown) =>
@@ -351,6 +344,22 @@ function ScopeDetails({
                 value={currency(si.preposto?.prepostoSelecionado?.valor)}
               />
               <Field
+                label="Emissão LI/LPCO"
+                value={boolBadge(si.emissaoLiLpco?.habilitado)}
+              />
+              <Field
+                label="Valor emissão LI/LPCO"
+                value={currency(si.emissaoLiLpco?.valor)}
+              />
+              <Field
+                label="Cadastro de catálogo de produtos"
+                value={boolBadge(si.cadastroCatalogoProdutos?.habilitado)}
+              />
+              <Field
+                label="Valor cadastro de catálogo"
+                value={currency(si.cadastroCatalogoProdutos?.valor)}
+              />
+              <Field
                 label="Assessoria"
                 value={boolBadge(si.assessoria?.habilitado)}
               />
@@ -408,7 +417,7 @@ function ScopeDetails({
               />
               <Field
                 label="Regime especial"
-                value={list(si.regimeEspecial.map((r) => r.nomeRegime))}
+                value={list(si.regimeEspecial?.map((r) => r.nomeRegime))}
               />
               <Field
                 label="Emissão NFe"
@@ -506,7 +515,7 @@ function ScopeDetails({
               />
               <Field
                 label="Itens de outros certificados"
-                value={list(se.outrosCertificados?.itens.map((i) => i.chave))}
+                value={list(se.outrosCertificados?.itens?.map((i) => i.chave))}
               />
               <Field
                 label="Assessoria"
@@ -570,7 +579,7 @@ function ScopeDetails({
               />
               <Field
                 label="Regime especial"
-                value={list(se.regimeEspecial.map((r) => r.nomeRegime))}
+                value={list(se.regimeEspecial?.map((r) => r.nomeRegime))}
               />
             </Grid>
           ) : (
@@ -605,26 +614,10 @@ export default function ScopeViewPage() {
     isLoading: loadingScope,
     error: scopeError,
   } = useScope(id);
-  const { data: versionsResponse, isLoading: loadingVersions } =
-    useScopeVersions(id);
-  const [selectedVersion, setSelectedVersion] = useState<string>("draft");
-  const versions = useMemo(
-    () =>
-      [...(versionsResponse ?? [])].sort(
-        (a, b) => b.version_number - a.version_number,
-      ),
-    [versionsResponse],
-  );
-  const selectedScope = useMemo(() => {
-    const draft = scopeResponse?.draft;
-    if (!draft) return null;
-    if (selectedVersion === "draft") return draft;
-    const version = versions.find(
-      (v) => String(v.version_number) === selectedVersion,
-    );
-    return version?.data ?? draft;
-  }, [scopeResponse?.draft, selectedVersion, versions]);
-  if (loadingScope || loadingVersions)
+
+  const selectedScope = useMemo(() => scopeResponse?.draft ?? null, [scopeResponse?.draft]);
+
+  if (loadingScope)
     return (
       <Card className="p-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
@@ -642,8 +635,7 @@ export default function ScopeViewPage() {
         </Button>
       </Card>
     );
-  const label =
-    selectedVersion === "draft" ? "Draft atual" : `Versão v${selectedVersion}`;
+
   return (
     <div className="grid gap-4" id="scope-view-layout">
       <Card className="p-4 print-avoid-break">
@@ -660,31 +652,14 @@ export default function ScopeViewPage() {
             <Button asChild variant="outline">
               <Link href={`/clients/${cnpj}/scopes`}>Voltar</Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link href={`/clients/${cnpj}/scopes/edit/${id}`}>Editar</Link>
+            </Button>
             <Button onClick={() => window.print()}>Baixar em PDF</Button>
           </div>
         </div>
-        <Separator className="my-4" />
-        <div className="grid gap-2 md:grid-cols-[220px_1fr] md:items-center">
-          <p className="text-sm text-muted-foreground">Versões disponíveis:</p>
-          <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-            <SelectTrigger className="w-full md:w-90">
-              <SelectValue placeholder="Selecione uma versão" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Draft atual</SelectItem>
-              {versions.map((v) => (
-                <SelectItem
-                  key={v.version_number}
-                  value={String(v.version_number)}
-                >
-                  v{v.version_number}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </Card>
-      <ScopeDetails scope={selectedScope} versionLabel={label} />
+      <ScopeDetails scope={selectedScope} versionLabel="Escopo atual" />
       <style jsx global>{`
         @media print {
           header,

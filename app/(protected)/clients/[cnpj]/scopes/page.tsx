@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { RotateCw } from "lucide-react";
 import { scopeApi } from "@/lib/api/services/scopes";
@@ -19,6 +19,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function formatISO(iso: string) {
   try {
@@ -35,31 +43,27 @@ export default function ScopesPage() {
     limit: 500,
     offset: 0,
   });
+  const [scopeToDelete, setScopeToDelete] = useState<{
+    id: string;
+    razaoSocial: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const items = useMemo(() => data?.items ?? [], [data]);
-  const drafts = useMemo(
-    () => items.filter((r) => r.status === "draft"),
-    [items],
-  );
-  const published = useMemo(
-    () => items.filter((r) => r.status === "published"),
-    [items],
-  );
 
-  async function cloneFromPublished(scopeId: string) {
+  async function handleDeleteScope() {
+    if (!scopeToDelete) return;
+
     try {
-      const rec = await scopeApi.getScope(scopeId);
-      const created = await scopeApi.createScope();
-      await scopeApi.saveScopeDraft({
-        id: created.id,
-        draft: {
-          ...rec.draft,
-        },
-      });
+      setDeleting(true);
+      await scopeApi.deleteScope(scopeToDelete.id);
       await mutate();
-      alert("Draft clonado a partir da versão publicada.");
+      setScopeToDelete(null);
+      alert("Escopo excluído com sucesso.");
     } catch {
-      alert("Falha ao clonar versão publicada.");
+      alert("Falha ao excluir escopo.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -72,7 +76,7 @@ export default function ScopesPage() {
               Escopos • {cnpj}
             </div>
             <div className="text-sm text-muted-foreground">
-              Gestão de rascunhos e documentos publicados.
+              Gestão e manutenção dos formulários de escopo.
             </div>
           </div>
 
@@ -92,124 +96,102 @@ export default function ScopesPage() {
             Falha ao carregar escopos.
           </div>
         ) : (
-          <div className="grid gap-6">
-            <section>
-              <div className="mb-2 flex items-center gap-2">
-                <div className="text-sm font-semibold">Drafts</div>
-                <Badge variant="secondary">{drafts.length}</Badge>
-              </div>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Razão Social</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Atualizado</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {drafts.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-sm text-muted-foreground"
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Razão Social</TableHead>
+                <TableHead>ID</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Atualizado</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-sm text-muted-foreground">
+                    Nenhum escopo encontrado.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                items.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium">
+                      {r.razao_social || "(sem razão social)"}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {r.id}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={r.status === "draft" ? "secondary" : "default"}>
+                        {r.status === "draft"
+                          ? "Rascunho"
+                          : r.status === "published"
+                            ? "Publicado"
+                            : "Arquivado"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatISO(r.updated_at)}</TableCell>
+                    <TableCell className="space-x-2 text-right">
+                      <Button asChild variant="secondary" className="rounded-xl">
+                        <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>Visualizar</Link>
+                      </Button>
+                      <Button asChild variant="outline" className="rounded-xl">
+                        <Link href={`/clients/${cnpj}/scopes/edit/${r.id}`}>Editar</Link>
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="rounded-xl"
+                        onClick={() =>
+                          setScopeToDelete({
+                            id: r.id,
+                            razaoSocial: r.razao_social || r.id,
+                          })
+                        }
                       >
-                        Nenhum draft ainda.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    drafts.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell className="font-medium">
-                          {r.razao_social || "(sem razão social)"}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {r.id}
-                        </TableCell>
-                        <TableCell>{formatISO(r.updated_at)}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            asChild
-                            variant="outline"
-                            className="rounded-xl"
-                          >
-                            <Link href={`/clients/${cnpj}/scopes/edit/${r.id}`}>
-                              Editar
-                            </Link>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </section>
-
-            <section>
-              <div className="mb-2 flex items-center gap-2">
-                <div className="text-sm font-semibold">Publicados</div>
-                <Badge variant="secondary">{published.length}</Badge>
-              </div>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Razão Social</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Atualizado</TableHead>
-                    <TableHead>Versões</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                        Excluir
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {published.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="text-sm text-muted-foreground"
-                      >
-                        Nenhuma versão publicada ainda.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    published.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>
-                          {r.razao_social || "(sem razão social)"}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {r.id}
-                        </TableCell>
-                        <TableCell>{formatISO(r.updated_at)}</TableCell>
-                        <TableCell>v{r.version_count}</TableCell>
-                        <TableCell className="space-x-2 text-right">
-                          <Button
-                            asChild
-                            variant="secondary"
-                            className="rounded-xl"
-                          >
-                            <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>
-                              Visualizar
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="rounded-xl"
-                            onClick={() => cloneFromPublished(r.id)}
-                          >
-                            Clonar
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </section>
-          </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
         )}
       </Card>
+
+      <Dialog
+        open={Boolean(scopeToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setScopeToDelete(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir escopo</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir o escopo
+              {scopeToDelete ? ` "${scopeToDelete.razaoSocial}"` : ""}? Essa ação não poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setScopeToDelete(null)}
+              disabled={deleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteScope}
+              disabled={deleting}
+            >
+              {deleting ? "Excluindo..." : "Confirmar exclusão"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

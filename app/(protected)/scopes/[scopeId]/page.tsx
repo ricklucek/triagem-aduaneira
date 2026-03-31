@@ -1,28 +1,17 @@
 "use client";
 
 import { useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import ScopeWizard from "@/components/scope/ScopeWizard";
-import VersionHistory from "@/components/scope/VersionHistory";
 import { EscopoForm } from "@/domain/scope/types";
-import {
-  Card,
-  PageShell,
-  SecondaryButton,
-  Stack,
-} from "@/components/ui/form-layout";
-import {
-  useScope,
-  useScopeMetadata,
-  useScopeVersions,
-} from "@/lib/api/hooks/use-scope-api";
+import { Card, PageShell, Stack } from "@/components/ui/form-layout";
+import { useScope, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
 import { scopeApi } from "@/lib/api/services/scopes";
 import { Badge } from "@/components/ui/badge";
 import { formatCNPJ } from "@/utils/format";
 
 export default function ScopeDetailPage() {
   const { scopeId } = useParams<{ scopeId: string }>();
-  const router = useRouter();
 
   const {
     data: scopeResponse,
@@ -30,16 +19,10 @@ export default function ScopeDetailPage() {
     error: scopeError,
     mutate,
   } = useScope(scopeId);
-  const {
-    data: versionsResponse,
-    isLoading: loadingVersions,
-    mutate: mutateVersions,
-  } = useScopeVersions(scopeId);
   const { data: metadataResponse, isLoading: loadingMetadata } =
     useScopeMetadata();
 
-  const loading = loadingScope || loadingVersions || loadingMetadata;
-  const versions = versionsResponse ?? [];
+  const loading = loadingScope || loadingMetadata;
 
   const draft = scopeResponse?.draft
     ? {
@@ -64,15 +47,16 @@ export default function ScopeDetailPage() {
   const handleSave = useCallback(
     async (nextData: EscopoForm) => {
       await scopeApi.saveScopeDraft({ id: scopeId, draft: nextData });
+      await mutate();
     },
-    [scopeId],
+    [scopeId, mutate],
   );
 
   const handlePublish = useCallback(async () => {
     await scopeApi.publishScope(scopeId);
-    await Promise.all([mutate(), mutateVersions()]);
+    await mutate();
     alert("Escopo publicado com sucesso.");
-  }, [mutate, mutateVersions, scopeId]);
+  }, [mutate, scopeId]);
 
   if (loading) return <div style={{ padding: 24 }}>Carregando escopo...</div>;
   if (scopeError || !draft)
@@ -94,7 +78,6 @@ export default function ScopeDetailPage() {
         </div>
 
         <Stack>
-          <VersionHistory versions={versions} />
           <Card>
             <Badge variant={statusCode === "draft" ? "secondary" : "default"}>
               {status}

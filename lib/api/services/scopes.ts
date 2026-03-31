@@ -55,6 +55,10 @@ export const scopeApi: ScopeApiClient = {
     return data;
   },
 
+  async deleteScope(id: string): Promise<void> {
+    await http.delete<void>(API_ROUTES.scopes.delete(id));
+  },
+
   async listScopeVersions(id: string): Promise<ScopeVersionsResponse> {
     const { data } = await http.get<ScopeVersionsResponse>(
       API_ROUTES.scopes.versions(id),
