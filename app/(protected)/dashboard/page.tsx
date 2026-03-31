@@ -197,13 +197,15 @@ export default function DashboardPage() {
                               <Ellipsis className="h-5 w-5 text-white-light" />
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="right-0 w-56">
-                            <div className="flex w-full flex-col gap-2">
-                              <Link href={`/clients/${x.cnpj}/scopes/view/${x.id}`}>
-                                <button className="w-full text-left">Visualizar</button>
-                              </Link>
-                              <Link href={`/clients/${x.cnpj}/scopes/edit/${x.id}`}>
-                                <button className="w-full text-left">Editar</button>
+                          <PopoverContent className="popover-menu-container right-0 w-56">
+                            <div className="flex w-full flex-col gap-4">
+                              <div className="popover-menu-item">
+                                <Link className="cursor-pointer" href={`/clients/${x.cnpj}/scopes/view/${x.id}`}>
+                                  <button className="w-full">Visualizar</button>
+                                </Link>
+                              </div>
+                              <Link className="cursor-pointer" href={`/scopes/${x.id}?step=SOBRE_EMPRESA`}>
+                                <button className="w-full">Editar</button>
                               </Link>
                               <Button
                                 variant="destructive"
@@ -254,7 +256,7 @@ export default function DashboardPage() {
                       <p>{formatDate(x.updated_at)}</p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 bg-red-500">
                     <Link href={`/clients/${x.cnpj}/scopes/view/${x.id}`}>
                       <SecondaryButton>Visualizar</SecondaryButton>
                     </Link>

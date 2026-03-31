@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -31,6 +31,7 @@ import {
   Toolbar,
 } from "@/components/ui/form-layout";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 function buildEtapas(data: EscopoForm): EtapaFormulario[] {
   const etapas: EtapaFormulario[] = ["SOBRE_EMPRESA", "CONTATOS", "OPERACAO"];
@@ -77,24 +78,32 @@ export default function ScopeWizard({
   title = "Escopos",
 }: Props) {
   const [form, setForm] = useState<EscopoForm>(
-    initialData ?? escopoFormDefault,
+    () => initialData ?? escopoFormDefault,
   );
-  const [indiceEtapa, setIndiceEtapa] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState("Não salvo");
   const [errorSheetOpen, setErrorSheetOpen] = useState(false);
 
-  useEffect(() => {
-    if (initialData) setForm(initialData);
-  }, [initialData]);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const etapas = useMemo(() => buildEtapas(form), [form]);
-  const etapaAtual = etapas[indiceEtapa];
+
+  const stepFromUrl = searchParams.get("step");
+  const etapaAtual = etapas.includes(stepFromUrl as EtapaFormulario)
+    ? (stepFromUrl as EtapaFormulario)
+    : etapas[0];
+
+  const etapaAtualIndex = etapas.indexOf(etapaAtual);
+  const isLastStep = etapaAtualIndex === etapas.length - 1;
+  const isFirstStep = etapaAtualIndex === 0;
 
   const persist = useCallback(
     async (data: EscopoForm, silent = false): Promise<boolean> => {
       if (!onSave) return true;
+
       setSaving(true);
       try {
         await onSave(data);
@@ -110,39 +119,67 @@ export default function ScopeWizard({
     [onSave],
   );
 
+  const navigateToStep = useCallback(
+    (nextStep: EtapaFormulario, method: "push" | "replace" = "push") => {
+      const q = new URLSearchParams(searchParams.toString());
+      q.set("step", nextStep);
+
+      const url = `${pathname}?${q.toString()}`;
+
+      if (method === "replace") {
+        router.replace(url);
+        return;
+      }
+
+      router.push(url);
+    },
+    [pathname, router, searchParams],
+  );
+
   async function proximaEtapa() {
     const result = validarEtapa(etapaAtual, form);
     setErrors(result.errors);
+
     if (!result.ok) {
       setErrorSheetOpen(true);
       return;
     }
 
+    const nextStep = etapas[etapaAtualIndex + 1];
+    if (!nextStep) return;
+
     setErrors({});
-    setIndiceEtapa((prev) => Math.min(prev + 1, etapas.length - 1));
-    void persist(form);
+    await persist(form, true);
+    navigateToStep(nextStep, "push");
   }
 
   function etapaAnterior() {
+    const previousStep = etapas[etapaAtualIndex - 1];
+    if (!previousStep) return;
+
     setErrors({});
-    setIndiceEtapa((prev) => prev - 1);
+    navigateToStep(previousStep, "push");
   }
 
   async function finalizar() {
     const result = validarFormularioCompleto(form);
     setErrors(result.errors);
+
     if (!result.ok) {
       setErrorSheetOpen(true);
       return;
     }
 
     const ok = await persist(form);
-    if (ok) alert("Formulário válido. Rascunho salvo com sucesso.");
+    if (ok) {
+      alert("Formulário válido. Rascunho salvo com sucesso.");
+    }
   }
 
   async function publicar() {
     const result = validarFormularioCompleto(form);
     setErrors(result.errors);
+
     if (!result.ok) {
       setErrorSheetOpen(true);
       return;
@@ -161,7 +198,9 @@ export default function ScopeWizard({
     const invalidElements = Array.from(
       document.querySelectorAll<HTMLElement>("[aria-invalid='true']"),
     );
+
     const target = invalidElements[index] ?? invalidElements[0];
+
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "center" });
       target.focus();
@@ -182,10 +221,13 @@ export default function ScopeWizard({
             responsaveis={responsaveis}
           />
         );
+
       case "CONTATOS":
         return <StepContatos form={form} errors={errors} onChange={setForm} />;
+
       case "OPERACAO":
         return <StepOperacao form={form} errors={errors} onChange={setForm} />;
+
       case "IMPORTACAO":
         return (
           <StepImportacao
@@ -195,6 +237,7 @@ export default function ScopeWizard({
             responsaveis={responsaveis}
           />
         );
+
       case "SERVICOS_IMPORTACAO":
         return (
           <StepServicosImportacao
@@ -204,6 +247,7 @@ export default function ScopeWizard({
             responsaveis={responsaveis}
           />
         );
+
       case "EXPORTACAO":
         return (
           <StepExportacao
@@ -213,6 +257,7 @@ export default function ScopeWizard({
             responsaveis={responsaveis}
           />
         );
+
       case "SERVICOS_EXPORTACAO":
         return (
           <StepServicosExportacao
@@ -222,10 +267,12 @@ export default function ScopeWizard({
             responsaveis={responsaveis}
           />
         );
+
       case "FINANCEIRO":
         return (
           <StepFinanceiro form={form} errors={errors} onChange={setForm} />
         );
+
       default:
         return null;
     }
@@ -237,9 +284,10 @@ export default function ScopeWizard({
         title={title}
         subtitle={`${saving ? "Salvando..." : savedMessage}`}
       />
+
       <StepPills
         steps={etapas.map((e) => STEP_LABELS[e])}
-        currentIndex={indiceEtapa}
+        currentIndex={etapaAtualIndex}
       />
 
       <div style={{ marginBottom: 20 }}>{renderEtapa()}</div>
@@ -283,7 +331,7 @@ export default function ScopeWizard({
 
       <Toolbar
         left={
-          indiceEtapa > 0 ? (
+          !isFirstStep ? (
             <SecondaryButton
               type="button"
               onClick={etapaAnterior}
@@ -297,7 +345,7 @@ export default function ScopeWizard({
         }
         right={
           <div style={{ display: "flex", gap: 8 }}>
-            {indiceEtapa === etapas.length - 1 ? (
+            {isLastStep ? (
               <PrimaryButton type="button" onClick={publicar} disabled={saving}>
                 Publicar
               </PrimaryButton>
@@ -310,6 +358,7 @@ export default function ScopeWizard({
                 >
                   Salvar rascunho
                 </SecondaryButton>
+
                 <PrimaryButton
                   type="button"
                   onClick={proximaEtapa}

@@ -124,3 +124,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .popover-menu-container {
+    @apply p-2 rounded-md bg-white min-w-56 shadow-black/40 shadow-xl z-50 flex flex-col gap-2
+  }
+
+  .popover-menu-item {
+    @apply w-full hover:bg-white/50 rounded-md p-1
+  }
+}

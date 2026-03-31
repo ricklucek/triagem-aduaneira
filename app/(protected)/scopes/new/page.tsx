@@ -13,7 +13,7 @@ export default function NewScopePage() {
       const { id } = await scopeApi.createScope({
         informacoesFixas: metadata.informacoesFixas,
       });
-      router.replace(`/scopes/${id}`);
+      router.replace(`/scopes/${id}?step=SOBRE_EMPRESA`);
     })();
   }, [router]);
 
