@@ -71,7 +71,7 @@ export default function ScopeDetailPage() {
             responsaveis={responsaveis}
             onSave={handleSave}
             onPublish={handlePublish}
-            title={scopeId}
+            title={""}
             subtitle="Edite, valide e publique o escopo."
             status={status}
           />
