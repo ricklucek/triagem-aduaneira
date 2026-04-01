@@ -1,11 +1,16 @@
 export interface PublicCompanyLookupResponse {
   cnpj: string;
+  logradouro: string;
+  numero: string;
+  complemento: string | null;
+  bairro: string;
+  municipio: string;
+  uf: string;
+  cep: string;
   razao_social: string;
   nome_fantasia?: string | null;
   inscricaoEstadual?: string | null;
   inscricaoMunicipal?: string | null;
-  enderecoCompletoEscritorio?: string | null;
-  enderecoCompletoArmazem?: string | null;
   cnae_fiscal?: string | null;
   cnae_fiscal_descricao?: string | null;
   cnaes_secundarios?: {

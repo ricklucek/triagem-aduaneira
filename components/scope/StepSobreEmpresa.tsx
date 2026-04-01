@@ -48,12 +48,8 @@ export default function StepSobreEmpresa({
               data.inscricaoEstadual ?? form.sobreEmpresa.inscricaoEstadual,
             inscricaoMunicipal:
               data.inscricaoMunicipal ?? form.sobreEmpresa.inscricaoMunicipal,
-            enderecoCompletoEscritorio:
-              data.enderecoCompletoEscritorio ??
-              form.sobreEmpresa.enderecoCompletoEscritorio,
-            enderecoCompletoArmazem:
-              data.enderecoCompletoArmazem ??
-              form.sobreEmpresa.enderecoCompletoArmazem,
+            enderecoCompletoEscritorio: `${data.logradouro}, ${data.bairro}, n°${data.numero} - ${data.municipio}/${data.uf} - CEP: ${data.cep}`,
+            enderecoCompletoArmazem: form.sobreEmpresa.enderecoCompletoArmazem,
             cnaePrincipal:
               data.cnae_fiscal_descricao ?? form.sobreEmpresa.cnaePrincipal,
             cnaeSecundario:
