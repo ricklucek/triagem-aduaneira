@@ -26,7 +26,7 @@ export const usersApi = {
   },
 
   async deleteUser(userId: string): Promise<void> {
-    await http.delete(API_ROUTES.users.delete(userId));
+    await http.delete(API_ROUTES.users.deleteUser(userId));
   },
 
 };

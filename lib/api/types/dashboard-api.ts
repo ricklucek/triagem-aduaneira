@@ -41,7 +41,7 @@ export type UserSummary = {
   id: string;
   nome: string;
   email: string;
-  role: "comercial" | "credenciamento" | "operacao";
+  role: "administrador" | "comercial" | "credenciamento" | "operacao";
   setor: string;
   ativo: boolean;
 };

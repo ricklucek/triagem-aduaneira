@@ -50,9 +50,11 @@ export default function SettingsUsersPage() {
     setOpen(true);
   };
 
-  const onDelete = async (id: string) => {
-    await usersApi.deleteUser(id);
-    await mutate();
+  const onDelete = async (user: UserSummary) => {
+    if (user.role !== "administrador") {
+      await usersApi.deleteUser(user.id);
+      await mutate();
+    }
   };
 
   return (
@@ -100,7 +102,7 @@ export default function SettingsUsersPage() {
                             <Button variant="ghost" className="w-full justify-start" onClick={() => openEdit(user)}>Editar</Button>
                           </div>
                           <div className="popover-menu-item">
-                            <Button variant="destructive" className="w-full justify-start" onClick={() => onDelete(user.id)}>Excluir</Button>
+                            <Button variant="destructive" className="w-full justify-start" onClick={() => onDelete(user)}>Excluir</Button>
                           </div>
                         </div>
                       </PopoverContent>

@@ -34,7 +34,8 @@ export const API_ROUTES = {
     list: "/users",
     create: "/users",
     update: (userId: string) => `/users/${userId}`,
-    delete: (userId: string) => `/users/${userId}`,
+    deleteUser: (userId: string) => `/users/user/${userId}`,
+    deleteAdmin: (userId: string) => `/users/admin/${userId}`,
   },
   analytics: {
     comercialAveragePrice: "/analytics/comercial/average-price",
