@@ -151,7 +151,7 @@ export default function StepServicosExportacao({
             </Select>
           </Field>
           {data.despachoAduaneiroExportacao.tipoValor === "OUTRO" ? (
-            <Field label="Valor" required>
+            <Field label="Valor">
               <NumberInput
                 value={data.despachoAduaneiroExportacao.valor ?? ""}
                 onChange={(e) =>
@@ -163,6 +163,27 @@ export default function StepServicosExportacao({
               />
             </Field>
           ) : null}
+          <Field label="Última atualização" hint="Campo opcional">
+            <TextInput
+              type="date"
+              value={data.despachoAduaneiroExportacao.ultimaAtualizacao ?? ""}
+              onChange={(e) =>
+                update(
+                  "despachoAduaneiroExportacao.ultimaAtualizacao",
+                  e.target.value,
+                )
+              }
+            />
+          </Field>
+
+          <Field label="Observação geral" hint="Campo opcional">
+            <TextArea
+              value={data.despachoAduaneiroExportacao.observacao ?? ""}
+              onChange={(e) =>
+                update("despachoAduaneiroExportacao.observacao", e.target.value)
+              }
+            />
+          </Field>
         </Grid>
       </ServicoToggleCard>
       <ServicoToggleCard
@@ -232,17 +253,34 @@ export default function StepServicosExportacao({
             valor: errors["preposto.prepostoSelecionado.valor"],
           }}
         />
+
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.preposto.observacao ?? ""}
+            onChange={(e) =>
+              update("preposto.observacao", e.target.value)
+            }
+          />
+        </Field>
       </ServicoToggleCard>
       <ServicoToggleCard
         title="Certificado de Origem"
         checked={data.certificadoOrigem.habilitado}
         onToggle={(checked) => update("certificadoOrigem.habilitado", checked)}
       >
-        <Field label="Valor" required>
+        <Field label="Valor">
           <NumberInput
             value={data.certificadoOrigem.valor ?? ""}
             onChange={(e) =>
               update("certificadoOrigem.valor", Number(e.target.value))
+            }
+          />
+        </Field>
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.certificadoOrigem.observacao ?? ""}
+            onChange={(e) =>
+              update("certificadoOrigem.observacao", e.target.value)
             }
           />
         </Field>
@@ -259,6 +297,14 @@ export default function StepServicosExportacao({
             value={data.certificadoFitossanitario.valor ?? ""}
             onChange={(e) =>
               update("certificadoFitossanitario.valor", Number(e.target.value))
+            }
+          />
+        </Field>
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.certificadoFitossanitario.observacao ?? ""}
+            onChange={(e) =>
+              update("certificadoFitossanitario.observacao", e.target.value)
             }
           />
         </Field>
@@ -366,6 +412,15 @@ export default function StepServicosExportacao({
               }
             />
           </Field>
+
+          <Field label="Observação geral" hint="Campo opcional">
+            <TextArea
+              value={data.assessoria.observacao ?? ""}
+              onChange={(e) =>
+                update("assessoria.observacao", e.target.value)
+              }
+            />
+          </Field>
         </Grid>
       </ServicoToggleCard>
       <ServicoToggleCard
@@ -378,6 +433,15 @@ export default function StepServicosExportacao({
             value={data.freteInternacional.ptaxNegociado ?? ""}
             onChange={(e) =>
               update("freteInternacional.ptaxNegociado", e.target.value)
+            }
+          />
+        </Field>
+
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.freteInternacional.observacao ?? ""}
+            onChange={(e) =>
+              update("freteInternacional.observacao", e.target.value)
             }
           />
         </Field>
@@ -403,8 +467,6 @@ export default function StepServicosExportacao({
           </Field>
           <Field
             label="% sobre frete + mercadoria (CFR/CPT)"
-            required
-            error={errors["seguroInternacional.percentualSobreCfr"]}
           >
             <NumberInput
               value={data.seguroInternacional.percentualSobreCfr ?? ""}

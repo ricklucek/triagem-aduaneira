@@ -244,7 +244,6 @@ export default function ScopeWizard({
             form={form}
             errors={errors}
             onChange={setForm}
-            responsaveis={responsaveis}
           />
         );
 

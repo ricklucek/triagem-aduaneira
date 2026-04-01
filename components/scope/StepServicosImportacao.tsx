@@ -13,8 +13,6 @@ import {
   TextInput,
 } from "@/components/ui/form-fields";
 import { Grid, Stack } from "@/components/ui/form-layout";
-import { ResponsiblePicker } from "./ResponsiblePicker";
-import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { publicApi } from "@/lib/api/services/public";
 import type { PrepostoLookupItem } from "@/lib/api/types/public-api";
 
@@ -22,7 +20,6 @@ type Props = {
   form: EscopoForm;
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
-  responsaveis: ScopeResponsible[];
 };
 function emptyImportacaoServicos(): NonNullable<
   EscopoForm["servicos"]["importacao"]
@@ -87,7 +84,6 @@ export default function StepServicosImportacao({
   form,
   errors,
   onChange,
-  responsaveis,
 }: Props) {
   const data = form.servicos.importacao ?? emptyImportacaoServicos();
   const [loadingPrepostos, setLoadingPrepostos] = useState(false);
@@ -158,8 +154,6 @@ export default function StepServicosImportacao({
           {data.despachoAduaneiroImportacao.tipoValor === "OUTRO" ? (
             <Field
               label="Valor"
-              required
-              error={errors["despachoAduaneiroImportacao.valor"]}
             >
               <NumberInput
                 value={data.despachoAduaneiroImportacao.valor ?? ""}
@@ -181,6 +175,15 @@ export default function StepServicosImportacao({
                   "despachoAduaneiroImportacao.ultimaAtualizacao",
                   e.target.value,
                 )
+              }
+            />
+          </Field>
+
+          <Field label="Observação geral" hint="Campo opcional">
+            <TextArea
+              value={data.despachoAduaneiroImportacao.observacao ?? ""}
+              onChange={(e) =>
+                update("despachoAduaneiroImportacao.observacao", e.target.value)
               }
             />
           </Field>
@@ -260,17 +263,35 @@ export default function StepServicosImportacao({
             valor: errors["preposto.prepostoSelecionado.valor"],
           }}
         />
+
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.preposto.observacao ?? ""}
+            onChange={(e) =>
+              update("preposto.observacao", e.target.value)
+            }
+          />
+        </Field>
       </ServicoToggleCard>
       <ServicoToggleCard
         title="Emissão de LI / LPCO"
         checked={data.emissaoLiLpco.habilitado}
         onToggle={(checked) => update("emissaoLiLpco.habilitado", checked)}
       >
-        <Field label="Valor" required error={errors["emissaoLiLpco.valor"]}>
+        <Field label="Valor" error={errors["emissaoLiLpco.valor"]}>
           <NumberInput
             value={data.emissaoLiLpco.valor ?? ""}
             onChange={(e) =>
               update("emissaoLiLpco.valor", Number(e.target.value))
+            }
+          />
+        </Field>
+
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.emissaoLiLpco.observacao ?? ""}
+            onChange={(e) =>
+              update("emissaoLiLpco.observacao", e.target.value)
             }
           />
         </Field>
@@ -284,13 +305,20 @@ export default function StepServicosImportacao({
       >
         <Field
           label="Valor"
-          required
-          error={errors["cadastroCatalogoProdutos.valor"]}
         >
           <NumberInput
             value={data.cadastroCatalogoProdutos.valor ?? ""}
             onChange={(e) =>
               update("cadastroCatalogoProdutos.valor", Number(e.target.value))
+            }
+          />
+        </Field>
+
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.cadastroCatalogoProdutos.observacao ?? ""}
+            onChange={(e) =>
+              update("cadastroCatalogoProdutos.observacao", e.target.value)
             }
           />
         </Field>
@@ -332,6 +360,16 @@ export default function StepServicosImportacao({
               }
             />
           </Field>
+
+          
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.assessoria.observacao ?? ""}
+            onChange={(e) =>
+              update("assessoria.observacao", e.target.value)
+            }
+          />
+        </Field>
         </Grid>
       </ServicoToggleCard>
       <ServicoToggleCard
@@ -351,6 +389,15 @@ export default function StepServicosImportacao({
             }
           />
         </Field>
+        
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.freteInternacional.observacao ?? ""}
+            onChange={(e) =>
+              update("freteInternacional.observacao", e.target.value)
+            }
+          />
+        </Field>
       </ServicoToggleCard>
       <ServicoToggleCard
         title="Seguro Internacional"
@@ -362,8 +409,6 @@ export default function StepServicosImportacao({
         <Grid columns={2}>
           <Field
             label="% sobre frete + mercadoria (CFR/CPT)"
-            required
-            error={errors["seguroInternacional.percentualSobreCfr"]}
           >
             <NumberInput
               value={data.seguroInternacional.percentualSobreCfr ?? ""}
@@ -440,6 +485,15 @@ export default function StepServicosImportacao({
           <NumberInput
             value={data.emissaoNfe.valor ?? ""}
             onChange={(e) => update("emissaoNfe.valor", Number(e.target.value))}
+          />
+        </Field>
+        
+        <Field label="Observação geral" hint="Campo opcional">
+          <TextArea
+            value={data.emissaoNfe.observacao ?? ""}
+            onChange={(e) =>
+              update("emissaoNfe.observacao", e.target.value)
+            }
           />
         </Field>
       </ServicoToggleCard>

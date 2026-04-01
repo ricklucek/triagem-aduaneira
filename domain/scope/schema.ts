@@ -95,6 +95,7 @@ const ServicoValorOuSalarioSchema = z
     tipoValor: z.enum(["MEIO_SALARIO_MINIMO", "SALARIO_MINIMO", "OUTRO", ""]),
     valor: z.number().optional().nullable(),
     responsavel: z.string().trim().optional().nullable(),
+    observacao: z.string().trim().optional().nullable(),
     ultimaAtualizacao: ServicoDataSchema,
   })
   .superRefine((value, ctx) => {
@@ -105,14 +106,6 @@ const ServicoValorOuSalarioSchema = z
         code: z.ZodIssueCode.custom,
         path: ["tipoValor"],
         message: "Tipo de valor é obrigatório",
-      });
-    }
-
-    if (value.tipoValor === "OUTRO" && (!value.valor || value.valor <= 0)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["valor"],
-        message: "Valor é obrigatório",
       });
     }
 
@@ -129,15 +122,7 @@ const ServicoValorSimplesSchema = z
   .object({
     habilitado: z.boolean(),
     valor: z.number().optional().nullable(),
-  })
-  .superRefine((value, ctx) => {
-    if (value.habilitado && (!value.valor || value.valor <= 0)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["valor"],
-        message: "Valor é obrigatório",
-      });
-    }
+    observacao: z.string().trim().optional().nullable(),
   });
 
 const PrepostoEscolhaSchema = z.object({
@@ -161,6 +146,7 @@ const ServicoPrepostoSchema = z
     outroPorto: z.string().trim().optional().nullable(),
     outraFronteira: z.string().trim().optional().nullable(),
     prepostoSelecionado: PrepostoEscolhaSchema.optional().nullable(),
+    observacao: z.string().trim().optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
@@ -198,6 +184,7 @@ const ServicoFreteInternacionalSchema = z
   .object({
     habilitado: z.boolean(),
     ptaxNegociado: z.string().trim().optional().nullable(),
+    observacao: z.string().trim().optional().nullable(),
   })
   .superRefine((value, ctx) => {
     if (!value.habilitado) return;
