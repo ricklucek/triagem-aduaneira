@@ -32,7 +32,6 @@ function emptyExportacaoServicos(): NonNullable<
       habilitado: false,
       tipoValor: "SALARIO_MINIMO",
       valor: null,
-      responsavel: undefined,
       ultimaAtualizacao: "",
     },
     preposto: {
@@ -49,9 +48,8 @@ function emptyExportacaoServicos(): NonNullable<
     outrosCertificados: { habilitado: false, itens: [] },
     assessoria: {
       habilitado: false,
-      tipoValor: "SALARIO_MINIMO",
+      tipoValor: "",
       valor: null,
-      responsavel: undefined,
       ultimaAtualizacao: "",
     },
     freteInternacional: { habilitado: false, ptaxNegociado: "" },
@@ -166,15 +164,6 @@ export default function StepServicosExportacao({
             </Field>
           ) : null}
         </Grid>
-        <ResponsiblePicker
-          label="Responsável"
-          value={data.despachoAduaneiroExportacao.responsavel ?? ""}
-          onChange={(value) =>
-            update("despachoAduaneiroExportacao.responsavel", value)
-          }
-          options={responsaveis}
-          error={errors["despachoAduaneiroExportacao.responsavel"]}
-        />
       </ServicoToggleCard>
       <ServicoToggleCard
         title="Preposto"
@@ -351,6 +340,7 @@ export default function StepServicosExportacao({
               value={data.assessoria.tipoValor as string | undefined}
               onChange={(e) => update("assessoria.tipoValor", e.target.value)}
             >
+              <option value="">Selecione uma opção</option>
               <option value="SALARIO_MINIMO">
                 Meio salário mínimo vigente
               </option>
@@ -377,13 +367,6 @@ export default function StepServicosExportacao({
             />
           </Field>
         </Grid>
-        <ResponsiblePicker
-          label="Responsável"
-          value={data.assessoria.responsavel ?? ""}
-          onChange={(value) => update("assessoria.responsavel", value)}
-          options={responsaveis}
-          error={errors["assessoria.responsavel"]}
-        />
       </ServicoToggleCard>
       <ServicoToggleCard
         title="Frete Internacional"
@@ -419,7 +402,7 @@ export default function StepServicosExportacao({
             />
           </Field>
           <Field
-            label="% sobre CFR"
+            label="% sobre frete + mercadoria (CFR/CPT)"
             required
             error={errors["seguroInternacional.percentualSobreCfr"]}
           >

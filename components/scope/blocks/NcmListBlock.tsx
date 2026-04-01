@@ -8,6 +8,7 @@ import {
   Stack,
   Toolbar,
 } from "@/components/ui/form-layout";
+import { formatNCM } from "@/utils/format";
 
 export default function NcmListBlock({
   items,
@@ -51,7 +52,7 @@ export default function NcmListBlock({
               error={index === 0 ? error : undefined}
             >
               <TextInput
-                value={item}
+                value={formatNCM(item)}
                 onChange={(e) => updateItem(index, e.target.value)}
               />
             </Field>

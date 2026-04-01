@@ -13,6 +13,7 @@ import { Card, Grid } from "@/components/ui/form-layout";
 import { ResponsiblePicker } from "./ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { Button } from "../ui/button";
+import { formatNCM } from "@/utils/format";
 
 const LOCAIS = [
   ["SANTOS_BANDEIRANTES_8931364", "Santos Bandeirantes"],
@@ -147,7 +148,7 @@ export default function StepImportacao({
             filterSetores={["Operação", "operacao", "Atendimento"]}
           />
         </Grid>
-        <Field label="Produtos importados" hint="Campo opcional">
+        <Field label="Produtos importados" required error={errors["produtosImportados"]}>
           <TextArea
             value={data.produtosImportados ?? ""}
             onChange={(e) => update("produtosImportados", e.target.value)}
@@ -175,7 +176,7 @@ export default function StepImportacao({
                   error={index === 0 ? errors["ncms"] : undefined}
                 >
                   <TextInput
-                    value={item.codigo ?? ""}
+                    value={formatNCM(item.codigo ?? "")}
                     onChange={(e) => {
                       const next = [...data.ncms];
                       next[index] = { ...next[index], codigo: e.target.value };

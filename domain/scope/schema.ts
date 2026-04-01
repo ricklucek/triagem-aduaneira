@@ -92,7 +92,7 @@ const ServicoDataSchema = z.string().trim().optional().nullable();
 const ServicoValorOuSalarioSchema = z
   .object({
     habilitado: z.boolean(),
-    tipoValor: z.enum(["SALARIO_MINIMO", "OUTRO"]).optional().nullable(),
+    tipoValor: z.enum(["MEIO_SALARIO_MINIMO", "SALARIO_MINIMO", "OUTRO", ""]),
     valor: z.number().optional().nullable(),
     responsavel: z.string().trim().optional().nullable(),
     ultimaAtualizacao: ServicoDataSchema,
@@ -224,7 +224,7 @@ const ServicoSeguroSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["percentualSobreCfr"],
-        message: "% sobre CFR é obrigatório",
+        message: "% sobre frete + mercadoria (CFR/CPT) é obrigatório",
       });
     }
   });
@@ -276,7 +276,7 @@ export const ImportacaoSchema = z
   .object({
     analistaDA: AnalistaDAImportacaoSchema,
     analistaAE: z.string().trim().optional().nullable(),
-    produtosImportados: z.string().trim().optional().nullable(),
+    produtosImportados: z.string().trim().min(1, "Produtos importados é obrigatório"),
     ncms: z
       .array(
         z.object({

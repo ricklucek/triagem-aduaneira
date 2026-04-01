@@ -7,3 +7,9 @@ export function formatCNPJ(value: string) {
     .replace(/\.(\d{3})(\d)/, ".$1/$2")
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
+
+export function formatNCM(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+
+  return digits.replace(/^(\d{4})(\d{2})(\d{2})/, "$1.$2.$3");
+}
