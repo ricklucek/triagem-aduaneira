@@ -14,6 +14,7 @@ import { useUsers } from "@/lib/api/hooks/use-dashboards";
 import { usersApi } from "@/lib/api/services/users";
 import type { CreateUserPayload, UserSummary } from "@/lib/api/types/dashboard-api";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { set } from "zod";
 
 const emptyForm: CreateUserPayload = { nome: "", email: "", password: "", role: "comercial", setor: "" };
 
@@ -23,15 +24,19 @@ export default function SettingsUsersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreateUserPayload>(emptyForm);
 
+  const [submitting, setSubmitting] = useState(false);
+
   if (!hasRole("admin")) return <p>Acesso restrito ao administrador.</p>;
 
   const onSubmit = async (event: FormEvent) => {
+    setSubmitting(true);
     event.preventDefault();
     if (editingId) {
       await usersApi.updateUser(editingId, form);
     } else {
       await usersApi.createUser(form);
     }
+    setSubmitting(false);
     setOpen(false);
     setEditingId(null);
     setForm(emptyForm);
@@ -137,7 +142,9 @@ export default function SettingsUsersPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit">Salvar</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Salvando..." : "Salvar"}
+            </Button>
           </form>
         </SheetContent>
       </Sheet>
