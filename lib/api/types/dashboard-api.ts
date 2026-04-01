@@ -50,7 +50,7 @@ export interface CreateUserPayload {
   nome: string;
   email: string;
   password: string;
-  role: "comercial" | "credenciamento" | "operacao";
+  role: "comercial" | "credenciamento" | "operacao" | "administrador";
   setor: string;
 }
 

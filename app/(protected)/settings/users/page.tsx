@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { Ellipsis, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { hasRole } from "@/lib/auth/guard";
 import { useUsers } from "@/lib/api/hooks/use-dashboards";
 import { usersApi } from "@/lib/api/services/users";
 import type { CreateUserPayload, UserSummary } from "@/lib/api/types/dashboard-api";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const emptyForm: CreateUserPayload = { nome: "", email: "", password: "", role: "comercial", setor: "" };
 
@@ -84,13 +85,26 @@ export default function SettingsUsersPage() {
                   <TableCell>{user.setor}</TableCell>
                   <TableCell>{user.ativo ? "Ativo" : "Inativo"}</TableCell>
                   <TableCell>
-                    <details className="relative">
-                      <summary className="flex cursor-pointer list-none justify-center"><MoreHorizontal className="size-4" /></summary>
-                      <div className="absolute right-0 z-10 mt-1 w-32 rounded-md border bg-background p-1 shadow">
-                        <Button variant="ghost" className="w-full justify-start" onClick={() => openEdit(user)}>Editar</Button>
-                        <Button variant="ghost" className="w-full justify-start text-destructive" onClick={() => onDelete(user.id)}>Excluir</Button>
-                      </div>
-                    </details>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          className="inline-flex size-8 items-center justify-center rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/20"
+                          aria-label="Abrir menu de opções"
+                        >
+                          <Ellipsis className="h-5 w-5 text-white-light" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="popover-menu-container right-0 w-56">
+                        <div className="flex w-full flex-col gap-4">
+                          <div className="popover-menu-item">
+                            <Button variant="ghost" className="w-full justify-start" onClick={() => openEdit(user)}>Editar</Button>
+                          </div>
+                          <div className="popover-menu-item">
+                            <Button variant="destructive" className="w-full justify-start" onClick={() => onDelete(user.id)}>Excluir</Button>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </TableCell>
                 </TableRow>
               ))}
@@ -101,10 +115,10 @@ export default function SettingsUsersPage() {
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className="w-full sm:max-w-xl">
-          <SheetHeader>
+          <SheetHeader className="p-5">
             <SheetTitle>{editingId ? "Editar usuário" : "Criar usuário"}</SheetTitle>
           </SheetHeader>
-          <form className="mt-6 grid gap-3" onSubmit={onSubmit}>
+          <form className="mt-6 grid gap-3 p-5" onSubmit={onSubmit}>
             <Field label="Nome"><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required /></Field>
             <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></Field>
             <Field label="Senha"><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required={!editingId} /></Field>
@@ -114,6 +128,7 @@ export default function SettingsUsersPage() {
               <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value as CreateUserPayload['role'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="administrador">Administrador</SelectItem>
                   <SelectItem value="comercial">Comercial</SelectItem>
                   <SelectItem value="credenciamento">Credenciamento</SelectItem>
                   <SelectItem value="operacao">Operação</SelectItem>

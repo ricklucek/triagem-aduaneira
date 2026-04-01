@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Bolt, ChartLine, LayoutDashboard, Menu, UserRound } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -20,28 +20,28 @@ import { cn } from "@/lib/utils";
 
 const navByRole = {
   admin: [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/admin", label: "Painel Admin" },
-    { href: "/clients", label: "Clientes" },
-    { href: "/settings", label: "Configurações" },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin", label: "Métricas", icon: ChartLine },
+    { href: "/clients", label: "Clientes", icon: UserRound },
+    { href: "/settings", label: "Configurações", icon: Bolt },
   ],
   comercial: [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/comercial", label: "Meu Painel" },
-    { href: "/clients", label: "Clientes" },
-    { href: "/settings", label: "Configurações" },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/comercial", label: "Métricas", icon: ChartLine },
+    { href: "/clients", label: "Clientes", icon: UserRound },
+    { href: "/settings", label: "Configurações", icon: Bolt },
   ],
   credenciamento: [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/credenciamento", label: "Meu Painel" },
-    { href: "/clients", label: "Clientes" },
-    { href: "/settings", label: "Configurações" },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/credenciamento", label: "Métricas", icon: ChartLine },
+    { href: "/clients", label: "Clientes", icon: UserRound },
+    { href: "/settings", label: "Configurações", icon: Bolt },
   ],
   operacao: [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/operacao", label: "Meu Painel" },
-    { href: "/clients", label: "Clientes" },
-    { href: "/settings", label: "Configurações" },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/operacao", label: "Métricas", icon: ChartLine },
+    { href: "/clients", label: "Clientes", icon: UserRound },
+    { href: "/settings", label: "Configurações", icon: Bolt },
   ],
 } as const;
 
@@ -58,7 +58,7 @@ function NavLinks({
   items,
   pathname,
 }: {
-  items: readonly { href: string; label: string }[];
+  items: readonly { href: string; label: string; icon: React.ComponentType<{ className?: string }> }[];
   pathname: string;
 }) {
   return (
@@ -66,16 +66,16 @@ function NavLinks({
       {items.map((item) => {
         const active = pathname.startsWith(item.href);
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "rounded-lg px-3 py-2.5 text-sm transition hover:bg-muted",
-              active && "bg-muted font-medium",
-            )}
-          >
-            {item.label}
-          </Link>
+          <div className={cn("flex flex-row gap-3 items-center rounded-lg px-3 py-2.5 text-sm transition hover:bg-muted",
+            active && "bg-muted font-medium"
+          )} key={item.href}>
+            {<item.icon className="h-4 w-4" />}
+            <Link
+              href={item.href}
+            >
+              {item.label}
+            </Link>
+          </div>
         );
       })}
     </SidebarMenu>
