@@ -145,7 +145,7 @@ export default function StepImportacao({
             onChange={(value) => update("analistaAE", value)}
             options={responsaveis}
             error={errors["analistaAE"]}
-            filterSetores={["Operação", "operacao", "Atendimento"]}
+            filterSetores={["Operação", "operacao", "Despacho Aduaneiro"]}
           />
         </Grid>
         <Field label="Produtos importados" required error={errors["produtosImportados"]}>
