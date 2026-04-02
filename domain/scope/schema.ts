@@ -94,7 +94,6 @@ const ServicoValorOuSalarioSchema = z
     habilitado: z.boolean(),
     tipoValor: z.enum(["MEIO_SALARIO_MINIMO", "SALARIO_MINIMO", "OUTRO", ""]),
     valor: z.number().optional().nullable(),
-    responsavel: z.string().trim().optional().nullable(),
     observacao: z.string().trim().optional().nullable(),
     ultimaAtualizacao: ServicoDataSchema,
   })
@@ -106,14 +105,6 @@ const ServicoValorOuSalarioSchema = z
         code: z.ZodIssueCode.custom,
         path: ["tipoValor"],
         message: "Tipo de valor é obrigatório",
-      });
-    }
-
-    if (!value.responsavel) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["responsavel"],
-        message: "Responsável é obrigatório",
       });
     }
   });

@@ -29,7 +29,6 @@ function emptyImportacaoServicos(): NonNullable<
       habilitado: false,
       tipoValor: "",
       valor: null,
-      responsavel: undefined,
       ultimaAtualizacao: "",
     },
     preposto: {
@@ -47,7 +46,6 @@ function emptyImportacaoServicos(): NonNullable<
       habilitado: false,
       tipoValor: "",
       valor: null,
-      responsavel: undefined,
       ultimaAtualizacao: "",
     },
     freteInternacional: { habilitado: false, ptaxNegociado: "" },

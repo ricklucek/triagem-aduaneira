@@ -30,7 +30,7 @@ function emptyExportacaoServicos(): NonNullable<
   return {
     despachoAduaneiroExportacao: {
       habilitado: false,
-      tipoValor: "SALARIO_MINIMO",
+      tipoValor: "",
       valor: null,
       ultimaAtualizacao: "",
     },
@@ -146,6 +146,7 @@ export default function StepServicosExportacao({
                 update("despachoAduaneiroExportacao.tipoValor", e.target.value)
               }
             >
+              <option value="">Selecione uma opção</option>
               <option value="SALARIO_MINIMO">Um salário mínimo vigente</option>
               <option value="OUTRO">Outro</option>
             </Select>
