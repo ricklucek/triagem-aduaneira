@@ -296,10 +296,6 @@ function ScopeDetails({
                 value={currency(si.despachoAduaneiroImportacao?.valor)}
               />
               <Field
-                label="Responsável"
-                value={text(si.despachoAduaneiroImportacao?.responsavel)}
-              />
-              <Field
                 label="Última atualização"
                 value={date(si.despachoAduaneiroImportacao?.ultimaAtualizacao)}
               />
@@ -370,10 +366,6 @@ function ScopeDetails({
               <Field
                 label="Valor assessoria"
                 value={currency(si.assessoria?.valor)}
-              />
-              <Field
-                label="Responsável assessoria"
-                value={text(si.assessoria?.responsavel)}
               />
               <Field
                 label="Última atualização assessoria"
@@ -450,10 +442,6 @@ function ScopeDetails({
                 value={currency(se.despachoAduaneiroExportacao?.valor)}
               />
               <Field
-                label="Responsável"
-                value={text(se.despachoAduaneiroExportacao?.responsavel)}
-              />
-              <Field
                 label="Preposto"
                 value={boolBadge(se.preposto?.habilitado)}
               />
@@ -528,10 +516,6 @@ function ScopeDetails({
               <Field
                 label="Valor assessoria"
                 value={currency(se.assessoria?.valor)}
-              />
-              <Field
-                label="Responsável assessoria"
-                value={text(se.assessoria?.responsavel)}
               />
               <Field
                 label="Última atualização assessoria"
