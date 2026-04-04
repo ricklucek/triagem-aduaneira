@@ -560,10 +560,10 @@ export default function StepImportacao({
         </Field>
       </div>
 
-      <Grid columns={2}>
+      <Grid columns={1}>
         <Field label="Destinação" required>
           <SearchableCheckboxMenu
-            title="Destinação"
+            title=""
             searchLabel="Pesquisar destinação"
             value={data.destinacao}
             options={[

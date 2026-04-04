@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { hasRole } from "@/lib/auth/guard";
-import { useUsers } from "@/lib/api/hooks/use-dashboards";
+import { useAdmins, useUsers } from "@/lib/api/hooks/use-dashboards";
 import { usersApi } from "@/lib/api/services/users";
 import type { CreateUserPayload, UserSummary } from "@/lib/api/types/dashboard-api";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -27,15 +27,13 @@ const emptyForm: CreateUserPayload = {
 const ADMIN_ROLES = new Set(["admin", "administrador"]);
 
 export default function SettingsUsersPage() {
-  const { data, isLoading, mutate } = useUsers();
+  const { data: usersData, isLoading, mutate } = useUsers();
+  const { data: adminsData } = useAdmins();
+
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreateUserPayload>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
-
-  const users = data ?? [];
-  const adminUsers = users.filter((user) => ADMIN_ROLES.has(user.role));
-  const regularUsers = users.filter((user) => !ADMIN_ROLES.has(user.role));
 
   if (!hasRole("admin")) return <p>Acesso restrito ao administrador.</p>;
 
@@ -172,11 +170,11 @@ export default function SettingsUsersPage() {
           <>
             <section className="space-y-3">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Administradores</h3>
-              {renderTable(adminUsers)}
+              {renderTable(adminsData ?? [])}
             </section>
             <section className="space-y-3">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Demais usuários</h3>
-              {renderTable(regularUsers)}
+              {renderTable(usersData ?? [])}
             </section>
           </>
         )}

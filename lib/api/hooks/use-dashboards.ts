@@ -28,6 +28,10 @@ export function useUsers() {
   return useSWR("users:list", usersApi.listUsers);
 }
 
+export function useAdmins() {
+  return useSWR("admins:list", usersApi.listAdmins);
+}
+
 export function useAdminSettings() {
   return useSWR("admin:settings", adminSettingsApi.getSettings);
 }

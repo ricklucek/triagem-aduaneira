@@ -8,7 +8,12 @@ import type {
 
 export const usersApi = {
   async listUsers(): Promise<UserSummary[]> {
-    const { data } = await http.get<UserSummary[]>(API_ROUTES.users.list);
+    const { data } = await http.get<UserSummary[]>(API_ROUTES.users.listUsers);
+    return data;
+  },
+
+  async listAdmins(): Promise<UserSummary[]> {
+    const { data } = await http.get<UserSummary[]>(API_ROUTES.users.listAdmins);
     return data;
   },
 

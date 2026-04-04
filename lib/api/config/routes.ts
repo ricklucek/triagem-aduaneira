@@ -31,7 +31,8 @@ export const API_ROUTES = {
     operacao: "/dashboards/operacao",
   },
   users: {
-    list: "/users",
+    listUsers: "/users",
+    listAdmins: "/users/admin",
     create: "/users",
     update: (userId: string) => `/users/user/${userId}`,
     deleteUser: (userId: string) => `/users/user/${userId}`,
