@@ -21,9 +21,9 @@ const currency = (v?: number | null) =>
   v == null || Number.isNaN(v)
     ? "-"
     : new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(v);
+      style: "currency",
+      currency: "BRL",
+    }).format(v);
 const date = (v?: string | null) =>
   !v ? "-" : new Date(v).toLocaleDateString("pt-BR");
 const list = (v?: Array<string | number | null> | null) =>
@@ -282,7 +282,28 @@ function ScopeDetails({
                   label="Produtos exportados"
                   value={text(e.produtosExportados)}
                 />
-                <Field label="NCMs" value={list(e.ncms)} />
+                <div className="grid gap-3">
+                  {e.ncms
+                    .filter((ncm) => ncm.codigo)
+                    .map((ncm, index) => (
+                      <Grid key={index}>
+                        <Field
+                          label={
+                            index === 0 ? "NCM principal" : `NCM ${index + 1}`
+                          }
+                          value={text(ncm.codigo)}
+                        />
+                        <Field
+                          label="Possui benefício"
+                          value={text(ncm.possuiBeneficio)}
+                        />
+                        <Field
+                          label="Descrição do benefício"
+                          value={text(ncm.descricaoBeneficio)}
+                        />
+                      </Grid>
+                    ))}
+                </div>
                 <Field label="Destinação" value={list(e.destinacao)} />
                 <Field
                   label="Subtipo de consumo"

@@ -1,16 +1,18 @@
 "use client";
 
 import { EscopoForm } from "@/domain/scope/types";
-import NcmListBlock from "./blocks/NcmListBlock";
 import SearchableCheckboxMenu from "./blocks/SearchableCheckboxMenu";
 import {
   Field,
   Select,
   TextArea,
+  TextInput,
 } from "@/components/ui/form-fields";
-import { Grid } from "@/components/ui/form-layout";
+import { Card, Grid } from "@/components/ui/form-layout";
 import { ResponsiblePicker } from "./ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+import { Button } from "../ui/button";
+import { formatNCM } from "@/utils/format";
 
 type Props = {
   form: EscopoForm;
@@ -27,13 +29,13 @@ export default function StepExportacao({
 }: Props) {
   const data: NonNullable<EscopoForm["operacao"]["exportacao"]> =
     form.operacao.exportacao ?? {
-    analistaDA: "",
-    produtosExportados: "",
-    ncms: [""],
-    observacaoNcms: "",
-    destinacao: [],
-    subtipoConsumo: null,
-  };
+      analistaDA: "",
+      produtosExportados: "",
+      ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
+      observacaoNcms: "",
+      destinacao: [],
+      subtipoConsumo: null,
+    };
   function setData(next: NonNullable<EscopoForm["operacao"]["exportacao"]>) {
     onChange({ ...form, operacao: { ...form.operacao, exportacao: next } });
   }
@@ -72,11 +74,102 @@ export default function StepExportacao({
         </Field>
       </div>
 
-      <NcmListBlock
-        items={data.ncms}
-        onChange={(next) => update("ncms", next)}
-        error={errors["ncms"]}
-      />
+      <div className="flex flex-col gap-5">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() =>
+            update("ncms", [
+              ...data.ncms,
+              { codigo: "", possuiBeneficio: null, descricaoBeneficio: "" },
+            ])
+          }
+        >
+          + Adicionar NCM
+        </Button>
+        <div className="grid gap-3">
+          {data.ncms.map((item, index) => (
+            <Card key={index} className="gap-4 p-4">
+              <Grid columns={2}>
+                <Field
+                  label={index === 0 ? "NCM principal" : `NCM ${index + 1}`}
+                  required
+                  error={index === 0 ? errors["ncms"] : undefined}
+                >
+                  <TextInput
+                    value={formatNCM(item.codigo ?? "")}
+                    onChange={(e) => {
+                      const next = [...data.ncms];
+                      next[index] = { ...next[index], codigo: e.target.value };
+                      update("ncms", next);
+                    }}
+                  />
+                </Field>
+                <Field label="Possui benefício?" required>
+                  <Select
+                    value={item.possuiBeneficio ?? ""}
+                    onChange={(e) => {
+                      const value =
+                        e.target.value === "SIM" || e.target.value === "NAO"
+                          ? e.target.value
+                          : null;
+                      const next = [...data.ncms];
+                      next[index] = {
+                        ...next[index],
+                        possuiBeneficio: value,
+                        descricaoBeneficio:
+                          value === "SIM"
+                            ? next[index].descricaoBeneficio
+                            : "",
+                      };
+                      update("ncms", next);
+                    }}
+                  >
+                    <option value="">Selecione</option>
+                    <option value="SIM">Sim</option>
+                    <option value="NAO">Não</option>
+                  </Select>
+                </Field>
+              </Grid>
+              {item.possuiBeneficio === "SIM" ? (
+                <Field label="Descrição do benefício">
+                  <TextInput
+                    value={item.descricaoBeneficio ?? ""}
+                    onChange={(e) => {
+                      const next = [...data.ncms];
+                      next[index] = {
+                        ...next[index],
+                        descricaoBeneficio: e.target.value,
+                      };
+                      update("ncms", next);
+                    }}
+                  />
+                </Field>
+              ) : null}
+              {data.ncms.length > 1 ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() =>
+                    update(
+                      "ncms",
+                      data.ncms.filter((_, i) => i !== index),
+                    )
+                  }
+                >
+                  Remover
+                </Button>
+              ) : null}
+            </Card>
+          ))}
+          <Field label="Observações" hint="Campo opcional">
+            <TextArea
+              value={data.observacaoNcms ?? ""}
+              onChange={(e) => update("observacaoNcms", e.target.value)}
+            />
+          </Field>
+        </div>
+      </div>
 
       <Field label="Observações" hint="Campo opcional">
         <TextArea
@@ -84,7 +177,7 @@ export default function StepExportacao({
           onChange={(e) => update("observacaoNcms", e.target.value)}
         />
       </Field>
-            
+
       <div className="flex flex-col gap-5">
         <Grid columns={2}>
           <Field label="Destinação" required>

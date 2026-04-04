@@ -371,7 +371,15 @@ export const ExportacaoSchema = z
       .string()
       .trim()
       .min(1, "Produtos exportados é obrigatório"),
-    ncms: z.array(z.string().trim()).default([]),
+    ncms: z
+      .array(
+        z.object({
+          codigo: z.string().trim().optional().nullable(),
+          possuiBeneficio: z.enum(["SIM", "NAO"]).optional().nullable(),
+          descricaoBeneficio: z.string().trim().optional().nullable(),
+        }),
+      )
+      .default([]),
     observacaoNcms: z.string().trim().optional().nullable(),
     destinacao: DestinacaoSchema,
     subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
