@@ -3,13 +3,22 @@
 import { EscopoForm } from "@/domain/scope/types";
 import ContaBancariaBlock from "./blocks/ContaBancariaBlock";
 import { Field, TextArea } from "@/components/ui/form-fields";
-import { Section, Stack } from "@/components/ui/form-layout";
 
 type Props = {
   form: EscopoForm;
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
 };
+
+const BANCOS_SUGERIDOS = [
+  "Banco do Brasil — 001",
+  "Caixa Econômica Federal — 104",
+  "Bradesco — 237",
+  "Itaú Unibanco — 341",
+  "Santander Brasil — 033",
+  "Sicoob — 756",
+  "Sicredi — 748",
+];
 
 export default function StepFinanceiro({ form, errors, onChange }: Props) {
   return (
@@ -19,6 +28,7 @@ export default function StepFinanceiro({ form, errors, onChange }: Props) {
       </h2>
       <ContaBancariaBlock
         value={form.financeiro.dadosBancariosClienteDevolucaoSaldo}
+        bancoOptions={BANCOS_SUGERIDOS}
         onChange={(nextConta) =>
           onChange({
             ...form,

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Ellipsis, MoreHorizontal } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,33 +14,53 @@ import { useUsers } from "@/lib/api/hooks/use-dashboards";
 import { usersApi } from "@/lib/api/services/users";
 import type { CreateUserPayload, UserSummary } from "@/lib/api/types/dashboard-api";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { set } from "zod";
+import { toast } from "@/components/ui/toast";
 
-const emptyForm: CreateUserPayload = { nome: "", email: "", password: "", role: "comercial", setor: "" };
+const emptyForm: CreateUserPayload = {
+  nome: "",
+  email: "",
+  password: "",
+  role: "comercial",
+  setor: "",
+};
+
+const ADMIN_ROLES = new Set(["admin", "administrador"]);
 
 export default function SettingsUsersPage() {
   const { data, isLoading, mutate } = useUsers();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreateUserPayload>(emptyForm);
-
   const [submitting, setSubmitting] = useState(false);
+
+  const users = data ?? [];
+  const adminUsers = users.filter((user) => ADMIN_ROLES.has(user.role));
+  const regularUsers = users.filter((user) => !ADMIN_ROLES.has(user.role));
 
   if (!hasRole("admin")) return <p>Acesso restrito ao administrador.</p>;
 
   const onSubmit = async (event: FormEvent) => {
-    setSubmitting(true);
     event.preventDefault();
-    if (editingId) {
-      await usersApi.updateUser(editingId, form);
-    } else {
-      await usersApi.createUser(form);
+    setSubmitting(true);
+
+    try {
+      if (editingId) {
+        await usersApi.updateUser(editingId, form);
+        toast.success("Usuário atualizado com sucesso.");
+      } else {
+        await usersApi.createUser(form);
+        toast.success("Usuário criado com sucesso.");
+      }
+
+      setOpen(false);
+      setEditingId(null);
+      setForm(emptyForm);
+      await mutate();
+    } catch {
+      toast.error("Não foi possível salvar o usuário.");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
-    setOpen(false);
-    setEditingId(null);
-    setForm(emptyForm);
-    await mutate();
   };
 
   const openCreate = () => {
@@ -51,16 +71,93 @@ export default function SettingsUsersPage() {
 
   const openEdit = (user: UserSummary) => {
     setEditingId(user.id);
-    setForm({ nome: user.nome, email: user.email, password: "", role: user.role, setor: user.setor });
+    setForm({
+      nome: user.nome,
+      email: user.email,
+      password: "",
+      role: user.role,
+      setor: user.setor,
+    });
     setOpen(true);
   };
 
   const onDelete = async (user: UserSummary) => {
-    if (user.role !== "administrador") {
+    if (ADMIN_ROLES.has(user.role)) {
+      toast.info("Usuários administradores devem ser gerenciados separadamente.");
+      return;
+    }
+
+    try {
       await usersApi.deleteUser(user.id);
       await mutate();
+      toast.success("Usuário removido com sucesso.");
+    } catch {
+      toast.error("Não foi possível excluir o usuário.");
     }
   };
+
+  const renderTable = (rows: UserSummary[]) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Nome</TableHead>
+          <TableHead>E-mail</TableHead>
+          <TableHead>Perfil</TableHead>
+          <TableHead>Setor</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="w-20">Ações</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={6}>Nenhum usuário encontrado.</TableCell>
+          </TableRow>
+        ) : (
+          rows.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell>{user.nome}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.role}</TableCell>
+              <TableCell>{user.setor}</TableCell>
+              <TableCell>{user.ativo ? "Ativo" : "Inativo"}</TableCell>
+              <TableCell>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="inline-flex size-8 items-center justify-center rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/20"
+                      aria-label="Abrir menu de opções"
+                    >
+                      <Ellipsis className="h-5 w-5 text-white-light" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="popover-menu-container right-0 w-56">
+                    <div className="flex w-full flex-col gap-4">
+                      <div className="popover-menu-item">
+                        <Button variant="ghost" className="w-full justify-start" onClick={() => openEdit(user)}>
+                          Editar
+                        </Button>
+                      </div>
+                      <div className="popover-menu-item">
+                        <Button
+                          variant="destructive"
+                          className="w-full justify-start"
+                          onClick={() => onDelete(user)}
+                          disabled={ADMIN_ROLES.has(user.role)}
+                        >
+                          Excluir
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  );
 
   return (
     <Card>
@@ -68,55 +165,20 @@ export default function SettingsUsersPage() {
         <CardTitle>Gerenciar usuários</CardTitle>
         <Button onClick={openCreate}>Criar usuário</Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-8">
         {isLoading ? (
           <p>Carregando usuários...</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Perfil</TableHead>
-                <TableHead>Setor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-20">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data?.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.nome}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.role}</TableCell>
-                  <TableCell>{user.setor}</TableCell>
-                  <TableCell>{user.ativo ? "Ativo" : "Inativo"}</TableCell>
-                  <TableCell>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button
-                          className="inline-flex size-8 items-center justify-center rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/20"
-                          aria-label="Abrir menu de opções"
-                        >
-                          <Ellipsis className="h-5 w-5 text-white-light" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="popover-menu-container right-0 w-56">
-                        <div className="flex w-full flex-col gap-4">
-                          <div className="popover-menu-item">
-                            <Button variant="ghost" className="w-full justify-start" onClick={() => openEdit(user)}>Editar</Button>
-                          </div>
-                          <div className="popover-menu-item">
-                            <Button variant="destructive" className="w-full justify-start" onClick={() => onDelete(user)}>Excluir</Button>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <>
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Administradores</h3>
+              {renderTable(adminUsers)}
+            </section>
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Demais usuários</h3>
+              {renderTable(regularUsers)}
+            </section>
+          </>
         )}
       </CardContent>
 
@@ -132,7 +194,7 @@ export default function SettingsUsersPage() {
             <Field label="Setor"><Input value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} required /></Field>
             <div className="space-y-2">
               <Label>Perfil</Label>
-              <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value as CreateUserPayload['role'] })}>
+              <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value as CreateUserPayload["role"] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="administrador">Administrador</SelectItem>

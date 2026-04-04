@@ -17,6 +17,7 @@ import {
 import { logoutSession } from "@/lib/api/hooks/use-auth";
 import { useAuthSession, type AuthSession } from "@/lib/auth/session-storage";
 import { cn } from "@/lib/utils";
+import { ToastProvider } from "@/components/ui/toast";
 
 const navByRole = {
   admin: [
@@ -103,7 +104,8 @@ export function AppShellClient({
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <ToastProvider>
+      <div className="min-h-screen bg-muted/30">
       <div className="mx-auto flex min-h-screen w-full max-w-screen-2xl">
         {isAuthenticated ? (
           <Sidebar className="sticky top-0 h-screen">
@@ -171,6 +173,7 @@ export function AppShellClient({
           <div className="p-4 md:p-6">{children}</div>
         </main>
       </div>
-    </div>
+      </div>
+    </ToastProvider>
   );
 }

@@ -25,7 +25,6 @@ export default function EditDraftPage({
   async function handlePublish() {
     await scopeApi.publishScope(params.id);
     await mutate();
-    alert("Escopo publicado com sucesso.");
   }
 
   if (isLoading) {

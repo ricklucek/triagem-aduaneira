@@ -81,14 +81,15 @@ export default function StepImportacao({
     analistaDA: "",
     analistaAE: "",
     produtosImportados: "",
-    ncms: [{ codigo: "", possuiNve: undefined }],
+    ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
     observacaoNcms: "",
     vinculoComExportador: "NAO",
     locaisDesembaraco: [],
     outroLocalDesembaraco: "",
     locaisDespacho: [],
     outroLocalDespacho: "",
-    necessidadeDtcDta: "NAO",
+    necessidadeDta: null,
+    necessidadeDtc: null,
     necessidadeLiLpco: "NAO",
     anuencias: [],
     outroOrgaoAnuente: "",
@@ -102,7 +103,7 @@ export default function StepImportacao({
     },
     afrmm: { observacao: "" },
     icms: { regime: "INTEGRAL", observacao: "" },
-    destinacao: "REVENDA",
+    destinacao: [],
     subtipoConsumo: null,
   };
 
@@ -161,7 +162,10 @@ export default function StepImportacao({
           type="button"
           variant="outline"
           onClick={() =>
-            update("ncms", [...data.ncms, { codigo: "", possuiNve: undefined }])
+            update("ncms", [
+              ...data.ncms,
+              { codigo: "", possuiBeneficio: null, descricaoBeneficio: "" },
+            ])
           }
         >
           + Adicionar NCM
@@ -184,7 +188,47 @@ export default function StepImportacao({
                     }}
                   />
                 </Field>
+                <Field label="Possui benefício?" required>
+                  <Select
+                    value={item.possuiBeneficio ?? ""}
+                    onChange={(e) => {
+                      const value =
+                        e.target.value === "SIM" || e.target.value === "NAO"
+                          ? e.target.value
+                          : null;
+                      const next = [...data.ncms];
+                      next[index] = {
+                        ...next[index],
+                        possuiBeneficio: value,
+                        descricaoBeneficio:
+                          value === "SIM"
+                            ? next[index].descricaoBeneficio
+                            : "",
+                      };
+                      update("ncms", next);
+                    }}
+                  >
+                    <option value="">Selecione</option>
+                    <option value="SIM">Sim</option>
+                    <option value="NAO">Não</option>
+                  </Select>
+                </Field>
               </Grid>
+              {item.possuiBeneficio === "SIM" ? (
+                <Field label="Descrição do benefício">
+                  <TextInput
+                    value={item.descricaoBeneficio ?? ""}
+                    onChange={(e) => {
+                      const next = [...data.ncms];
+                      next[index] = {
+                        ...next[index],
+                        descricaoBeneficio: e.target.value,
+                      };
+                      update("ncms", next);
+                    }}
+                  />
+                </Field>
+              ) : null}
               {data.ncms.length > 1 ? (
                 <Button
                   type="button"
@@ -210,7 +254,7 @@ export default function StepImportacao({
         </div>
       </div>
 
-      <Grid columns={2}>
+      <Grid columns={3}>
         <Field
           label="Importador tem vínculo com o exportador"
           required
@@ -225,16 +269,30 @@ export default function StepImportacao({
           </Select>
         </Field>
         <Field
-          label="Necessidade de DTC/DTA"
+          label="Necessidade de DTA"
           required
-          error={errors["necessidadeDtcDta"]}
+          error={errors["necessidadeDta"]}
         >
           <Select
-            value={data.necessidadeDtcDta}
-            onChange={(e) => update("necessidadeDtcDta", e.target.value)}
+            value={data.necessidadeDta ?? ""}
+            onChange={(e) => update("necessidadeDta", e.target.value || null)}
           >
-            <option value="DTC">DTC</option>
-            <option value="DTA">DTA</option>
+            <option value="">Selecione</option>
+            <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
+          </Select>
+        </Field>
+        <Field
+          label="Necessidade de DTC"
+          required
+          error={errors["necessidadeDtc"]}
+        >
+          <Select
+            value={data.necessidadeDtc ?? ""}
+            onChange={(e) => update("necessidadeDtc", e.target.value || null)}
+          >
+            <option value="">Selecione</option>
+            <option value="SIM">Sim</option>
             <option value="NAO">Não</option>
           </Select>
         </Field>
@@ -504,15 +562,19 @@ export default function StepImportacao({
 
       <Grid columns={2}>
         <Field label="Destinação" required>
-          <Select
+          <SearchableCheckboxMenu
+            title="Destinação"
+            searchLabel="Pesquisar destinação"
             value={data.destinacao}
-            onChange={(e) => update("destinacao", e.target.value)}
-          >
-            <option value="REVENDA">Revenda</option>
-            <option value="CONSUMO">Consumo</option>
-          </Select>
+            options={[
+              { value: "CONSUMO", label: "Consumo" },
+              { value: "REVENDA", label: "Revenda" },
+            ]}
+            onChange={(next) => update("destinacao", next)}
+            error={errors["destinacao"]}
+          />
         </Field>
-        {data.destinacao === "CONSUMO" ? (
+        {data.destinacao.includes("CONSUMO") ? (
           <Field
             label="Subtipo de consumo"
             required

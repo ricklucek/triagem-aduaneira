@@ -2,24 +2,15 @@
 
 import { EscopoForm } from "@/domain/scope/types";
 import NcmListBlock from "./blocks/NcmListBlock";
+import SearchableCheckboxMenu from "./blocks/SearchableCheckboxMenu";
 import {
-  Checkbox,
   Field,
   Select,
   TextArea,
-  TextInput,
 } from "@/components/ui/form-fields";
-import { Grid, Stack } from "@/components/ui/form-layout";
+import { Grid } from "@/components/ui/form-layout";
 import { ResponsiblePicker } from "./ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
-
-const PORTOS = [
-  ["FOZ_DO_IGUACU", "Foz do Iguaçu"],
-  ["URUGUAIANA", "Uruguaiana"],
-  ["JAGUARAO", "Jaguarão"],
-  ["CHUI", "Chuí"],
-  ["CORUMBA", "Corumbá"],
-] as const;
 
 type Props = {
   form: EscopoForm;
@@ -34,15 +25,13 @@ export default function StepExportacao({
   onChange,
   responsaveis,
 }: Props) {
-  const data = form.operacao.exportacao ?? {
+  const data: NonNullable<EscopoForm["operacao"]["exportacao"]> =
+    form.operacao.exportacao ?? {
     analistaDA: "",
     produtosExportados: "",
     ncms: [""],
     observacaoNcms: "",
-    portosFronteiras: [],
-    outroPorto: "",
-    outraFronteira: "",
-    destinacao: "REVENDA",
+    destinacao: [],
     subtipoConsumo: null,
   };
   function setData(next: NonNullable<EscopoForm["operacao"]["exportacao"]>) {
@@ -99,15 +88,19 @@ export default function StepExportacao({
       <div className="flex flex-col gap-5">
         <Grid columns={2}>
           <Field label="Destinação" required>
-            <Select
+            <SearchableCheckboxMenu
+              title="Destinação"
+              searchLabel="Pesquisar destinação"
               value={data.destinacao}
-              onChange={(e) => update("destinacao", e.target.value)}
-            >
-              <option value="REVENDA">Revenda</option>
-              <option value="CONSUMO">Consumo</option>
-            </Select>
+              options={[
+                { value: "CONSUMO", label: "Consumo" },
+                { value: "REVENDA", label: "Revenda" },
+              ]}
+              onChange={(next) => update("destinacao", next)}
+              error={errors["destinacao"]}
+            />
           </Field>
-          {data.destinacao === "CONSUMO" ? (
+          {data.destinacao.includes("CONSUMO") ? (
             <Field
               label="Subtipo de consumo"
               required

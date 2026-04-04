@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/form-layout";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "@/components/ui/toast";
 
 function buildEtapas(data: EscopoForm): EtapaFormulario[] {
   const etapas: EtapaFormulario[] = ["SOBRE_EMPRESA", "CONTATOS", "OPERACAO"];
@@ -172,7 +173,7 @@ export default function ScopeWizard({
 
     const ok = await persist(form);
     if (ok) {
-      alert("Formulário válido. Rascunho salvo com sucesso.");
+      toast.success("Formulário válido. Rascunho salvo com sucesso.");
     }
   }
 
@@ -191,6 +192,7 @@ export default function ScopeWizard({
     if (onPublish) {
       await onPublish();
       setSavedMessage("Publicado");
+      toast.success("Escopo publicado com sucesso.");
     }
   }
 

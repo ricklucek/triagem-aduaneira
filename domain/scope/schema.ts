@@ -19,7 +19,6 @@ export const AnalistaDAImportacaoSchema = z
   .string()
   .trim()
   .min(1, "Analista DA é obrigatório");
-export const DtcDtaSchema = z.enum(["DTC", "DTA", "NAO"]);
 export const AnuenciaImportacaoSchema = z.enum([
   "ANVISA",
   "MAPA",
@@ -37,7 +36,7 @@ export const AnuenciaImportacaoSchema = z.enum([
   "ANP",
   "ANTT_ANTAQ_ANAC",
 ]);
-export const DestinacaoSchema = z.enum(["CONSUMO", "REVENDA"]);
+export const DestinacaoSchema = z.array(z.string().trim().min(1)).default([]);
 export const SubtipoConsumoSchema = z.enum([
   "ATIVO_IMOBILIZADO_FIXO",
   "INSUMOS_PARA_INDUSTRIALIZACAO",
@@ -69,7 +68,8 @@ export const ContatoSchema = z.object({
 
 export const NcmItemSchema = z.object({
   codigo: z.string().trim().min(1, "NCM é obrigatório"),
-  possuiNve: z.enum(["SIM", "NAO"]).optional().nullable(),
+  possuiBeneficio: z.enum(["SIM", "NAO"]).optional().nullable(),
+  descricaoBeneficio: z.string().trim().optional().nullable(),
 });
 
 const BeneficioTributoSchema = z
@@ -259,7 +259,8 @@ export const ImportacaoSchema = z
       .array(
         z.object({
           codigo: z.string().trim().optional().nullable(),
-          possuiNve: z.enum(["SIM", "NAO"]).optional().nullable(),
+          possuiBeneficio: z.enum(["SIM", "NAO"]).optional().nullable(),
+          descricaoBeneficio: z.string().trim().optional().nullable(),
         }),
       )
       .default([]),
@@ -269,7 +270,8 @@ export const ImportacaoSchema = z
     outroLocalDesembaraco: z.string().trim().optional().nullable(),
     locaisDespacho: z.array(z.string().trim().min(1)).default([]),
     outroLocalDespacho: z.string().trim().optional().nullable(),
-    necessidadeDtcDta: DtcDtaSchema,
+    necessidadeDta: SimNaoSchema.optional().nullable(),
+    necessidadeDtc: SimNaoSchema.optional().nullable(),
     necessidadeLiLpco: SimNaoSchema,
     anuencias: z.array(AnuenciaImportacaoSchema).default([]),
     outroOrgaoAnuente: z.string().trim().optional().nullable(),
@@ -339,7 +341,21 @@ export const ImportacaoSchema = z
         message: "Dados da conta do cliente são obrigatórios",
       });
     }
-    if (value.destinacao === "CONSUMO" && !value.subtipoConsumo) {
+    if (!value.necessidadeDta) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["necessidadeDta"],
+        message: "Necessidade de DTA é obrigatória",
+      });
+    }
+    if (!value.necessidadeDtc) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["necessidadeDtc"],
+        message: "Necessidade de DTC é obrigatória",
+      });
+    }
+    if (value.destinacao.includes("CONSUMO") && !value.subtipoConsumo) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["subtipoConsumo"],
@@ -361,7 +377,7 @@ export const ExportacaoSchema = z
     subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
   })
   .superRefine((value, ctx) => {
-    if (value.destinacao === "CONSUMO" && !value.subtipoConsumo) {
+    if (value.destinacao.includes("CONSUMO") && !value.subtipoConsumo) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["subtipoConsumo"],

@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "@/components/ui/toast";
 
 function formatISO(iso: string) {
   try {
@@ -59,9 +60,9 @@ export default function ScopesPage() {
       await scopeApi.deleteScope(scopeToDelete.id);
       await mutate();
       setScopeToDelete(null);
-      alert("Escopo excluído com sucesso.");
+      toast.success("Escopo excluído com sucesso.");
     } catch {
-      alert("Falha ao excluir escopo.");
+      toast.error("Falha ao excluir escopo.");
     } finally {
       setDeleting(false);
     }

@@ -219,8 +219,12 @@ function ScopeDetails({
                   value={text(i.outroLocalDespacho)}
                 />
                 <Field
-                  label="Necessidade DTC / DTA"
-                  value={text(i.necessidadeDtcDta)}
+                  label="Necessidade DTA"
+                  value={text(i.necessidadeDta)}
+                />
+                <Field
+                  label="Necessidade DTC"
+                  value={text(i.necessidadeDtc)}
                 />
                 <Field
                   label="Necessidade LI / LPCO"
@@ -239,7 +243,7 @@ function ScopeDetails({
                   label="Conta cliente p/ impostos federais"
                   value={account(i.impostosFederais?.dadosContaCliente)}
                 />
-                <Field label="Destinação" value={text(i.destinacao)} />
+                <Field label="Destinação" value={list(i.destinacao)} />
                 <Field
                   label="Subtipo de consumo"
                   value={text(i.subtipoConsumo)}
@@ -256,6 +260,14 @@ function ScopeDetails({
                         }
                         value={text(ncm.codigo)}
                       />
+                      <Field
+                        label="Possui benefício"
+                        value={text(ncm.possuiBeneficio)}
+                      />
+                      <Field
+                        label="Descrição do benefício"
+                        value={text(ncm.descricaoBeneficio)}
+                      />
                     </Grid>
                   ))}
               </div>
@@ -271,7 +283,7 @@ function ScopeDetails({
                   value={text(e.produtosExportados)}
                 />
                 <Field label="NCMs" value={list(e.ncms)} />
-                <Field label="Destinação" value={text(e.destinacao)} />
+                <Field label="Destinação" value={list(e.destinacao)} />
                 <Field
                   label="Subtipo de consumo"
                   value={text(e.subtipoConsumo)}

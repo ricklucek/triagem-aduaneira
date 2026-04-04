@@ -35,15 +35,16 @@ export function calculateCompleteness(data: EscopoForm): number {
         i.locaisDesembaraco.length > 0 || hasValue(i.outroLocalDesembaraco),
       );
       check(i.locaisDespacho.length > 0 || hasValue(i.outroLocalDespacho));
-      check(hasValue(i.necessidadeDtcDta));
+      check(hasValue(i.necessidadeDta));
+      check(hasValue(i.necessidadeDtc));
       check(hasValue(i.necessidadeLiLpco));
       check(
         i.necessidadeLiLpco === "NAO" ||
           i.anuencias.length > 0 ||
           hasValue(i.outroOrgaoAnuente),
       );
-      check(hasValue(i.destinacao));
-      check(i.destinacao !== "CONSUMO" || hasValue(i.subtipoConsumo));
+      check(i.destinacao.length > 0);
+      check(!i.destinacao.includes("CONSUMO") || hasValue(i.subtipoConsumo));
     }
   }
   if (data.operacao.tipos.includes("EXPORTACAO")) {
@@ -53,8 +54,8 @@ export function calculateCompleteness(data: EscopoForm): number {
       check(hasValue(e.analistaDA));
       check(hasValue(e.produtosExportados));
       check(e.ncms.length > 0 && e.ncms.every((x) => hasValue(x)));
-      check(hasValue(e.destinacao));
-      check(e.destinacao !== "CONSUMO" || hasValue(e.subtipoConsumo));
+      check(e.destinacao.length > 0);
+      check(!e.destinacao.includes("CONSUMO") || hasValue(e.subtipoConsumo));
     }
   }
   check(hasValue(data.financeiro.dadosBancariosClienteDevolucaoSaldo.banco));

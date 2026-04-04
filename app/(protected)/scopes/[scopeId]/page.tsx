@@ -55,7 +55,6 @@ export default function ScopeDetailPage() {
   const handlePublish = useCallback(async () => {
     await scopeApi.publishScope(scopeId);
     await mutate();
-    alert("Escopo publicado com sucesso.");
   }, [mutate, scopeId]);
 
   if (loading) return <div style={{ padding: 24 }}>Carregando escopo...</div>;
