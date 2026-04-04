@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { dashboardApi } from "@/lib/api/services/dashboards";
 import { usersApi } from "@/lib/api/services/users";
 import { adminSettingsApi } from "@/lib/api/services/admin-settings";
+import { publicApi } from "../services/public";
 
 export function useAdminDashboard() {
   return useSWR("dashboard:admin", dashboardApi.getAdminMetrics);
@@ -34,4 +35,9 @@ export function useAdmins() {
 
 export function useAdminSettings() {
   return useSWR("admin:settings", adminSettingsApi.getSettings);
+}
+
+export function prepostosLookup() {
+
+  return useSWR("prepostos:lookup", (params: any) => publicApi.lookupPrepostos(params));
 }
