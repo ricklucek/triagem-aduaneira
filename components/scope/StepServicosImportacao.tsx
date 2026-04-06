@@ -359,15 +359,15 @@ export default function StepServicosImportacao({
             />
           </Field>
 
-          
-        <Field label="Observação geral" hint="Campo opcional">
-          <TextArea
-            value={data.assessoria.observacao ?? ""}
-            onChange={(e) =>
-              update("assessoria.observacao", e.target.value)
-            }
-          />
-        </Field>
+
+          <Field label="Observação geral" hint="Campo opcional">
+            <TextArea
+              value={data.assessoria.observacao ?? ""}
+              onChange={(e) =>
+                update("assessoria.observacao", e.target.value)
+              }
+            />
+          </Field>
         </Grid>
       </ServicoToggleCard>
       <ServicoToggleCard
@@ -375,6 +375,19 @@ export default function StepServicosImportacao({
         checked={data.freteInternacional.habilitado}
         onToggle={(checked) => update("freteInternacional.habilitado", checked)}
       >
+        <Field label="Modalidade" required>
+          <Select
+            value={data.freteInternacional.modalidade ?? ""}
+            onChange={(e) =>
+              update("freteInternacional.modalidade", e.target.value)
+            }
+          >
+            <option value="">Selecione</option>
+            <option value="SIM">Sim</option>
+            <option value="CASO_A_CASO">Caso a caso</option>
+          </Select>
+        </Field>
+
         <Field
           label="% PTAX negociada"
           required
@@ -387,7 +400,7 @@ export default function StepServicosImportacao({
             }
           />
         </Field>
-        
+
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.freteInternacional.observacao ?? ""}
@@ -485,7 +498,7 @@ export default function StepServicosImportacao({
             onChange={(e) => update("emissaoNfe.valor", Number(e.target.value))}
           />
         </Field>
-        
+
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.emissaoNfe.observacao ?? ""}

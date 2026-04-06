@@ -12,5 +12,5 @@ export default async function ProtectedLayout({
     redirect("/login?next=/dashboard");
   }
 
-  return <>{children}</>;
+  return children;
 }

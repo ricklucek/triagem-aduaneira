@@ -174,6 +174,7 @@ const ServicoPrepostoSchema = z
 const ServicoFreteInternacionalSchema = z
   .object({
     habilitado: z.boolean(),
+    modalidade: z.enum(["SIM", "CASO_A_CASO"]).optional().nullable(),
     ptaxNegociado: z.string().trim().optional().nullable(),
     observacao: z.string().trim().optional().nullable(),
   })
@@ -184,6 +185,13 @@ const ServicoFreteInternacionalSchema = z
         code: z.ZodIssueCode.custom,
         path: ["ptaxNegociado"],
         message: "% PTAX negociada é obrigatória",
+      });
+    }
+    if (!value.modalidade) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["modalidade"],
+        message: "Modalidade é obrigatória",
       });
     }
   });

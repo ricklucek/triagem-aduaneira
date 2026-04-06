@@ -429,6 +429,19 @@ export default function StepServicosExportacao({
         checked={data.freteInternacional.habilitado}
         onToggle={(checked) => update("freteInternacional.habilitado", checked)}
       >
+        <Field label="Modalidade" required>
+          <Select
+            value={data.freteInternacional.modalidade ?? ""}
+            onChange={(e) =>
+              update("freteInternacional.modalidade", e.target.value)
+            }
+          >
+            <option value="">Selecione</option>
+            <option value="SIM">Sim</option>
+            <option value="CASO_A_CASO">Caso a caso</option>
+          </Select>
+        </Field>
+
         <Field label="% PTAX negociada" required>
           <TextInput
             value={data.freteInternacional.ptaxNegociado ?? ""}

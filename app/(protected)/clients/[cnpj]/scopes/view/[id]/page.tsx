@@ -409,6 +409,10 @@ function ScopeDetails({
                 value={boolBadge(si.freteInternacional?.habilitado)}
               />
               <Field
+                label="Modalidade frete internacional"
+                value={text(si.freteInternacional?.modalidade)}
+              />
+              <Field
                 label="% PTAX negociada"
                 value={text(si.freteInternacional?.ptaxNegociado)}
               />
