@@ -138,7 +138,6 @@ export default function StepImportacao({
             onChange={(value) => update("analistaDA", value)}
             options={responsaveis}
             error={errors["analistaDA"]}
-            filterSetores={["Operação", "operacao", "Despacho Aduaneiro"]}
           />
           <ResponsiblePicker
             label="Analista AE"
@@ -146,7 +145,6 @@ export default function StepImportacao({
             onChange={(value) => update("analistaAE", value)}
             options={responsaveis}
             error={errors["analistaAE"]}
-            filterSetores={["Operação", "operacao", "Despacho Aduaneiro"]}
           />
         </Grid>
         <Field label="Produtos importados" required error={errors["produtosImportados"]}>
