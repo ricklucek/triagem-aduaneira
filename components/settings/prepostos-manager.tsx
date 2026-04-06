@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { PrepostoLookupItem, PrepostoLookupResponse } from "@/lib/api/types/public-api";
 
 const emptyPreposto = (): PrepostoLookupItem => ({
-  id: `preposto-${Date.now()}`,
+  id: `${Date.now()}`,
   cidade: "",
   contatoNome: null,
   descricaoLocal: null,
@@ -29,15 +36,27 @@ const emptyPreposto = (): PrepostoLookupItem => ({
 
 type PrepostosManagerProps = {
   settings: PrepostoLookupResponse;
+  filters?: {
+    cidade: string;
+    operacao: "IMPORTACAO" | "EXPORTACAO";
+  };
   onSave?: (payload: PrepostoLookupResponse) => Promise<void>;
 };
 
-export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
+export function PrepostosManager({
+  settings,
+  filters,
+  onSave,
+}: PrepostosManagerProps) {
   const [current, setCurrent] = useState<PrepostoLookupResponse>(settings);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<PrepostoLookupItem | null>(null);
+
+  useEffect(() => {
+    setCurrent(settings);
+  }, [settings]);
 
   const prepostos = current.items ?? [];
 
@@ -47,7 +66,10 @@ export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
     if (!normalizedQuery) return prepostos;
 
     return prepostos.filter((item) => {
-      const localidade = [item.cidade, item.uf, item.descricaoLocal].filter(Boolean).join(" ").toLowerCase();
+      const localidade = [item.cidade, item.uf, item.descricaoLocal]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
       return (
         item.nome.toLowerCase().includes(normalizedQuery) ||
@@ -59,7 +81,11 @@ export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
   }, [prepostos, query]);
 
   const openCreate = () => {
-    setEditing(emptyPreposto());
+    setEditing({
+      ...emptyPreposto(),
+      cidade: filters?.cidade ?? "",
+      operacao: filters?.operacao ?? "IMPORTACAO",
+    });
     setOpen(true);
   };
 
@@ -82,6 +108,7 @@ export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
     });
 
     setOpen(false);
+    setEditing(null);
   };
 
   const remove = (id: string) => {
@@ -108,17 +135,19 @@ export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
     <Card>
       <CardHeader className="gap-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>Contatos de prepostos</CardTitle>
+          <div>
+            <CardTitle>Contatos de prepostos</CardTitle>
+            {filters ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Cidade: {filters.cidade || "-"} · Operação: {filters.operacao}
+              </p>
+            ) : null}
+          </div>
+
           <Button onClick={openCreate}>Gerenciar registros</Button>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <Input
-            placeholder="Buscar por nome, cidade, UF, contato ou e-mail"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="max-w-sm"
-          />
           <span className="text-sm text-muted-foreground">
             Total: {filtered.length} de {current.total}
           </span>
@@ -126,56 +155,61 @@ export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
       </CardHeader>
 
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Localidade</TableHead>
-              <TableHead>Operação</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Contato</TableHead>
-              <TableHead className="w-20">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length > 0 ? (
-              filtered.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.nome}</TableCell>
-                  <TableCell>{formatLocalidade(item)}</TableCell>
-                  <TableCell>{item.operacao ?? "-"}</TableCell>
-                  <TableCell>{item.valorDescricao ?? item.valor ?? "-"}</TableCell>
-                  <TableCell>{item.contatoNome ?? "-"}</TableCell>
-                  <TableCell>
-                    <details className="relative">
-                      <summary className="flex cursor-pointer list-none justify-center">
-                        <MoreHorizontal className="size-4" />
-                      </summary>
-                      <div className="absolute right-0 z-10 mt-1 w-32 rounded-md border bg-background p-1 shadow">
-                        <Button variant="ghost" className="w-full justify-start" onClick={() => openEdit(item)}>
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-destructive"
-                          onClick={() => remove(item.id)}
-                        >
-                          Excluir
-                        </Button>
-                      </div>
-                    </details>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Localidade</TableHead>
+                <TableHead>Operação</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead className="w-20 text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {filtered.length > 0 ? (
+                filtered.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.nome}</TableCell>
+                    <TableCell>{formatLocalidade(item)}</TableCell>
+                    <TableCell>{item.operacao ?? "-"}</TableCell>
+                    <TableCell>{item.valorDescricao ?? item.valor ?? "-"}</TableCell>
+                    <TableCell>{item.contatoNome ?? "-"}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(item)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => remove(item.id)}
+                          >
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    Nenhum registro encontrado.
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Nenhum registro encontrado.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
         {onSave ? (
           <div className="mt-4">
@@ -186,11 +220,19 @@ export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
         ) : null}
       </CardContent>
 
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) setEditing(null);
+        }}
+      >
         <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
           <SheetHeader>
             <SheetTitle>
-              {prepostos.some((item) => item.id === editing?.id) ? "Editar registro" : "Novo registro"}
+              {prepostos.some((item) => item.id === editing?.id)
+                ? "Editar registro"
+                : "Novo registro"}
             </SheetTitle>
           </SheetHeader>
 
@@ -221,26 +263,36 @@ export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
                 <Input
                   value={editing.descricaoLocal ?? ""}
                   onChange={(e) =>
-                    setEditing({ ...editing, descricaoLocal: emptyToNull(e.target.value) })
+                    setEditing({
+                      ...editing,
+                      descricaoLocal: emptyToNull(e.target.value),
+                    })
                   }
                 />
               </Field>
 
               <Field label="Operação">
-                <select
-                  className="w-full rounded-md border px-3 py-2 text-sm"
-                  value={editing.operacao ?? ""}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      operacao: (e.target.value || null) as PrepostoLookupItem["operacao"],
-                    })
-                  }
-                >
-                  <option value="">Selecione</option>
-                  <option value="IMPORTACAO">Importação</option>
-                  <option value="EXPORTACAO">Exportação</option>
-                </select>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={editing.operacao === "IMPORTACAO" ? "default" : "outline"}
+                    onClick={() =>
+                      setEditing({ ...editing, operacao: "IMPORTACAO" })
+                    }
+                  >
+                    IMPORTACAO
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant={editing.operacao === "EXPORTACAO" ? "default" : "outline"}
+                    onClick={() =>
+                      setEditing({ ...editing, operacao: "EXPORTACAO" })
+                    }
+                  >
+                    EXPORTACAO
+                  </Button>
+                </div>
               </Field>
 
               <Field label="Contato">
@@ -293,7 +345,10 @@ export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
                 <Input
                   value={editing.valorDescricao ?? ""}
                   onChange={(e) =>
-                    setEditing({ ...editing, valorDescricao: emptyToNull(e.target.value) })
+                    setEditing({
+                      ...editing,
+                      valorDescricao: emptyToNull(e.target.value),
+                    })
                   }
                   placeholder="Ex.: USD 150,00"
                 />
@@ -303,7 +358,10 @@ export function PrepostosManager({ settings, onSave }: PrepostosManagerProps) {
                 <Textarea
                   value={editing.observacoes ?? ""}
                   onChange={(e) =>
-                    setEditing({ ...editing, observacoes: emptyToNull(e.target.value) })
+                    setEditing({
+                      ...editing,
+                      observacoes: emptyToNull(e.target.value),
+                    })
                   }
                 />
               </Field>

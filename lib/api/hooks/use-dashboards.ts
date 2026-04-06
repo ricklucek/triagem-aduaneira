@@ -37,7 +37,18 @@ export function useAdminSettings() {
   return useSWR("admin:settings", adminSettingsApi.getSettings);
 }
 
-export function prepostosLookup() {
+export function usePrepostosLookup(params?: {
+  cidade: string;
+  operacao: "IMPORTACAO" | "EXPORTACAO";
+}) {
 
-  return useSWR("prepostos:lookup", (params: any) => publicApi.lookupPrepostos(params));
+
+  return useSWR(
+   `prepostos:lookup?cidade=${params?.cidade.trim()}&operacao=${params?.operacao}`,
+    () =>
+      publicApi.lookupPrepostos({
+        cidade: params?.cidade.trim() ?? '',
+        operacao: params?.operacao as "IMPORTACAO" | "EXPORTACAO",
+      })
+  );
 }
