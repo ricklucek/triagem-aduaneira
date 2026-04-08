@@ -154,18 +154,6 @@ const ServicoPrepostoSchema = z
       });
     }
 
-    const cidadeInformada =
-      value.cidadesLiberacao.length > 0 ||
-      value.outroPorto ||
-      value.outraFronteira;
-    if (!cidadeInformada) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["cidadesLiberacao"],
-        message: "Informe ao menos uma cidade/porto/fronteira",
-      });
-    }
-
     if (!value.prepostoSelecionado) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
