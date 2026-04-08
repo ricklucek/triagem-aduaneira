@@ -6,12 +6,13 @@ import { useParams } from "next/navigation";
 import { CheckCircle2, RotateCw, XCircle } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
-import { useScope } from "@/lib/api/hooks/use-scope-api";
+import { useScope, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCNPJ } from "@/utils/format";
+import { ResponsibleShow } from "@/components/ResponsibleShow";
 
 const text = (v: unknown) =>
   v == null || v === "" || (Array.isArray(v) && v.length === 0)
@@ -91,6 +92,10 @@ function ScopeDetails({
   const si = scope.servicos.importacao;
   const se = scope.servicos.exportacao;
 
+  const { data: metadataResponse } = useScopeMetadata();
+
+  const responsaveis = metadataResponse?.responsaveis ?? [];
+
   return (
     <Card className="p-4 md:p-6 print-avoid-break">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -161,7 +166,7 @@ function ScopeDetails({
             />
             <Field
               label="Responsável comercial"
-              value={text(scope.sobreEmpresa?.responsavelComercial)}
+              value={<ResponsibleShow value={scope.sobreEmpresa?.responsavelComercial} options={responsaveis} />}
             />
           </Grid>
         </ViewCard>
@@ -196,8 +201,8 @@ function ScopeDetails({
             <>
               <Separator className="my-2" />
               <Grid>
-                <Field label="Analista DA" value={text(i.analistaDA)} />
-                <Field label="Analista AE" value={text(i.analistaAE)} />
+                <Field label="Analista DA" value={<ResponsibleShow value={i.analistaDA} options={responsaveis} />} />
+                <Field label="Analista AE" value={<ResponsibleShow value={i.analistaAE} options={responsaveis} />} />
                 <Field
                   label="Produtos importados"
                   value={text(i.produtosImportados)}
