@@ -51,9 +51,8 @@ export function calculateCompleteness(data: EscopoForm): number {
     const e = data.operacao.exportacao;
     check(!!e);
     if (e) {
-      check(hasValue(e.analistaDA));
       check(hasValue(e.produtosExportados));
-      check(e.ncms.length > 0 && e.ncms.every((x) => hasValue(x)));
+      check(e.ncms.length > 0 && e.ncms.every((x) => hasValue(x.codigo)));
       check(e.destinacao.length > 0);
       check(!e.destinacao.includes("CONSUMO") || hasValue(e.subtipoConsumo));
     }

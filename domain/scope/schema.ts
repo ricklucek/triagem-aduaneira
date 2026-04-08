@@ -8,6 +8,7 @@ export const RegimeTributacaoSchema = z.enum([
   "SIMPLES_NACIONAL",
   "LUCRO_PRESUMIDO",
   "LUCRO_REAL",
+  "LUCRO_PRESUMIDO_OU_REAL",
 ]);
 
 export const ResponsavelComercialSchema = z
@@ -37,11 +38,14 @@ export const AnuenciaImportacaoSchema = z.enum([
   "ANTT_ANTAQ_ANAC",
 ]);
 export const DestinacaoSchema = z.array(z.string().trim().min(1)).default([]);
-export const SubtipoConsumoSchema = z.enum([
+export const SubtipoConsumoItemSchema = z.enum([
   "ATIVO_IMOBILIZADO_FIXO",
   "INSUMOS_PARA_INDUSTRIALIZACAO",
   "USO_E_CONSUMO",
 ]);
+export const SubtipoConsumoSchema = z
+  .array(SubtipoConsumoItemSchema)
+  .default([]);
 export const PortoFronteiraExportacaoSchema = z.enum([
   "FOZ_DO_IGUACU",
   "URUGUAIANA",
@@ -310,7 +314,7 @@ export const ImportacaoSchema = z
         observacao: z.string().trim().optional().nullable(),
       }),
     destinacao: DestinacaoSchema,
-    subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
+    subtipoConsumo: SubtipoConsumoSchema,
   })
   .superRefine((value, ctx) => {
     if (value.locaisDesembaraco.length === 0 && !value.outroLocalDesembaraco) {
@@ -363,7 +367,10 @@ export const ImportacaoSchema = z
         message: "Necessidade de DTC é obrigatória",
       });
     }
-    if (value.destinacao.includes("CONSUMO") && !value.subtipoConsumo) {
+    if (
+      value.destinacao.includes("CONSUMO") &&
+      value.subtipoConsumo.length === 0
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["subtipoConsumo"],
@@ -374,7 +381,6 @@ export const ImportacaoSchema = z
 
 export const ExportacaoSchema = z
   .object({
-    analistaDA: z.string().trim().min(1, "Analista DA é obrigatório"),
     produtosExportados: z
       .string()
       .trim()
@@ -390,10 +396,13 @@ export const ExportacaoSchema = z
       .default([]),
     observacaoNcms: z.string().trim().optional().nullable(),
     destinacao: DestinacaoSchema,
-    subtipoConsumo: SubtipoConsumoSchema.optional().nullable(),
+    subtipoConsumo: SubtipoConsumoSchema,
   })
   .superRefine((value, ctx) => {
-    if (value.destinacao.includes("CONSUMO") && !value.subtipoConsumo) {
+    if (
+      value.destinacao.includes("CONSUMO") &&
+      value.subtipoConsumo.length === 0
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["subtipoConsumo"],
@@ -438,6 +447,7 @@ export const EscopoSchema = z
     }),
     sobreEmpresa: z.object({
       razaoSocial: z.string().trim().min(1, "Razão social é obrigatória"),
+      nomeResumido: z.string().trim().optional().nullable(),
       cnpj: z.string().trim().min(14, "CNPJ é obrigatório"),
       inscricaoEstadual: z.string().trim().optional().nullable(),
       inscricaoMunicipal: z.string().trim().optional().nullable(),

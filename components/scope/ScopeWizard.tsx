@@ -196,12 +196,16 @@ export default function ScopeWizard({
     }
   }
 
-  function focusErrorAt(index: number) {
-    const invalidElements = Array.from(
-      document.querySelectorAll<HTMLElement>("[aria-invalid='true']"),
-    );
-
-    const target = invalidElements[index] ?? invalidElements[0];
+  function focusErrorAt(path: string) {
+    const guess = path.split(".").at(-1) ?? path;
+    const target =
+      document.querySelector<HTMLElement>(`[name='${path}']`) ??
+      document.querySelector<HTMLElement>(`[name='${guess}']`) ??
+      document.querySelector<HTMLElement>(`#${path}`) ??
+      document.querySelector<HTMLElement>(`#${guess}`) ??
+      Array.from(
+        document.querySelectorAll<HTMLElement>("[aria-invalid='true']"),
+      )[0];
 
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -211,6 +215,45 @@ export default function ScopeWizard({
   }
 
   const errorEntries = Object.entries(errors);
+  const scopedErrors = useMemo(() => {
+    const prefixMap: Record<EtapaFormulario, string[]> = {
+      INFORMACOES_FIXAS: ["informacoesFixas."],
+      SOBRE_EMPRESA: ["sobreEmpresa."],
+      CONTATOS: ["contatos."],
+      OPERACAO: ["operacao.tipos"],
+      IMPORTACAO: ["operacao.importacao."],
+      SERVICOS_IMPORTACAO: ["servicos.importacao."],
+      EXPORTACAO: ["operacao.exportacao."],
+      SERVICOS_EXPORTACAO: ["servicos.exportacao."],
+      FINANCEIRO: ["financeiro."],
+    };
+    const prefixes = prefixMap[etapaAtual];
+    const map: Record<string, string> = {};
+    const hasGlobalPrefix = (path: string) =>
+      [
+        "informacoesFixas.",
+        "sobreEmpresa.",
+        "contatos.",
+        "operacao.",
+        "servicos.",
+        "financeiro.",
+      ].some((prefix) => path.startsWith(prefix));
+    for (const [path, message] of errorEntries) {
+      let matched = false;
+      for (const prefix of prefixes) {
+        if (path === prefix || path.startsWith(prefix)) {
+          map[path.replace(prefix, "")] = message;
+          matched = true;
+          break;
+        }
+      }
+
+      if (!matched && !hasGlobalPrefix(path)) {
+        map[path] = message;
+      }
+    }
+    return map;
+  }, [errorEntries, etapaAtual]);
 
   function renderEtapa() {
     switch (etapaAtual) {
@@ -218,23 +261,27 @@ export default function ScopeWizard({
         return (
           <StepSobreEmpresa
             form={form}
-            errors={errors}
+            errors={scopedErrors}
             onChange={setForm}
             responsaveis={responsaveis}
           />
         );
 
       case "CONTATOS":
-        return <StepContatos form={form} errors={errors} onChange={setForm} />;
+        return (
+          <StepContatos form={form} errors={scopedErrors} onChange={setForm} />
+        );
 
       case "OPERACAO":
-        return <StepOperacao form={form} errors={errors} onChange={setForm} />;
+        return (
+          <StepOperacao form={form} errors={scopedErrors} onChange={setForm} />
+        );
 
       case "IMPORTACAO":
         return (
           <StepImportacao
             form={form}
-            errors={errors}
+            errors={scopedErrors}
             onChange={setForm}
             responsaveis={responsaveis}
           />
@@ -244,7 +291,7 @@ export default function ScopeWizard({
         return (
           <StepServicosImportacao
             form={form}
-            errors={errors}
+            errors={scopedErrors}
             onChange={setForm}
           />
         );
@@ -253,9 +300,8 @@ export default function ScopeWizard({
         return (
           <StepExportacao
             form={form}
-            errors={errors}
+            errors={scopedErrors}
             onChange={setForm}
-            responsaveis={responsaveis}
           />
         );
 
@@ -263,7 +309,7 @@ export default function ScopeWizard({
         return (
           <StepServicosExportacao
             form={form}
-            errors={errors}
+            errors={scopedErrors}
             onChange={setForm}
             responsaveis={responsaveis}
           />
@@ -271,7 +317,7 @@ export default function ScopeWizard({
 
       case "FINANCEIRO":
         return (
-          <StepFinanceiro form={form} errors={errors} onChange={setForm} />
+          <StepFinanceiro form={form} errors={scopedErrors} onChange={setForm} />
         );
 
       default:
@@ -289,6 +335,7 @@ export default function ScopeWizard({
       <StepPills
         steps={etapas.map((e) => STEP_LABELS[e])}
         currentIndex={etapaAtualIndex}
+        onSelect={(index) => navigateToStep(etapas[index])}
       />
 
       <div style={{ marginBottom: 20 }}>{renderEtapa()}</div>
@@ -309,7 +356,7 @@ export default function ScopeWizard({
                 Nenhum erro encontrado no momento.
               </p>
             ) : (
-              errorEntries.map(([path, message], index) => (
+              errorEntries.map(([path, message]) => (
                 <div key={path} className="rounded-xl border p-4">
                   <p className="text-sm font-semibold">{path}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -319,7 +366,7 @@ export default function ScopeWizard({
                     type="button"
                     variant="outline"
                     className="mt-3"
-                    onClick={() => focusErrorAt(index)}
+                    onClick={() => focusErrorAt(path)}
                   >
                     Ir para o campo
                   </Button>

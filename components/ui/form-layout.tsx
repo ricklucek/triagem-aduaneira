@@ -218,26 +218,31 @@ export function ToolbarSearchField({
 export function StepPills({
   steps,
   currentIndex,
+  onSelect,
 }: {
   steps: string[];
   currentIndex: number;
+  onSelect?: (index: number) => void;
 }) {
   return (
     <div className="mb-6 flex flex-wrap gap-2">
       {steps.map((step, idx) => {
         const active = idx === currentIndex;
         return (
-          <div
+          <button
             key={step}
+            type="button"
+            onClick={() => onSelect?.(idx)}
             className={cn(
               "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+              onSelect ? "cursor-pointer hover:border-foreground/60" : "",
               active
                 ? "border-foreground bg-muted text-foreground"
                 : "border-border bg-background text-muted-foreground",
             )}
           >
             {step}
-          </div>
+          </button>
         );
       })}
     </div>

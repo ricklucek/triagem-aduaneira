@@ -80,6 +80,12 @@ export default function StepSobreEmpresa({
             onChange={(e) => patch({ razaoSocial: e.target.value })}
           />
         </Field>
+        <Field label="Nome Resumido" hint="Campo opcional">
+          <TextInput
+            value={s.nomeResumido ?? ""}
+            onChange={(e) => patch({ nomeResumido: e.target.value })}
+          />
+        </Field>
         <Field
           label="CNPJ"
           required
@@ -167,6 +173,9 @@ export default function StepSobreEmpresa({
             <option value="SIMPLES_NACIONAL">Simples Nacional</option>
             <option value="LUCRO_PRESUMIDO">Lucro Presumido</option>
             <option value="LUCRO_REAL">Lucro Real</option>
+            <option value="LUCRO_PRESUMIDO_OU_REAL">
+              Lucro Presumido / Lucro Real
+            </option>
           </Select>
         </Field>
         <ResponsiblePicker

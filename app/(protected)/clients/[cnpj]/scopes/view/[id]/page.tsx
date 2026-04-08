@@ -124,6 +124,10 @@ function ScopeDetails({
               value={text(scope.sobreEmpresa?.razaoSocial)}
             />
             <Field
+              label="Nome resumido"
+              value={text(scope.sobreEmpresa?.nomeResumido)}
+            />
+            <Field
               label="CNPJ"
               value={formatCNPJ(scope.sobreEmpresa?.cnpj) || "-"}
             />
@@ -246,7 +250,7 @@ function ScopeDetails({
                 <Field label="Destinação" value={list(i.destinacao)} />
                 <Field
                   label="Subtipo de consumo"
-                  value={text(i.subtipoConsumo)}
+                  value={list(i.subtipoConsumo)}
                 />
               </Grid>
               <div className="grid gap-3">
@@ -277,7 +281,6 @@ function ScopeDetails({
             <>
               <Separator className="my-2" />
               <Grid>
-                <Field label="Analista DA" value={text(e.analistaDA)} />
                 <Field
                   label="Produtos exportados"
                   value={text(e.produtosExportados)}
@@ -307,7 +310,7 @@ function ScopeDetails({
                 <Field label="Destinação" value={list(e.destinacao)} />
                 <Field
                   label="Subtipo de consumo"
-                  value={text(e.subtipoConsumo)}
+                  value={list(e.subtipoConsumo)}
                 />
               </Grid>
             </>

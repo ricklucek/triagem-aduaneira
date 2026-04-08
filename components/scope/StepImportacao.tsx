@@ -16,21 +16,28 @@ import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 
 const LOCAIS = [
-  ["SANTOS_BANDEIRANTES_8931364", "Santos Bandeirantes"],
-  ["SANTOS_MOVECTA_8933001", "Santos Movecta"],
-  ["SANTOS_MULTILOG_8933201", "Santos Multilog"],
-  ["SANTOS_EUDMARCO_8933202", "Santos Eudmarco"],
-  ["VCP_8921101", "VCP"],
-  ["GRU_8911101", "GRU"],
-  ["CLIF_9983001", "CLIF"],
-  ["PORTONAVE_9101602", "Portonave"],
-  ["MULTILOG_ITAJAI_9103201", "Multilog Itajaí"],
-  ["PACLOG_NAVEGANTES_9101102", "PacLog Navegantes"],
-  ["PACLOG_CURITIBA_9991102", "PacLog Curitiba"],
-  ["PS1_MULTILOG_CURITIBA_9993202", "PS1 Multilog Curitiba"],
-  ["TCP_PARANAGUA_9801303", "TCP Paranaguá"],
-  ["ROCHA_PARANAGUA_9801408", "Rocha Paranaguá"],
-  ["TECON_SUAPE_4931303", "Tecon Suape"],
+  ["9D.01.894|0917900/0917800|Curitiba/ Paranaguá", "9D.01.894 • 0917900/0917800 • Curitiba/ Paranaguá"],
+  ["8D.04.934|0817800|Santos", "8D.04.934 • 0817800 • Santos"],
+  ["9D.01.007|0927800|Itajaí/ Navegantes", "9D.01.007 • 0927800 • Itajaí/ Navegantes"],
+  ["9D.02.957|0927700|Itapoá", "9D.02.957 • 0927700 • Itapoá"],
+  ["10D.00.915|1017500|Borja", "10D.00.915 • 1017500 • Borja"],
+  ["9D.00.422|0927502|Imbituba - SC", "9D.00.422 • 0927502 • Imbituba - SC"],
+  ["8D.03.722|0817700|Viracopos/ Campinas", "8D.03.722 • 0817700 • Viracopos/ Campinas"],
+  ["8D.03.887|0817600|Guarulhos/ São Paulo", "8D.03.887 • 0817600 • Guarulhos/ São Paulo"],
+  ["9D.01.689|0917500|Foz do Iguaçu", "9D.01.689 • 0917500 • Foz do Iguaçu"],
+  ["5D.00.103|0517800|Salvador", "5D.00.103 • 0517800 • Salvador"],
+  ["7D.01.398|0720100|Vitória - ES", "7D.01.398 • 0720100 • Vitória - ES"],
+  ["6D.00.0035|0617700|Belo Horizonte", "6D.00.0035 • 0617700 • Belo Horizonte"],
+  ["8D.01.445|0717700|Rio de Janeiro", "8D.01.445 • 0717700 • Rio de Janeiro"],
+  ["1D.00.175|0147600|Corumbá", "1D.00.175 • 0147600 • Corumbá"],
+  ["10D.00.061|1010253|Cersando / Bagé", "10D.00.061 • 1010253 • Cersando / Bagé"],
+  ["2D.00.799|0230155|Epitaciolândia / Acre", "2D.00.799 • 0230155 • Epitaciolândia / Acre"],
+  ["10D.00.992|1017700|Porto de Rio Grande - RS", "10D.00.992 • 1017700 • Porto de Rio Grande - RS"],
+  ["4D.0.255|0417902|Suape - PE", "4D.0.255 • 0417902 • Suape - PE"],
+  ["10D.00.197|1017801|Aeroporto Salgado Filho - Porto Alegre - RS", "10D.00.197 • 1017801 • Aeroporto Salgado Filho - Porto Alegre - RS"],
+  ["9D.02.694|0920200|Aeroporto Lauro Carneiro de Loyola - Joinville - SC", "9D.02.694 • 0920200 • Aeroporto Lauro Carneiro de Loyola - Joinville - SC"],
+  ["6D/00.0088|0617700|Betim - MG/Aeroporto de Confins", "6D/00.0088 • 0617700 • Betim - MG/Aeroporto de Confins"],
+  ["5D.0.360|0317800|Pecem - CE", "5D.0.360 • 0317800 • Pecem - CE"],
 ] as const;
 
 const ANUENCIAS = [
@@ -104,7 +111,7 @@ export default function StepImportacao({
     afrmm: { observacao: "" },
     icms: { regime: "INTEGRAL", observacao: "" },
     destinacao: [],
-    subtipoConsumo: null,
+    subtipoConsumo: [],
   };
 
   function setData(next: NonNullable<EscopoForm["operacao"]["importacao"]>) {
@@ -578,19 +585,24 @@ export default function StepImportacao({
             required
             error={errors["subtipoConsumo"]}
           >
-            <Select
-              value={data.subtipoConsumo ?? ""}
-              onChange={(e) => update("subtipoConsumo", e.target.value)}
-            >
-              <option value="">Selecione</option>
-              <option value="ATIVO_IMOBILIZADO_FIXO">
-                Ativo imobilizado/fixo
-              </option>
-              <option value="INSUMOS_PARA_INDUSTRIALIZACAO">
-                Insumos para industrialização
-              </option>
-              <option value="USO_E_CONSUMO">Uso e consumo</option>
-            </Select>
+            <SearchableCheckboxMenu
+              title=""
+              searchLabel="Pesquisar subtipo de consumo"
+              value={data.subtipoConsumo}
+              options={[
+                {
+                  value: "ATIVO_IMOBILIZADO_FIXO",
+                  label: "Ativo imobilizado/fixo",
+                },
+                {
+                  value: "INSUMOS_PARA_INDUSTRIALIZACAO",
+                  label: "Insumos para industrialização",
+                },
+                { value: "USO_E_CONSUMO", label: "Uso e consumo" },
+              ]}
+              onChange={(next) => update("subtipoConsumo", next)}
+              error={errors["subtipoConsumo"]}
+            />
           </Field>
         ) : null}
       </Grid>

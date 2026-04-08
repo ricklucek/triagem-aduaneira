@@ -10,6 +10,24 @@ import {
 } from "./schema";
 import { EscopoForm, EtapaFormulario, ResultadoValidacaoEtapa } from "./types";
 
+function sanitizeByOperationType(data: EscopoForm): EscopoForm {
+  const next = structuredClone(data);
+  const hasImportacao = next.operacao.tipos.includes("IMPORTACAO");
+  const hasExportacao = next.operacao.tipos.includes("EXPORTACAO");
+
+  if (!hasImportacao) {
+    next.operacao.importacao = undefined;
+    next.servicos.importacao = undefined;
+  }
+
+  if (!hasExportacao) {
+    next.operacao.exportacao = undefined;
+    next.servicos.exportacao = undefined;
+  }
+
+  return next;
+}
+
 function zodErrorToMap(error: ZodError): Record<string, string> {
   const result: Record<string, string> = {};
   for (const issue of error.issues) {
@@ -153,7 +171,7 @@ export function validarFormularioCompleto(
   data: EscopoForm,
 ): ResultadoValidacaoEtapa {
   try {
-    EscopoSchema.parse(data);
+    EscopoSchema.parse(sanitizeByOperationType(data));
     return { ok: true, errors: {} };
   } catch (error) {
     if (error instanceof ZodError) {

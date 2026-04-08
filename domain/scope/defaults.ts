@@ -12,6 +12,7 @@ export const escopoFormDefault: EscopoForm = {
 
   sobreEmpresa: {
     razaoSocial: "",
+    nomeResumido: "",
     cnpj: "",
     inscricaoEstadual: "",
     inscricaoMunicipal: "",

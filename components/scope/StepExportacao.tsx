@@ -9,8 +9,6 @@ import {
   TextInput,
 } from "@/components/ui/form-fields";
 import { Card, Grid } from "@/components/ui/form-layout";
-import { ResponsiblePicker } from "./ResponsiblePicker";
-import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 
@@ -18,23 +16,20 @@ type Props = {
   form: EscopoForm;
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
-  responsaveis: ScopeResponsible[];
 };
 
 export default function StepExportacao({
   form,
   errors,
   onChange,
-  responsaveis,
 }: Props) {
   const data: NonNullable<EscopoForm["operacao"]["exportacao"]> =
     form.operacao.exportacao ?? {
-      analistaDA: "",
       produtosExportados: "",
       ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
       observacaoNcms: "",
       destinacao: [],
-      subtipoConsumo: null,
+      subtipoConsumo: [],
     };
   function setData(next: NonNullable<EscopoForm["operacao"]["exportacao"]>) {
     onChange({ ...form, operacao: { ...form.operacao, exportacao: next } });
@@ -53,15 +48,6 @@ export default function StepExportacao({
   return (
     <main className="flex flex-col gap-10">
       <div className="flex flex-col gap-5">
-        <Grid columns={2}>
-          <ResponsiblePicker
-            label="Analista DA"
-            value={data.analistaDA}
-            onChange={(value) => update("analistaDA", value)}
-            options={responsaveis}
-            error={errors["analistaDA"]}
-          />
-        </Grid>
         <Field
           label="Principais produtos exportados"
           required
@@ -199,19 +185,24 @@ export default function StepExportacao({
               required
               error={errors["subtipoConsumo"]}
             >
-              <Select
-                value={data.subtipoConsumo ?? ""}
-                onChange={(e) => update("subtipoConsumo", e.target.value)}
-              >
-                <option value="">Selecione</option>
-                <option value="ATIVO_IMOBILIZADO_FIXO">
-                  Ativo imobilizado/fixo
-                </option>
-                <option value="INSUMOS_PARA_INDUSTRIALIZACAO">
-                  Insumos para industrialização
-                </option>
-                <option value="USO_E_CONSUMO">Uso e consumo</option>
-              </Select>
+              <SearchableCheckboxMenu
+                title=""
+                searchLabel="Pesquisar subtipo de consumo"
+                value={data.subtipoConsumo}
+                options={[
+                  {
+                    value: "ATIVO_IMOBILIZADO_FIXO",
+                    label: "Ativo imobilizado/fixo",
+                  },
+                  {
+                    value: "INSUMOS_PARA_INDUSTRIALIZACAO",
+                    label: "Insumos para industrialização",
+                  },
+                  { value: "USO_E_CONSUMO", label: "Uso e consumo" },
+                ]}
+                onChange={(next) => update("subtipoConsumo", next)}
+                error={errors["subtipoConsumo"]}
+              />
             </Field>
           ) : null}
         </Grid>
