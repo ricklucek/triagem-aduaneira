@@ -11,23 +11,28 @@ import {
 import { Card, Grid } from "@/components/ui/form-layout";
 import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
+import { ResponsiblePicker } from "./ResponsiblePicker";
+import { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 
 type Props = {
   form: EscopoForm;
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
+  responsaveis: ScopeResponsible[];
 };
 
 export default function StepExportacao({
   form,
   errors,
   onChange,
+  responsaveis,
 }: Props) {
   const data: NonNullable<EscopoForm["operacao"]["exportacao"]> =
     form.operacao.exportacao ?? {
       produtosExportados: "",
       ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
       observacaoNcms: "",
+      analistaDA: "",
       destinacao: [],
       subtipoConsumo: [],
     };
@@ -48,6 +53,16 @@ export default function StepExportacao({
   return (
     <main className="flex flex-col gap-10">
       <div className="flex flex-col gap-5">
+        <Grid columns={2}>
+          <ResponsiblePicker
+            label="Analista DA"
+            value={data.analistaDA}
+            onChange={(value) => update("analistaDA", value)}
+            options={responsaveis}
+            error={errors["analistaDA"]}
+          />
+        </Grid>
+
         <Field
           label="Principais produtos exportados"
           required

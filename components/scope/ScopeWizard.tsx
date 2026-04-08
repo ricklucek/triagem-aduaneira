@@ -186,14 +186,12 @@ export default function ScopeWizard({
       return;
     }
 
-    const ok = await persist(form);
-    if (!ok) return;
-
     if (onPublish) {
       await onPublish();
       setSavedMessage("Publicado");
       toast.success("Escopo publicado com sucesso.");
     }
+    router.replace('/dashboard');
   }
 
   function focusErrorAt(path: string) {
@@ -302,6 +300,7 @@ export default function ScopeWizard({
             form={form}
             errors={scopedErrors}
             onChange={setForm}
+            responsaveis={responsaveis}
           />
         );
 
