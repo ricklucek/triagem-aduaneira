@@ -280,6 +280,12 @@ function ScopeDetails({
                     </Grid>
                   ))}
               </div>
+              <Grid>
+                <Field
+                  label="Observação NCM"
+                  value={i.observacaoNcms}
+                />
+              </Grid>
             </>
           ) : null}
           {e ? (
@@ -312,6 +318,12 @@ function ScopeDetails({
                       </Grid>
                     ))}
                 </div>
+                <Grid>
+                  <Field
+                    label="Observação NCM"
+                    value={e.observacaoNcms}
+                  />
+                </Grid>
                 <Field label="Destinação" value={list(e.destinacao)} />
                 <Field
                   label="Subtipo de consumo"
