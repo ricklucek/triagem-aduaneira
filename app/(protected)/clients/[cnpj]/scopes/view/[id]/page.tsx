@@ -353,6 +353,10 @@ function ScopeDetails({
                 value={date(si.despachoAduaneiroImportacao?.ultimaAtualizacao)}
               />
               <Field
+                label="Observação despacho aduaneiro"
+                value={text(si.despachoAduaneiroImportacao?.observacao)}
+              />
+              <Field
                 label="Preposto"
                 value={boolBadge(si.preposto?.habilitado)}
               />
@@ -497,6 +501,10 @@ function ScopeDetails({
               <Field
                 label="Valor"
                 value={currency(se.despachoAduaneiroExportacao?.valor)}
+              />
+              <Field
+                label="Observação despacho aduaneiro"
+                value={text(se.despachoAduaneiroExportacao?.observacao)}
               />
               <Field
                 label="Preposto"
