@@ -186,6 +186,8 @@ export default function ScopeWizard({
       return;
     }
 
+    await persist(form, true);
+
     if (onPublish) {
       await onPublish();
       setSavedMessage("Publicado");
