@@ -4,6 +4,7 @@ import type {
   ListScopesParams,
   ListScopesResult,
   PublishResult,
+  ScopeSummary,
 } from "@/data/scope/ScopeRepo";
 import type { EscopoForm } from "@/domain/scope/types";
 import type {
@@ -13,9 +14,66 @@ import type {
   SaveScopeDraftPayload,
   ScopeApiClient,
   ScopeDetailResponse,
+  ScopeSummaryApi,
   ScopeVersionsResponse,
 } from "@/lib/api/types/scope-api";
 import type { ScopeMetadataResponse } from "@/lib/api/types/scope-metadata";
+
+type ScopeListResponseApi =
+  | ListScopesResult
+  | {
+      items: ScopeSummaryApi[];
+      total?: number;
+      limit?: number;
+      offset?: number;
+    }
+  | ScopeSummaryApi[];
+
+function normalizeScopeSummary(item: ScopeSummaryApi | ScopeSummary): ScopeSummary {
+  return {
+    id: item.id,
+    status: item.status,
+    completeness_score: item.completeness_score ?? 0,
+    client_id: "client_id" in item ? item.client_id ?? null : null,
+    cnpj:
+      "client_cnpj" in item
+        ? item.client_cnpj ?? null
+        : (item as ScopeSummary).cnpj ?? null,
+    razao_social:
+      "client_razao_social" in item
+        ? item.client_razao_social ?? null
+        : (item as ScopeSummary).razao_social ?? null,
+    updated_at: item.updated_at ?? null,
+    last_published_at: item.last_published_at ?? null,
+    version: item.version ?? null,
+    version_count: "version_count" in item ? item.version_count ?? null : null,
+    responsible_user_id: item.responsible_user_id ?? null,
+    responsible_user_nome: item.responsible_user_nome ?? null,
+  };
+}
+
+function normalizeScopeListResponse(
+  response: ScopeListResponseApi,
+  params: ListScopesParams,
+): ListScopesResult {
+  if (Array.isArray(response)) {
+    return {
+      items: response.map(normalizeScopeSummary),
+      total: response.length,
+      limit: params.limit,
+      offset: params.offset,
+    };
+  }
+
+  const items = (response.items ?? []).map(normalizeScopeSummary);
+
+  return {
+    items,
+    total: response.total ?? items.length,
+    limit: response.limit ?? params.limit,
+    offset: response.offset ?? params.offset,
+  };
+}
 
 export const scopeApi: ScopeApiClient = {
   async createScope(
@@ -29,10 +87,11 @@ export const scopeApi: ScopeApiClient = {
   },
 
   async listScopes(params: ListScopesParams): Promise<ListScopesResult> {
-    const { data } = await http.get<ListScopesResult>(API_ROUTES.scopes.list, {
+    const { data } = await http.get<ScopeListResponseApi>(API_ROUTES.scopes.list, {
       params,
     });
-    return data;
+
+    return normalizeScopeListResponse(data, params);
   },
 
   async getScope(id: string): Promise<ScopeDetailResponse> {

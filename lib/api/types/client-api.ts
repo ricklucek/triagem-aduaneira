@@ -1,18 +1,34 @@
 import type { ScopeSummary } from "@/data/scope/ScopeRepo";
 
-export interface ClientSummary {
+export interface ClientContactApi {
   id: string;
-  cnpj: string;
-  razaoSocial: string;
-  nomeResumido?: string | null;
+  client_id: string;
+  nome: string;
+  email?: string | null;
+  telefone?: string | null;
+  whatsapp?: string | null;
+  cargo_departamento?: string | null;
+  principal: boolean;
   ativo: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
-export interface ClientDetailResponse extends ClientSummary {
-  inscricaoEstadual?: string | null;
-  inscricaoMunicipal?: string | null;
+export interface ClientApi {
+  id: string;
+  organization_id: string;
+  cnpj: string;
+  razao_social: string;
+  nome_resumido?: string | null;
+  inscricao_estadual?: string | null;
+  inscricao_municipal?: string | null;
+  endereco_completo_escritorio?: string | null;
+  endereco_completo_armazem?: string | null;
+  cnae_principal?: string | null;
+  cnae_secundario?: string | null;
+  regime_tributacao?: string | null;
+  ativo: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+  contatos?: ClientContactApi[];
 }
 
 export interface ListClientsParams {
@@ -24,7 +40,7 @@ export interface ListClientsParams {
 }
 
 export interface ListClientsResponse {
-  items: ClientSummary[];
+  items: ClientApi[];
   total: number;
   limit: number;
   offset: number;
@@ -45,12 +61,16 @@ export interface ListClientScopesResponse {
 
 export type UpdateClientPayload = Partial<
   Pick<
-    ClientDetailResponse,
-    | "razaoSocial"
-    | "nomeResumido"
-    | "cnpj"
+    ClientApi,
+    | "razao_social"
+    | "nome_resumido"
+    | "inscricao_estadual"
+    | "inscricao_municipal"
+    | "endereco_completo_escritorio"
+    | "endereco_completo_armazem"
+    | "cnae_principal"
+    | "cnae_secundario"
+    | "regime_tributacao"
     | "ativo"
-    | "inscricaoEstadual"
-    | "inscricaoMunicipal"
   >
 >;

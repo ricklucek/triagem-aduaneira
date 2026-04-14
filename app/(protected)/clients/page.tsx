@@ -59,7 +59,7 @@ export default function ClientsPage() {
             ) : (
               items.map((client) => (
                 <TableRow key={client.id}>
-                  <TableCell className="font-medium">{client.razaoSocial}</TableCell>
+                  <TableCell className="font-medium">{client.razao_social}</TableCell>
                   <TableCell>{formatCNPJ(client.cnpj)}</TableCell>
                   <TableCell>
                     <Badge variant={client.ativo ? "default" : "secondary"}>

@@ -75,7 +75,7 @@ export default function ScopesPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="text-lg font-semibold tracking-tight">
-              Escopos • {clientData?.razaoSocial ?? clientId}
+              Escopos • {clientData?.razao_social ?? clientId}
             </div>
             <div className="text-sm text-muted-foreground">
               {clientData?.cnpj ? `CNPJ: ${formatCNPJ(clientData.cnpj)} • ` : ""}
@@ -120,7 +120,7 @@ export default function ScopesPage() {
                 items.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">
-                      {r.razao_social || clientData?.razaoSocial || "(sem razão social)"}
+                      {r.razao_social || clientData?.razao_social || "(sem razão social)"}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {r.id}

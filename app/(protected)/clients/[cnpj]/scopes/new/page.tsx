@@ -25,7 +25,7 @@ export default function NewScopePage({ params }: { params: { cnpj: string } }) {
             sobreEmpresa: {
               ...rec.draft.sobreEmpresa,
               cnpj: client.cnpj,
-              razaoSocial: client.razaoSocial,
+              razaoSocial: client.razao_social,
             },
           },
         });

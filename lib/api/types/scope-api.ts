@@ -26,13 +26,26 @@ export interface SaveScopeDraftPayload {
 
 export type ScopeVersionsResponse = ScopeVersion[];
 
-
+export interface ScopeSummaryApi {
+  id: string;
+  status: ScopeStatus;
+  completeness_score: number;
+  version?: number | null;
+  updated_at?: string | null;
+  last_published_at?: string | null;
+  client_id?: string | null;
+  client_cnpj?: string | null;
+  client_razao_social?: string | null;
+  responsible_user_id?: string | null;
+  responsible_user_nome?: string | null;
+}
 
 export interface BulkReassignResponsiblePayload {
-  from_responsible_user_id: string;
-  to_responsible_user_id: string;
+  old_user_id: string;
+  new_user_id: string;
+  apply_status?: ScopeStatus[];
+  only_active_assignments?: boolean;
   dry_run?: boolean;
-  statuses?: ScopeStatus[];
 }
 
 export interface BulkReassignResponsibleResponse {

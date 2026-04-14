@@ -2,13 +2,17 @@ import { EscopoForm } from "@/domain/scope/types";
 
 export type ScopeSummary = {
   id: string;
-  cnpj: string;
-  razao_social: string;
+  client_id?: string | null;
+  cnpj?: string | null;
+  razao_social?: string | null;
   status: "draft" | "published" | "archived";
-  updated_at: string;
+  updated_at?: string | null;
   last_published_at?: string | null;
-  version_count: number;
+  version_count?: number | null;
+  version?: number | null;
   completeness_score: number;
+  responsible_user_id?: string | null;
+  responsible_user_nome?: string | null;
 };
 
 export type ScopeVersion = {
@@ -21,6 +25,9 @@ export type ListScopesParams = {
   status?: "draft" | "published" | "archived";
   cnpj?: string;
   q?: string;
+  client_id?: string;
+  responsible_user_id?: string;
+  created_by_id?: string;
   limit: number;
   offset: number;
 };
