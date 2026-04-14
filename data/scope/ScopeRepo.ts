@@ -3,7 +3,7 @@ import { EscopoForm } from "@/domain/scope/types";
 export type ScopeSummary = {
   id: string;
   client_id?: string | null;
-  cnpj?: string | null;
+  client_cnpj?: string | null;
   razao_social?: string | null;
   status: "draft" | "published" | "archived";
   updated_at?: string | null;

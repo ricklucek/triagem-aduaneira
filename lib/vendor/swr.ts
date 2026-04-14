@@ -21,28 +21,37 @@ export default function useSWR<Data>(
   options?: SWROptions,
 ): SWRResponse<Data> {
   void options;
+
   const [data, setData] = useState<Data>();
   const [error, setError] = useState<Error>();
   const [isLoading, setIsLoading] = useState(Boolean(key));
   const active = useRef(true);
+  const fetcherRef = useRef(fetcher);
+
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  }, [fetcher]);
 
   const run = useCallback(async () => {
     if (!key) return;
+
     setIsLoading(true);
     setError(undefined);
+
     try {
-      const result = await fetcher(key);
+      const result = await fetcherRef.current(key);
       if (active.current) setData(result);
     } catch (err) {
       if (active.current) setError(err as Error);
     } finally {
       if (active.current) setIsLoading(false);
     }
-  }, [fetcher, key]);
+  }, [key]);
 
   useEffect(() => {
     active.current = true;
     void run();
+
     return () => {
       active.current = false;
     };

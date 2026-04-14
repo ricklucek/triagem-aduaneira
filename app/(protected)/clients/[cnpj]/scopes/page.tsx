@@ -40,10 +40,12 @@ function formatISO(iso: string) {
 
 export default function ScopesPage() {
   const { cnpj: clientId } = useParams<{ cnpj: string }>();
+  
   const { data, error, isLoading, mutate } = useClientScopes(clientId, {
     limit: 500,
     offset: 0,
   });
+
   const { data: clientData } = useClient(clientId);
   const [scopeToDelete, setScopeToDelete] = useState<{
     id: string;
@@ -51,7 +53,7 @@ export default function ScopesPage() {
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const items = useMemo(() => data?.items ?? [], [data]);
+  const items = data?.items ?? [];
 
   async function handleDeleteScope() {
     if (!scopeToDelete) return;
@@ -102,8 +104,6 @@ export default function ScopesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Razão Social</TableHead>
-                <TableHead>ID</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Atualizado</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -119,12 +119,6 @@ export default function ScopesPage() {
               ) : (
                 items.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="font-medium">
-                      {r.razao_social || clientData?.razao_social || "(sem razão social)"}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {r.id}
-                    </TableCell>
                     <TableCell>
                       <Badge variant={r.status === "draft" ? "secondary" : "default"}>
                         {r.status === "draft"
@@ -134,7 +128,7 @@ export default function ScopesPage() {
                             : "Arquivado"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{formatISO(r.updated_at)}</TableCell>
+                    <TableCell>{formatISO(r.updated_at ?? '')}</TableCell>
                     <TableCell className="space-x-2 text-right">
                       <Button asChild variant="secondary" className="rounded-xl">
                         <Link href={`/clients/${clientId}/scopes/view/${r.id}`}>Visualizar</Link>

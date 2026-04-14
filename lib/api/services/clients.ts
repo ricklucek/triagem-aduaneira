@@ -37,7 +37,7 @@ function normalizeScopeSummary(item: ScopeSummaryApi): ScopeSummary {
     status: item.status,
     completeness_score: item.completeness_score ?? 0,
     client_id: item.client_id ?? null,
-    cnpj: item.client_cnpj ?? null,
+    client_cnpj: item.client_cnpj ?? null,
     razao_social: item.client_razao_social ?? null,
     updated_at: item.updated_at ?? null,
     last_published_at: item.last_published_at ?? null,
@@ -93,7 +93,7 @@ function normalizeClientScopesList(
 }
 
 export const clientsApi = {
-  async listClients(params: ListClientsParams = {}): Promise<ListClientsResponse> {
+  async listClients(params: any): Promise<ListClientsResponse> {
     const { data } = await http.get<ClientsListResponseApi>(API_ROUTES.clients.list, {
       params,
     });
@@ -121,7 +121,7 @@ export const clientsApi = {
 
   async listClientScopes(
     clientId: string,
-    params: ListClientScopesParams = {},
+    params: any,
   ): Promise<ListClientScopesResponse> {
     const { data } = await http.get<ClientScopesResponseApi>(
       API_ROUTES.clients.scopes(clientId),
