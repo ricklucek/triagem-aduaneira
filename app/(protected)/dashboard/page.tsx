@@ -166,7 +166,7 @@ export default function DashboardPage() {
                   {items.map((x) => (
                     <TableRow key={x.id}>
                       <TableCell className="px-5 py-4">
-                        {x.cnpj ? formatCNPJ(x.cnpj) : "-"}
+                        {x.client_cnpj ? formatCNPJ(x.client_cnpj) : "-"}
                       </TableCell>
                       <TableCell className="px-5 py-4 font-medium whitespace-normal">
                         {x.razao_social}
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                           <PopoverContent className="popover-menu-container right-0 w-56">
                             <div className="flex w-full flex-col gap-4">
                               <div className="popover-menu-item">
-                                <Link className="cursor-pointer" href={`/clients/${x.client_id ?? x.cnpj ?? ""}/scopes/view/${x.id}`}>
+                                <Link className="cursor-pointer" href={`/clients/${x.client_id ?? x.client_cnpj ?? ""}/scopes/view/${x.id}`}>
                                   <button className="w-full">Visualizar</button>
                                 </Link>
                               </div>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
                 >
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">CNPJ</p>
-                    <p className="font-medium">{x.cnpj ? formatCNPJ(x.cnpj) : "-"}</p>
+                    <p className="font-medium">{x.client_cnpj ? formatCNPJ(x.client_cnpj) : "-"}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Razão Social</p>
@@ -258,10 +258,10 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 bg-red-500">
-                    <Link href={`/clients/${x.client_id ?? x.cnpj ?? ""}/scopes/view/${x.id}`}>
+                    <Link href={`/clients/${x.client_id ?? x.client_cnpj ?? ""}/scopes/view/${x.id}`}>
                       <SecondaryButton>Visualizar</SecondaryButton>
                     </Link>
-                    <Link href={`/clients/${x.client_id ?? x.cnpj ?? ""}/scopes/edit/${x.id}`}>
+                    <Link href={`/clients/${x.client_id ?? x.client_cnpj ?? ""}/scopes/edit/${x.id}`}>
                       <SecondaryButton>Editar</SecondaryButton>
                     </Link>
                     <Button
