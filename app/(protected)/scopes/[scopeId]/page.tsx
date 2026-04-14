@@ -49,13 +49,13 @@ export default function ScopeDetailPage() {
       await scopeApi.saveScope({ id: scopeId, draft: nextData });
       await mutate();
     },
-    [scopeId],
+    [scopeId, mutate],
   );
 
   const handlePublish = useCallback(async () => {
     await scopeApi.publishScope(scopeId);
     await mutate();
-  }, [scopeId]);
+  }, [scopeId, mutate]);
 
   if (loading) return <div style={{ padding: 24 }}>Carregando escopo...</div>;
   if (scopeError || !draft)

@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { dashboardApi } from "@/lib/api/services/dashboards";
 import { usersApi } from "@/lib/api/services/users";
-import { adminSettingsApi } from "@/lib/api/services/admin-settings";
+import { organizationSettingsApi } from "@/lib/api/services/organization-settings";
 import { publicApi } from "../services/public";
 
 export function useAdminDashboard() {
@@ -34,7 +34,7 @@ export function useAdmins() {
 }
 
 export function useAdminSettings() {
-  return useSWR("admin:settings", adminSettingsApi.getSettings);
+  return useSWR("organization:settings", organizationSettingsApi.getSettings);
 }
 
 export function usePrepostosLookup(params?: {

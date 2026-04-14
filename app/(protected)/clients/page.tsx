@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -9,59 +12,71 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-const mockClients = [
-  { cnpj: "56091724000142", razao: "Vexos", status: "draft", lastVersion: 1 },
-  {
-    cnpj: "12345678000190",
-    razao: "Via Importadora",
-    status: "published",
-    lastVersion: 3,
-  },
-];
+import { Badge } from "@/components/ui/badge";
+import { useClients } from "@/lib/api/hooks/use-clients-api";
+import { formatCNPJ } from "@/utils/format";
 
 export default function ClientsPage() {
+  const { data, isLoading, error } = useClients({ limit: 100, offset: 0 });
+  const items = data?.items ?? [];
+
   return (
     <Card className="rounded-2xl p-4">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <div className="text-lg font-semibold">Clientes</div>
           <div className="text-sm text-muted-foreground">
-            CNPJ como chave única • Lista mockada
+            Lista de clientes da organização atual
           </div>
         </div>
-        <Button asChild className="rounded-xl">
-          <Link href="/clients/123/scopes/new">Novo cliente</Link>
-        </Button>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Razão Social</TableHead>
-            <TableHead>CNPJ</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Última versão</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {mockClients.map((c) => (
-            <TableRow key={c.cnpj} className="cursor-pointer">
-              <TableCell className="font-medium">
-                <Link
-                  href={`/clients/${c.cnpj}/scopes`}
-                  className="hover:underline"
-                >
-                  {c.razao}
-                </Link>
-              </TableCell>
-              <TableCell>{c.cnpj}</TableCell>
-              <TableCell>{c.status}</TableCell>
-              <TableCell className="text-right">v{c.lastVersion}</TableCell>
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <RotateCw className="h-4 w-4 animate-spin" /> Carregando clientes...
+        </div>
+      ) : error ? (
+        <div className="text-sm text-destructive">
+          Falha ao carregar clientes.
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Razão Social</TableHead>
+              <TableHead>CNPJ</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {items.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-sm text-muted-foreground">
+                  Nenhum cliente encontrado.
+                </TableCell>
+              </TableRow>
+            ) : (
+              items.map((client) => (
+                <TableRow key={client.id}>
+                  <TableCell className="font-medium">{client.razaoSocial}</TableCell>
+                  <TableCell>{formatCNPJ(client.cnpj)}</TableCell>
+                  <TableCell>
+                    <Badge variant={client.ativo ? "default" : "secondary"}>
+                      {client.ativo ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild variant="outline" className="rounded-xl">
+                      <Link href={`/clients/${client.id}/scopes`}>Ver escopos</Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      )}
     </Card>
   );
 }

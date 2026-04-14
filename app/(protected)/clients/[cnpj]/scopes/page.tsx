@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { RotateCw } from "lucide-react";
 import { scopeApi } from "@/lib/api/services/scopes";
-import { useScopes } from "@/lib/api/hooks/use-scope-api";
+import { useClient, useClientScopes } from "@/lib/api/hooks/use-clients-api";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
+import { formatCNPJ } from "@/utils/format";
 
 function formatISO(iso: string) {
   try {
@@ -38,12 +39,12 @@ function formatISO(iso: string) {
 }
 
 export default function ScopesPage() {
-  const { cnpj } = useParams<{ cnpj: string }>();
-  const { data, error, isLoading, mutate } = useScopes({
-    cnpj,
+  const { cnpj: clientId } = useParams<{ cnpj: string }>();
+  const { data, error, isLoading, mutate } = useClientScopes(clientId, {
     limit: 500,
     offset: 0,
   });
+  const { data: clientData } = useClient(clientId);
   const [scopeToDelete, setScopeToDelete] = useState<{
     id: string;
     razaoSocial: string;
@@ -74,15 +75,16 @@ export default function ScopesPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="text-lg font-semibold tracking-tight">
-              Escopos • {cnpj}
+              Escopos • {clientData?.razaoSocial ?? clientId}
             </div>
             <div className="text-sm text-muted-foreground">
+              {clientData?.cnpj ? `CNPJ: ${formatCNPJ(clientData.cnpj)} • ` : ""}
               Gestão e manutenção dos formulários de escopo.
             </div>
           </div>
 
           <Button asChild className="rounded-xl">
-            <Link href={`/clients/${cnpj}/scopes/new`}>Novo escopo</Link>
+            <Link href={`/clients/${clientId}/scopes/new`}>Novo escopo</Link>
           </Button>
         </div>
 
@@ -118,7 +120,7 @@ export default function ScopesPage() {
                 items.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">
-                      {r.razao_social || "(sem razão social)"}
+                      {r.razao_social || clientData?.razaoSocial || "(sem razão social)"}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {r.id}
@@ -135,10 +137,10 @@ export default function ScopesPage() {
                     <TableCell>{formatISO(r.updated_at)}</TableCell>
                     <TableCell className="space-x-2 text-right">
                       <Button asChild variant="secondary" className="rounded-xl">
-                        <Link href={`/clients/${cnpj}/scopes/view/${r.id}`}>Visualizar</Link>
+                        <Link href={`/clients/${clientId}/scopes/view/${r.id}`}>Visualizar</Link>
                       </Button>
                       <Button asChild variant="outline" className="rounded-xl">
-                        <Link href={`/clients/${cnpj}/scopes/edit/${r.id}`}>Editar</Link>
+                        <Link href={`/clients/${clientId}/scopes/edit/${r.id}`}>Editar</Link>
                       </Button>
                       <Button
                         variant="destructive"

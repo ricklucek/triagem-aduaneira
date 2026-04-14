@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import type { ListScopesParams } from "@/data/scope/ScopeRepo";
 import { scopeApi } from "@/lib/api/services/scopes";
-import { adminSettingsApi } from "@/lib/api/services/admin-settings";
+import { organizationSettingsApi } from "@/lib/api/services/organization-settings";
 
 export function useScopes(params: ListScopesParams | null) {
   const key = params ? `scopes:${JSON.stringify(params)}` : null;
@@ -30,5 +30,5 @@ export function useScopeVersions(scopeId: string | null) {
 }
 
 export function useScopeMetadata() {
-  return useSWR("scope:metadata", adminSettingsApi.getScopeMetadata);
+  return useSWR("scope:metadata", organizationSettingsApi.getScopeMetadata);
 }

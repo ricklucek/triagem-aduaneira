@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { adminSettingsApi } from "@/lib/api/services/admin-settings";
+import { organizationSettingsApi } from "@/lib/api/services/organization-settings";
 import type { AdminSettingsResponse } from "@/lib/api/types/scope-metadata";
 
 export function AdminFixedInfoSheet({ initial }: { initial: AdminSettingsResponse }) {
@@ -15,7 +15,7 @@ export function AdminFixedInfoSheet({ initial }: { initial: AdminSettingsRespons
 
   const onSave = async () => {
     setSaving(true);
-    await adminSettingsApi.updateSettings(form);
+    await organizationSettingsApi.updateSettings(form);
     setSaving(false);
     setOpen(false);
   };

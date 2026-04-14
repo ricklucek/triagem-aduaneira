@@ -26,6 +26,21 @@ export interface SaveScopeDraftPayload {
 
 export type ScopeVersionsResponse = ScopeVersion[];
 
+
+
+export interface BulkReassignResponsiblePayload {
+  from_responsible_user_id: string;
+  to_responsible_user_id: string;
+  dry_run?: boolean;
+  statuses?: ScopeStatus[];
+}
+
+export interface BulkReassignResponsibleResponse {
+  dry_run: boolean;
+  affected_scopes: number;
+  scope_ids: string[];
+}
+
 export interface ScopeApiClient {
   createScope(initial?: Partial<EscopoForm>): Promise<CreateScopeResponse>;
   listScopes(params: ListScopesParams): Promise<ListScopesResult>;
@@ -35,4 +50,7 @@ export interface ScopeApiClient {
   deleteScope(id: string): Promise<void>;
   listScopeVersions(id: string): Promise<ScopeVersionsResponse>;
   getMetadata(): Promise<ScopeMetadataResponse>;
+  bulkReassignResponsible(
+    payload: BulkReassignResponsiblePayload,
+  ): Promise<BulkReassignResponsibleResponse>;
 }

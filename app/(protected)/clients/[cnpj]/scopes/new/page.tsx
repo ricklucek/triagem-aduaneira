@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { RotateCw } from "lucide-react";
 import { scopeApi } from "@/lib/api/services/scopes";
+import { clientsApi } from "@/lib/api/services/clients";
 
 export default function NewScopePage({ params }: { params: { cnpj: string } }) {
   const router = useRouter();
@@ -13,15 +14,18 @@ export default function NewScopePage({ params }: { params: { cnpj: string } }) {
 
     (async () => {
       try {
+        const client = await clientsApi.getClient(params.cnpj);
         const { id } = await scopeApi.createScope();
         const rec = await scopeApi.getScope(id);
+
         await scopeApi.saveScope({
           id,
           draft: {
             ...rec.draft,
             sobreEmpresa: {
               ...rec.draft.sobreEmpresa,
-              cnpj: params.cnpj,
+              cnpj: client.cnpj,
+              razaoSocial: client.razaoSocial,
             },
           },
         });

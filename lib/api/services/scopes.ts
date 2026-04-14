@@ -7,11 +7,13 @@ import type {
 } from "@/data/scope/ScopeRepo";
 import type { EscopoForm } from "@/domain/scope/types";
 import type {
+  BulkReassignResponsiblePayload,
+  BulkReassignResponsibleResponse,
   CreateScopeResponse,
   SaveScopeDraftPayload,
+  ScopeApiClient,
   ScopeDetailResponse,
   ScopeVersionsResponse,
-  ScopeApiClient,
 } from "@/lib/api/types/scope-api";
 import type { ScopeMetadataResponse } from "@/lib/api/types/scope-metadata";
 
@@ -69,6 +71,16 @@ export const scopeApi: ScopeApiClient = {
   async getMetadata(): Promise<ScopeMetadataResponse> {
     const { data } = await http.get<ScopeMetadataResponse>(
       API_ROUTES.scopes.metadata,
+    );
+    return data;
+  },
+
+  async bulkReassignResponsible(
+    payload: BulkReassignResponsiblePayload,
+  ): Promise<BulkReassignResponsibleResponse> {
+    const { data } = await http.post<BulkReassignResponsibleResponse>(
+      API_ROUTES.scopes.bulkReassignResponsible,
+      payload,
     );
     return data;
   },

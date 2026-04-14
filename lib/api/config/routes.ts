@@ -14,6 +14,7 @@ export const API_ROUTES = {
     publish: (scopeId: string) => `/scopes/${scopeId}/publish`,
     versions: (scopeId: string) => `/scopes/${scopeId}/versions`,
     delete: (scopeId: string) => `/scopes/${scopeId}`,
+    bulkReassignResponsible: "/scopes/bulk/reassign-responsible",
     stale: "/scopes/stale",
     expired: "/scopes/expired",
     pendingAdjustments: "/scopes/pending-adjustments",
@@ -21,8 +22,15 @@ export const API_ROUTES = {
     bySector: "/scopes/analytics/by-sector",
     monthlyCreated: "/scopes/analytics/monthly-created",
   },
-  admin: {
-    settings: "/admin/settings",
+  organizations: {
+    me: "/organizations/me",
+    settings: "/organizations/me/settings",
+  },
+  clients: {
+    list: "/clients",
+    detail: (clientId: string) => `/clients/${clientId}`,
+    update: (clientId: string) => `/clients/${clientId}`,
+    scopes: (clientId: string) => `/clients/${clientId}/scopes`,
   },
   dashboards: {
     admin: "/dashboards/admin",
@@ -33,6 +41,7 @@ export const API_ROUTES = {
   users: {
     listUsers: "/users",
     listAdmins: "/users/admin",
+    listResponsibles: "/users/responsibles",
     create: "/users",
     update: (userId: string) => `/users/user/${userId}`,
     deleteUser: (userId: string) => `/users/user/${userId}`,
