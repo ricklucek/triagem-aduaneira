@@ -110,7 +110,7 @@ function ScopeDetails({
         <Badge>{versionLabel}</Badge>
       </div>
       <div className="grid gap-6">
-        <ViewCard title="Informações fixas">
+        {/* <ViewCard title="Informações fixas">
           <Grid>
             <Field
               label="Salário mínimo vigente"
@@ -121,7 +121,7 @@ function ScopeDetails({
               value={account(scope.informacoesFixas?.dadosBancariosCasco)}
             />
           </Grid>
-        </ViewCard>
+        </ViewCard> */}
         <ViewCard title="Sobre a empresa">
           <Grid>
             <Field

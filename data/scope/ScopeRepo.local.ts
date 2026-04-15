@@ -40,10 +40,6 @@ export class ScopeRepoLocal implements ScopeRepo {
     const draft: EscopoForm = {
       ...structuredClone(escopoFormDefault),
       ...initial,
-      informacoesFixas: {
-        ...escopoFormDefault.informacoesFixas,
-        ...(initial?.informacoesFixas ?? {}),
-      },
       sobreEmpresa: {
         ...escopoFormDefault.sobreEmpresa,
         ...(initial?.sobreEmpresa ?? {}),

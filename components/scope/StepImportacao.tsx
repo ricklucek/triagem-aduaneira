@@ -130,7 +130,6 @@ export default function StepImportacao({
   const afrmmData = data.afrmm ?? { ...DEFAULT_AFRMM };
   const icmsData = data.icms ?? { ...DEFAULT_ICMS };
   const options = LOCAIS.map(([value, label]) => ({ value, label }));
-  const cascoAccount = form.informacoesFixas.dadosBancariosCasco;
 
   return (
     <main className="flex flex-col gap-10">
@@ -379,8 +378,8 @@ export default function StepImportacao({
           <Card className="gap-3 rounded-2xl border-border/80 p-4 shadow-none">
             <h3 className="text-sm font-semibold">Dados bancários da Casco</h3>
             <p className="text-sm text-muted-foreground">
-              Banco: {cascoAccount.banco || "-"} • Agência:{" "}
-              {cascoAccount.agencia || "-"} • Conta: {cascoAccount.conta || "-"}
+              Banco: {"-"} • Agência:{" "}
+              {"-"} • Conta: {"-"}
             </p>
           </Card>
         ) : null}

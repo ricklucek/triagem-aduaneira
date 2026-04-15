@@ -15,7 +15,6 @@ export function calculateCompleteness(data: EscopoForm): number {
     total += 1;
     if (condition) done += 1;
   };
-  check(hasValue(data.informacoesFixas.salarioMinimoVigente));
   check(hasValue(data.sobreEmpresa.razaoSocial));
   check(hasValue(data.sobreEmpresa.cnpj));
   check(hasValue(data.sobreEmpresa.inscricaoEstadual));

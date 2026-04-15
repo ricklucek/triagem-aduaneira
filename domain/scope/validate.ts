@@ -43,22 +43,6 @@ export function validarEtapa(
 ): ResultadoValidacaoEtapa {
   try {
     switch (etapa) {
-      case "INFORMACOES_FIXAS":
-        ContaBancariaSchema.parse(data.informacoesFixas.dadosBancariosCasco);
-        if (
-          !data.informacoesFixas.salarioMinimoVigente ||
-          data.informacoesFixas.salarioMinimoVigente <= 0
-        ) {
-          return {
-            ok: false,
-            errors: {
-              "informacoesFixas.salarioMinimoVigente":
-                "Salário mínimo vigente é obrigatório",
-            },
-          };
-        }
-        return { ok: true, errors: {} };
-
       case "SOBRE_EMPRESA": {
         const sobreEmpresaSchema = EscopoSchema.shape.sobreEmpresa;
         sobreEmpresaSchema.parse(data.sobreEmpresa);

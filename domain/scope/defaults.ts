@@ -1,15 +1,6 @@
 import { EscopoForm } from "./types";
 
 export const escopoFormDefault: EscopoForm = {
-  informacoesFixas: {
-    salarioMinimoVigente: 1518,
-    dadosBancariosCasco: {
-      banco: "",
-      agencia: "",
-      conta: "",
-    },
-  },
-
   sobreEmpresa: {
     razaoSocial: "",
     nomeResumido: "",

@@ -50,7 +50,6 @@ function buildEtapas(data: EscopoForm): EtapaFormulario[] {
 }
 
 const STEP_LABELS: Record<EtapaFormulario, string> = {
-  INFORMACOES_FIXAS: "Informações Fixas",
   SOBRE_EMPRESA: "Sobre a Empresa",
   CONTATOS: "Contatos",
   OPERACAO: "Operação",
@@ -217,7 +216,6 @@ export default function ScopeWizard({
   const errorEntries = Object.entries(errors);
   const scopedErrors = useMemo(() => {
     const prefixMap: Record<EtapaFormulario, string[]> = {
-      INFORMACOES_FIXAS: ["informacoesFixas."],
       SOBRE_EMPRESA: ["sobreEmpresa."],
       CONTATOS: ["contatos."],
       OPERACAO: ["operacao.tipos"],
@@ -231,7 +229,6 @@ export default function ScopeWizard({
     const map: Record<string, string> = {};
     const hasGlobalPrefix = (path: string) =>
       [
-        "informacoesFixas.",
         "sobreEmpresa.",
         "contatos.",
         "operacao.",

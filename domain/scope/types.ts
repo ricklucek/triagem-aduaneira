@@ -4,7 +4,6 @@ import { EscopoSchema } from "./schema";
 export type EscopoForm = z.infer<typeof EscopoSchema>;
 
 export type EtapaFormulario =
-  | "INFORMACOES_FIXAS"
   | "SOBRE_EMPRESA"
   | "CONTATOS"
   | "OPERACAO"

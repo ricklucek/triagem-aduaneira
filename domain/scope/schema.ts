@@ -428,12 +428,6 @@ export const ServicosExportacaoSchema = z.object({
 
 export const EscopoSchema = z
   .object({
-    informacoesFixas: z.object({
-      salarioMinimoVigente: z
-        .number()
-        .positive("Salário mínimo vigente é obrigatório"),
-      dadosBancariosCasco: ContaBancariaSchema,
-    }),
     sobreEmpresa: z.object({
       razaoSocial: z.string().trim().min(1, "Razão social é obrigatória"),
       nomeResumido: z.string().trim().optional().nullable(),

@@ -25,12 +25,7 @@ export default function ScopeDetailPage() {
   const loading = loadingScope || loadingMetadata;
 
   const draft = scopeResponse?.draft
-    ? {
-        ...scopeResponse.draft,
-        informacoesFixas:
-          metadataResponse?.informacoesFixas ??
-          scopeResponse.draft.informacoesFixas,
-      }
+    ? scopeResponse.draft
     : null;
 
   const statusCode = scopeResponse?.status ?? "draft";
