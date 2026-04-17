@@ -62,6 +62,22 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
     </div>
   );
 }
+
+function TitleField({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="w-full col-span-2 flex flex-col gap-2">
+      <div className="p-3 flex flex-row items-center gap-5">
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <div className="text-sm font-medium wrap-break-word whitespace-pre-line text-wrap">{value}</div>
+      </div>
+      <Separator />
+    </div>
+  );
+}
+
+
 function Grid({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-3 md:grid-cols-2">{children}</div>;
 }
@@ -336,10 +352,11 @@ function ScopeDetails({
         <ViewCard title="Serviços de importação">
           {si ? (
             <Grid>
-              <Field
+              <TitleField
                 label="Despacho aduaneiro importação"
                 value={boolBadge(si.despachoAduaneiroImportacao?.habilitado)}
               />
+
               <Field
                 label="Tipo de valor"
                 value={text(si.despachoAduaneiroImportacao?.tipoValor)}
@@ -356,10 +373,12 @@ function ScopeDetails({
                 label="Observação despacho aduaneiro"
                 value={text(si.despachoAduaneiroImportacao?.observacao)}
               />
-              <Field
+
+              <TitleField
                 label="Preposto"
                 value={boolBadge(si.preposto?.habilitado)}
               />
+
               <Field
                 label="Valor do preposto"
                 value={currency(si.preposto?.prepostoSelecionado?.valor)}
@@ -396,26 +415,32 @@ function ScopeDetails({
                 label="Valor do preposto selecionado"
                 value={currency(si.preposto?.prepostoSelecionado?.valor)}
               />
-              <Field
+
+              <TitleField
                 label="Emissão LI/LPCO"
                 value={boolBadge(si.emissaoLiLpco?.habilitado)}
               />
+
               <Field
                 label="Valor emissão LI/LPCO"
                 value={currency(si.emissaoLiLpco?.valor)}
               />
-              <Field
+
+              <TitleField
                 label="Cadastro de catálogo de produtos"
                 value={boolBadge(si.cadastroCatalogoProdutos?.habilitado)}
               />
+
               <Field
                 label="Valor cadastro de catálogo"
                 value={currency(si.cadastroCatalogoProdutos?.valor)}
               />
-              <Field
+
+              <TitleField
                 label="Assessoria"
                 value={boolBadge(si.assessoria?.habilitado)}
               />
+
               <Field
                 label="Tipo de valor assessoria"
                 value={text(si.assessoria?.tipoValor)}
@@ -428,10 +453,12 @@ function ScopeDetails({
                 label="Última atualização assessoria"
                 value={date(si.assessoria?.ultimaAtualizacao)}
               />
-              <Field
+
+              <TitleField
                 label="Frete internacional"
                 value={boolBadge(si.freteInternacional?.habilitado)}
               />
+
               <Field
                 label="Modalidade frete internacional"
                 value={text(si.freteInternacional?.modalidade)}
@@ -440,10 +467,12 @@ function ScopeDetails({
                 label="% PTAX negociada"
                 value={text(si.freteInternacional?.ptaxNegociado)}
               />
-              <Field
+
+              <TitleField
                 label="Seguro internacional"
                 value={boolBadge(si.seguroInternacional?.habilitado)}
               />
+
               <Field
                 label="Percentual sobre CFR"
                 value={text(si.seguroInternacional?.percentualSobreCfr)}
@@ -456,10 +485,12 @@ function ScopeDetails({
                 label="Descrição complementar"
                 value={text(si.seguroInternacional?.descricaoComplementar)}
               />
-              <Field
+
+              <TitleField
                 label="Frete rodoviário"
                 value={boolBadge(si.freteRodoviario?.habilitado)}
               />
+
               <Field
                 label="Modalidade frete rodoviário"
                 value={text(si.freteRodoviario?.modalidade)}
@@ -472,10 +503,12 @@ function ScopeDetails({
                 label="Regime especial"
                 value={list(si.regimeEspecial?.map((r) => r.nomeRegime))}
               />
-              <Field
+
+              <TitleField
                 label="Emissão NFe"
                 value={boolBadge(si.emissaoNfe?.habilitado)}
               />
+
               <Field
                 label="Valor emissão NFe"
                 value={currency(si.emissaoNfe?.valor)}
@@ -490,10 +523,12 @@ function ScopeDetails({
         <ViewCard title="Serviços de exportação">
           {se ? (
             <Grid>
-              <Field
+              
+              <TitleField
                 label="Despacho aduaneiro exportação"
                 value={boolBadge(se.despachoAduaneiroExportacao?.habilitado)}
               />
+              
               <Field
                 label="Tipo de valor"
                 value={text(se.despachoAduaneiroExportacao?.tipoValor)}
@@ -506,10 +541,12 @@ function ScopeDetails({
                 label="Observação despacho aduaneiro"
                 value={text(se.despachoAduaneiroExportacao?.observacao)}
               />
-              <Field
+
+              <TitleField
                 label="Preposto"
                 value={boolBadge(se.preposto?.habilitado)}
               />
+
               <Field
                 label="Valor do preposto"
                 value={currency(se.preposto?.prepostoSelecionado?.valor)}
@@ -546,34 +583,42 @@ function ScopeDetails({
                 label="Valor do preposto selecionado"
                 value={currency(se.preposto?.prepostoSelecionado?.valor)}
               />
-              <Field
+              
+              <TitleField
                 label="Certificado de origem"
                 value={boolBadge(se.certificadoOrigem?.habilitado)}
               />
+              
               <Field
                 label="Valor certificado de origem"
                 value={currency(se.certificadoOrigem?.valor)}
               />
-              <Field
+
+              <TitleField
                 label="Certificado fitossanitário"
                 value={boolBadge(se.certificadoFitossanitario?.habilitado)}
               />
+
               <Field
                 label="Valor certificado fitossanitário"
                 value={currency(se.certificadoFitossanitario?.valor)}
               />
-              <Field
+
+              <TitleField
                 label="Outros certificados"
                 value={boolBadge(se.outrosCertificados?.habilitado)}
               />
+              
               <Field
                 label="Itens de outros certificados"
                 value={list(se.outrosCertificados?.itens?.map((i) => i.chave))}
               />
-              <Field
+
+              <TitleField
                 label="Assessoria"
                 value={boolBadge(se.assessoria?.habilitado)}
               />
+
               <Field
                 label="Tipo de valor assessoria"
                 value={text(se.assessoria?.tipoValor)}
@@ -586,18 +631,22 @@ function ScopeDetails({
                 label="Última atualização assessoria"
                 value={date(se.assessoria?.ultimaAtualizacao)}
               />
-              <Field
+
+              <TitleField
                 label="Frete internacional"
                 value={boolBadge(se.freteInternacional?.habilitado)}
               />
+              
               <Field
                 label="% PTAX negociada"
                 value={text(se.freteInternacional?.ptaxNegociado)}
               />
-              <Field
+
+              <TitleField
                 label="Seguro internacional"
                 value={boolBadge(se.seguroInternacional?.habilitado)}
               />
+              
               <Field
                 label="Valor mínimo"
                 value={currency(se.seguroInternacional?.valorMinimo)}
@@ -614,10 +663,12 @@ function ScopeDetails({
                 label="Descrição complementar"
                 value={text(se.seguroInternacional?.descricaoComplementar)}
               />
-              <Field
+
+              <TitleField
                 label="Frete rodoviário"
                 value={boolBadge(se.freteRodoviario?.habilitado)}
               />
+              
               <Field
                 label="Modalidade frete rodoviário"
                 value={text(se.freteRodoviario?.modalidade)}
