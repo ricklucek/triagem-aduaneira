@@ -460,6 +460,9 @@ export const EscopoSchema = z
       dadosBancariosClienteDevolucaoSaldo: ContaBancariaSchema,
       observacoesFinanceiro: z.string().trim().optional().nullable(),
     }),
+    geral: z.object({
+      descricao: z.string().trim().optional().nullable(),
+    })
   })
   .superRefine((value, ctx) => {
     const temImportacao = value.operacao.tipos.includes("IMPORTACAO");

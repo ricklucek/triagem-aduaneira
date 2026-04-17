@@ -25,6 +25,7 @@ export const API_ROUTES = {
   organizations: {
     me: "/organizations/me",
     settings: "/organizations/me/settings",
+    settingsByKey: (key: string) => `/organizations/settings/${key}`,
   },
   clients: {
     list: "/clients",

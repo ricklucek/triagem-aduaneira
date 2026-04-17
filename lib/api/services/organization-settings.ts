@@ -22,6 +22,13 @@ export const organizationSettingsApi = {
     return data;
   },
 
+  async getSettingsByKey(key: string): Promise<any> {
+    const { data } = await http.get<any>(
+      API_ROUTES.organizations.settingsByKey(key),
+    );
+    return data;
+  },
+
   async updateSettings(
     payload: UpdateOrganizationSettingsPayload,
   ): Promise<OrganizationSettingsResponse> {

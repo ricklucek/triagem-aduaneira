@@ -38,4 +38,8 @@ export const escopoFormDefault: EscopoForm = {
     },
     observacoesFinanceiro: "",
   },
+
+  geral: {
+    descricao: ""
+  }
 };

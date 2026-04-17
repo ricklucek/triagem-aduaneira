@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -9,7 +9,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { escopoFormDefault } from "@/domain/scope/defaults";
 import { EtapaFormulario, EscopoForm } from "@/domain/scope/types";
 import {
   validarEtapa,
@@ -61,7 +60,8 @@ const STEP_LABELS: Record<EtapaFormulario, string> = {
 };
 
 type Props = {
-  initialData?: EscopoForm | null;
+  form: EscopoForm;
+  setForm: Dispatch<SetStateAction<EscopoForm>>
   responsaveis?: ScopeResponsible[];
   onSave?: (data: EscopoForm) => Promise<void> | void;
   onPublish?: () => Promise<void> | void;
@@ -71,15 +71,14 @@ type Props = {
 };
 
 export default function ScopeWizard({
-  initialData,
+  form,
+  setForm,
   responsaveis = [],
   onSave,
   onPublish,
   title = "Escopos",
 }: Props) {
-  const [form, setForm] = useState<EscopoForm>(
-    () => initialData ?? escopoFormDefault,
-  );
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState("Não salvo");

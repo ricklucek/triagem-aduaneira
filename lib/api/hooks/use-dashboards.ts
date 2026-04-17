@@ -37,6 +37,10 @@ export function useAdminSettings() {
   return useSWR("organization:settings", organizationSettingsApi.getSettings);
 }
 
+export function useOrganizationSettingsByKey(key: string) {
+  return useSWR(`organization:settings:${key}`, () => organizationSettingsApi.getSettingsByKey(key));
+}
+
 export function usePrepostosLookup(params?: {
   cidade: string;
   operacao: "IMPORTACAO" | "EXPORTACAO";
@@ -44,7 +48,7 @@ export function usePrepostosLookup(params?: {
 
 
   return useSWR(
-   `prepostos:lookup?cidade=${params?.cidade.trim()}&operacao=${params?.operacao}`,
+    `prepostos:lookup?cidade=${params?.cidade.trim()}&operacao=${params?.operacao}`,
     () =>
       publicApi.lookupPrepostos({
         cidade: params?.cidade.trim() ?? '',

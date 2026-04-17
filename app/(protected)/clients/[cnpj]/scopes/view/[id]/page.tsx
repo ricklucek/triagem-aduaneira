@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCNPJ } from "@/utils/format";
 import { ResponsibleShow } from "@/components/ResponsibleShow";
+import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
 
 const text = (v: unknown) =>
   v == null || v === "" || (Array.isArray(v) && v.length === 0)
@@ -110,6 +111,12 @@ function ScopeDetails({
 
   const { data: metadataResponse } = useScopeMetadata();
 
+  const { data: salarioMinimoData } = useOrganizationSettingsByKey("salario_minimo_vigente");
+  const { data: ctaBancariaData } = useOrganizationSettingsByKey("dados_bancarios_casco");
+
+  const salarioMinimo = salarioMinimoData?.valor
+  const ctaBancariaCasco = ctaBancariaData ?? {}
+
   const responsaveis = metadataResponse?.responsaveis ?? [];
 
   return (
@@ -126,18 +133,20 @@ function ScopeDetails({
         <Badge>{versionLabel}</Badge>
       </div>
       <div className="grid gap-6">
-        {/* <ViewCard title="Informações fixas">
+
+        <ViewCard title="Informações fixas">
           <Grid>
             <Field
               label="Salário mínimo vigente"
-              value={currency(scope.informacoesFixas?.salarioMinimoVigente)}
+              value={currency(salarioMinimo ?? 0)}
             />
             <Field
               label="Dados bancários CASCO"
-              value={account(scope.informacoesFixas?.dadosBancariosCasco)}
+              value={account(ctaBancariaCasco)}
             />
           </Grid>
-        </ViewCard> */}
+        </ViewCard>
+
         <ViewCard title="Sobre a empresa">
           <Grid>
             <Field
@@ -523,12 +532,12 @@ function ScopeDetails({
         <ViewCard title="Serviços de exportação">
           {se ? (
             <Grid>
-              
+
               <TitleField
                 label="Despacho aduaneiro exportação"
                 value={boolBadge(se.despachoAduaneiroExportacao?.habilitado)}
               />
-              
+
               <Field
                 label="Tipo de valor"
                 value={text(se.despachoAduaneiroExportacao?.tipoValor)}
@@ -583,12 +592,12 @@ function ScopeDetails({
                 label="Valor do preposto selecionado"
                 value={currency(se.preposto?.prepostoSelecionado?.valor)}
               />
-              
+
               <TitleField
                 label="Certificado de origem"
                 value={boolBadge(se.certificadoOrigem?.habilitado)}
               />
-              
+
               <Field
                 label="Valor certificado de origem"
                 value={currency(se.certificadoOrigem?.valor)}
@@ -608,7 +617,7 @@ function ScopeDetails({
                 label="Outros certificados"
                 value={boolBadge(se.outrosCertificados?.habilitado)}
               />
-              
+
               <Field
                 label="Itens de outros certificados"
                 value={list(se.outrosCertificados?.itens?.map((i) => i.chave))}
@@ -636,7 +645,7 @@ function ScopeDetails({
                 label="Frete internacional"
                 value={boolBadge(se.freteInternacional?.habilitado)}
               />
-              
+
               <Field
                 label="% PTAX negociada"
                 value={text(se.freteInternacional?.ptaxNegociado)}
@@ -646,7 +655,7 @@ function ScopeDetails({
                 label="Seguro internacional"
                 value={boolBadge(se.seguroInternacional?.habilitado)}
               />
-              
+
               <Field
                 label="Valor mínimo"
                 value={currency(se.seguroInternacional?.valorMinimo)}
@@ -668,7 +677,7 @@ function ScopeDetails({
                 label="Frete rodoviário"
                 value={boolBadge(se.freteRodoviario?.habilitado)}
               />
-              
+
               <Field
                 label="Modalidade frete rodoviário"
                 value={text(se.freteRodoviario?.modalidade)}
@@ -701,6 +710,14 @@ function ScopeDetails({
               value={text(scope.financeiro?.observacoesFinanceiro)}
             />
           </Grid>
+        </ViewCard>
+        <ViewCard title="Informações gerais">
+          <Field
+            label=""
+            value={text(
+              scope.geral?.descricao,
+            )}
+          />
         </ViewCard>
       </div>
     </Card>

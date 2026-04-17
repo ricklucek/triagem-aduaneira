@@ -14,6 +14,7 @@ import { ResponsiblePicker } from "./ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
+import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
 
 const LOCAIS = [
   ["0917900/0917800|Curitiba/ Paranaguá", "0917900/0917800 • Curitiba/ Paranaguá"],
@@ -83,6 +84,10 @@ export default function StepImportacao({
   onChange,
   responsaveis,
 }: Props) {
+
+  const { data: ctaBancariaData } = useOrganizationSettingsByKey("dados_bancarios_casco");
+  const ctaBancariaCasco = ctaBancariaData ?? {}
+
   const data: NonNullable<EscopoForm["operacao"]["importacao"]> = form.operacao
     .importacao ?? {
     analistaDA: "",
@@ -378,8 +383,8 @@ export default function StepImportacao({
           <Card className="gap-3 rounded-2xl border-border/80 p-4 shadow-none">
             <h3 className="text-sm font-semibold">Dados bancários da Casco</h3>
             <p className="text-sm text-muted-foreground">
-              Banco: {"-"} • Agência:{" "}
-              {"-"} • Conta: {"-"}
+              Banco: {ctaBancariaCasco.banco ?? "-"} {ctaBancariaCasco.nome_banco ?? "-"} • Agência:{ctaBancariaCasco.agencia ?? "-"}
+              Conta: {ctaBancariaCasco.conta ?? "-"}
             </p>
           </Card>
         ) : null}
