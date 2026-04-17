@@ -58,7 +58,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
       <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <div className="text-sm font-medium wrap-break-word">{value}</div>
+      <div className="text-sm font-medium wrap-break-word whitespace-pre-line text-wrap">{value}</div>
     </div>
   );
 }
