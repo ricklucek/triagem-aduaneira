@@ -266,10 +266,10 @@ export const ImportacaoSchema = z
       .default([]),
     observacaoNcms: z.string().trim().optional().nullable(),
     vinculoComExportador: SimNaoSchema,
+    locaisEntrada: z.array(z.string().trim().min(1)).default([]),
+    outroLocalEntrada: z.string().trim().optional().nullable(),
     locaisDesembaraco: z.array(z.string().trim().min(1)).default([]),
     outroLocalDesembaraco: z.string().trim().optional().nullable(),
-    locaisDespacho: z.array(z.string().trim().min(1)).default([]),
-    outroLocalDespacho: z.string().trim().optional().nullable(),
     necessidadeDta: SimNaoSchema.optional().nullable(),
     necessidadeDtc: SimNaoSchema.optional().nullable(),
     necessidadeLiLpco: SimNaoSchema,
@@ -305,30 +305,18 @@ export const ImportacaoSchema = z
     subtipoConsumo: SubtipoConsumoSchema,
   })
   .superRefine((value, ctx) => {
+    if (value.locaisEntrada.length === 0 && !value.outroLocalEntrada) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["locaisEntrada"],
+        message: "Selecione ao menos um local de entrada ou informe outro",
+      });
+    }
     if (value.locaisDesembaraco.length === 0 && !value.outroLocalDesembaraco) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["locaisDesembaraco"],
         message: "Selecione ao menos um local de desembaraço ou informe outro",
-      });
-    }
-    if (value.locaisDespacho.length === 0 && !value.outroLocalDespacho) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["locaisDespacho"],
-        message: "Selecione ao menos um local de despacho ou informe outro",
-      });
-    }
-    if (
-      value.necessidadeLiLpco === "SIM" &&
-      value.anuencias.length === 0 &&
-      !value.outroOrgaoAnuente
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["anuencias"],
-        message:
-          "Selecione ao menos uma anuência ou informe outro órgão anuente",
       });
     }
     if (

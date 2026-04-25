@@ -17,19 +17,19 @@ import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
 
 const text = (v: unknown) =>
   v == null || v === "" || (Array.isArray(v) && v.length === 0)
-    ? "-"
+    ? null
     : String(v);
 const currency = (v?: number | null) =>
   v == null || Number.isNaN(v)
-    ? "-"
+    ? null
     : new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(v);
 const date = (v?: string | null) =>
-  !v ? "-" : new Date(v).toLocaleDateString("pt-BR");
+  !v ? null : new Date(v).toLocaleDateString("pt-BR");
 const list = (v?: Array<string | number | null> | null) =>
-  !v?.length ? "-" : v.filter(Boolean).join(", ");
+  !v?.length ? null : v.filter(Boolean).join(", ");
 const account = (
   v?: {
     banco?: string | null;
@@ -37,8 +37,8 @@ const account = (
     conta?: string | null;
   } | null,
 ) =>
-  !v
-    ? "-"
+  (!v || (!v.banco && !v.agencia && !v.conta))
+    ? null
     : `Banco: ${text(v.banco)} • Agência: ${text(v.agencia)} • Conta: ${text(v.conta)}`;
 const boolBadge = (value?: boolean | null) =>
   value ? (
@@ -53,8 +53,8 @@ const boolBadge = (value?: boolean | null) =>
     </Badge>
   );
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
+function Field({ label, value }: { label: string; value: React.ReactNode | null }) {
+  if (value) return (
     <div className="rounded-xl border p-3">
       <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
@@ -237,20 +237,20 @@ function ScopeDetails({
                   value={text(i.vinculoComExportador)}
                 />
                 <Field
+                  label="Locais de entrada"
+                  value={list(i.locaisEntrada)}
+                />
+                <Field
+                  label="Outro local de entrada"
+                  value={text(i.outroLocalEntrada)}
+                />
+                <Field
                   label="Locais de desembaraço"
                   value={list(i.locaisDesembaraco)}
                 />
                 <Field
                   label="Outro local de desembaraço"
                   value={text(i.outroLocalDesembaraco)}
-                />
-                <Field
-                  label="Locais de despacho"
-                  value={list(i.locaisDespacho)}
-                />
-                <Field
-                  label="Outro local de despacho"
-                  value={text(i.outroLocalDespacho)}
                 />
                 <Field
                   label="Necessidade DTA"
@@ -772,7 +772,6 @@ export default function ScopeViewPage() {
             <Button asChild variant="outline">
               <Link href={`/clients/${cnpj}/scopes/edit/${id}`}>Editar</Link>
             </Button>
-            <Button onClick={() => window.print()}>Baixar em PDF</Button>
           </div>
         </div>
       </Card>

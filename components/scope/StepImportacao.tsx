@@ -96,10 +96,10 @@ export default function StepImportacao({
     ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
     observacaoNcms: "",
     vinculoComExportador: "NAO",
+    locaisEntrada: [],
+    outroLocalEntrada: "",
     locaisDesembaraco: [],
     outroLocalDesembaraco: "",
-    locaisDespacho: [],
-    outroLocalDespacho: "",
     necessidadeDta: null,
     necessidadeDtc: null,
     necessidadeLiLpco: "NAO",
@@ -308,6 +308,18 @@ export default function StepImportacao({
       </Grid>
 
       <SearchableCheckboxMenu
+        title="Locais de entrada"
+        searchLabel="Pesquisar local de entrada"
+        value={data.locaisEntrada}
+        options={options}
+        onChange={(next) => update("locaisEntrada", next)}
+        customValue={data.outroLocalEntrada ?? ""}
+        onCustomValueChange={(next) => update("outroLocalEntrada", next)}
+        customLabel="Outro local de entrada"
+        error={errors["locaisEntrada"] || errors["outroLocalEntrada"]}
+      />
+
+      <SearchableCheckboxMenu
         title="Locais de desembaraço"
         searchLabel="Pesquisar local de desembaraço"
         value={data.locaisDesembaraco}
@@ -317,18 +329,6 @@ export default function StepImportacao({
         onCustomValueChange={(next) => update("outroLocalDesembaraco", next)}
         customLabel="Outro local de desembaraço"
         error={errors["locaisDesembaraco"] || errors["outroLocalDesembaraco"]}
-      />
-
-      <SearchableCheckboxMenu
-        title="Locais de despacho"
-        searchLabel="Pesquisar local de despacho"
-        value={data.locaisDespacho}
-        options={options}
-        onChange={(next) => update("locaisDespacho", next)}
-        customValue={data.outroLocalDespacho ?? ""}
-        onCustomValueChange={(next) => update("outroLocalDespacho", next)}
-        customLabel="Outro local de despacho"
-        error={errors["locaisDespacho"] || errors["outroLocalDespacho"]}
       />
 
       <div className="flex flex-col gap-5">
