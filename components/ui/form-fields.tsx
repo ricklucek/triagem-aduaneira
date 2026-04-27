@@ -64,7 +64,6 @@ export function NumberInput(
   const { className, invalid, ...rest } = props;
   return (
     <input
-      type="number"
       {...rest}
       aria-invalid={invalid}
       className={cn(
