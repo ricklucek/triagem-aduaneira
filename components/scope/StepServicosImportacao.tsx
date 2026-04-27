@@ -158,7 +158,7 @@ export default function StepServicosImportacao({
                 onChange={(e) =>
                   update(
                     "despachoAduaneiroImportacao.valor",
-                    Number(e.target.value),
+                    e.target.value,
                   )
                 }
               />
@@ -280,7 +280,7 @@ export default function StepServicosImportacao({
           <NumberInput
             value={data.emissaoLiLpco.valor ?? ""}
             onChange={(e) =>
-              update("emissaoLiLpco.valor", Number(e.target.value))
+              update("emissaoLiLpco.valor", e.target.value)
             }
           />
         </Field>
@@ -307,7 +307,7 @@ export default function StepServicosImportacao({
           <NumberInput
             value={data.cadastroCatalogoProdutos.valor ?? ""}
             onChange={(e) =>
-              update("cadastroCatalogoProdutos.valor", Number(e.target.value))
+              update("cadastroCatalogoProdutos.valor", e.target.value)
             }
           />
         </Field>
@@ -344,7 +344,7 @@ export default function StepServicosImportacao({
               <NumberInput
                 value={data.assessoria.valor ?? ""}
                 onChange={(e) =>
-                  update("assessoria.valor", Number(e.target.value))
+                  update("assessoria.valor", e.target.value)
                 }
               />
             </Field>
@@ -426,7 +426,7 @@ export default function StepServicosImportacao({
               onChange={(e) =>
                 update(
                   "seguroInternacional.percentualSobreCfr",
-                  Number(e.target.value),
+                  e.target.value,
                 )
               }
             />
@@ -495,7 +495,7 @@ export default function StepServicosImportacao({
         <Field label="Valor" required error={errors["emissaoNfe.valor"]}>
           <NumberInput
             value={data.emissaoNfe.valor ?? ""}
-            onChange={(e) => update("emissaoNfe.valor", Number(e.target.value))}
+            onChange={(e) => update("emissaoNfe.valor", e.target.value)}
           />
         </Field>
 

@@ -158,7 +158,7 @@ export default function StepServicosExportacao({
                 onChange={(e) =>
                   update(
                     "despachoAduaneiroExportacao.valor",
-                    Number(e.target.value),
+                    e.target.value,
                   )
                 }
               />
@@ -273,7 +273,7 @@ export default function StepServicosExportacao({
           <NumberInput
             value={data.certificadoOrigem.valor ?? ""}
             onChange={(e) =>
-              update("certificadoOrigem.valor", Number(e.target.value))
+              update("certificadoOrigem.valor", e.target.value)
             }
           />
         </Field>
@@ -297,7 +297,7 @@ export default function StepServicosExportacao({
           <NumberInput
             value={data.certificadoFitossanitario.valor ?? ""}
             onChange={(e) =>
-              update("certificadoFitossanitario.valor", Number(e.target.value))
+              update("certificadoFitossanitario.valor", e.target.value)
             }
           />
         </Field>
@@ -399,7 +399,7 @@ export default function StepServicosExportacao({
               <NumberInput
                 value={data.assessoria.valor ?? ""}
                 onChange={(e) =>
-                  update("assessoria.valor", Number(e.target.value))
+                  update("assessoria.valor", e.target.value)
                 }
               />
             </Field>
@@ -474,7 +474,7 @@ export default function StepServicosExportacao({
               onChange={(e) =>
                 update(
                   "seguroInternacional.valorMinimo",
-                  Number(e.target.value),
+                  e.target.value,
                 )
               }
             />
@@ -487,7 +487,7 @@ export default function StepServicosExportacao({
               onChange={(e) =>
                 update(
                   "seguroInternacional.percentualSobreCfr",
-                  Number(e.target.value),
+                  e.target.value
                 )
               }
             />
