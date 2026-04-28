@@ -61,11 +61,16 @@ export function TextInput(
 export function NumberInput(
   props: React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean },
 ) {
-  const { className, invalid, ...rest } = props;
+  const { className, invalid, onWheel, ...rest } = props;
   return (
     <input
       {...rest}
+      type="number"
       aria-invalid={invalid}
+      onWheel={(e) => {
+        e.currentTarget.blur();
+        onWheel?.(e);
+      }}
       className={cn(
         baseInputStyle,
         invalid ? "border-destructive bg-destructive/5" : "border-input",
