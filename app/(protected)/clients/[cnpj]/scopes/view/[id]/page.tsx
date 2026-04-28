@@ -26,8 +26,18 @@ const currency = (v?: number | null) =>
       style: "currency",
       currency: "BRL",
     }).format(v);
-const date = (v?: string | null) =>
-  !v ? null : new Date(v).toLocaleDateString("pt-BR");
+
+const date = (v?: string | null) => {
+  if (!v) return null;
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  if (!match) return v;
+
+  const [, year, month, day] = match;
+
+  return `${day}/${month}/${year}`;
+};
+
 const list = (v?: Array<string | number | null> | null) =>
   !v?.length ? null : v.filter(Boolean).join(", ");
 const account = (
