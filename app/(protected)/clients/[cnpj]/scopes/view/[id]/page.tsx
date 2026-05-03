@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useParams } from "next/navigation";
-import { CheckCircle2, RotateCw, XCircle } from "lucide-react";
+import { CheckCircle2, RotateCw } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
 import { useScope, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
@@ -74,7 +74,8 @@ function Field({ label, value }: { label: string; value: React.ReactNode | null 
   );
 }
 
-function TitleField({ label, value }: { label: string; value: React.ReactNode }) {
+function TitleField({ label, value }: { label: string; value: React.ReactNode | null }) {
+  if (!value) return null;
   return (
     <div className="w-full col-span-2 flex flex-col gap-2">
       <div className="p-3 flex flex-row items-center gap-5">
@@ -171,7 +172,7 @@ function ScopeDetails({
             />
             <Field
               label="CNPJ"
-              value={formatCNPJ(scope.sobreEmpresa?.cnpj) || "-"}
+              value={formatCNPJ(scope.sobreEmpresa?.cnpj)}
             />
             <Field
               label="Inscrição estadual"
@@ -200,6 +201,10 @@ function ScopeDetails({
             <Field
               label="Regime de tributação"
               value={text(scope.sobreEmpresa?.regimeTributacao)}
+            />
+            <Field
+              label="Modalidade RADAR"
+              value={text(scope.sobreEmpresa?.modalidadeRadar)}
             />
             <Field
               label="Responsável comercial"
@@ -238,16 +243,8 @@ function ScopeDetails({
             <>
               <Separator className="my-2" />
               <Grid>
-                {
-                  i.analistaDA.length > 0 && (
-                    <Field label="Analista DA" value={i.analistaDA.map((da) => <ResponsibleShow key={da} value={da} options={responsaveis} />)} />
-                  )
-                }
-                {
-                  i.analistaAE.length > 0 && (
-                    <Field label="Analista AE" value={i.analistaAE.map((da) => <ResponsibleShow key={da} value={da} options={responsaveis} />)} />
-                  )
-                }
+                <Field label="Analista DA" value={list((i.analistaDA ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
+                <Field label="Analista AE" value={list((i.analistaAE ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
                 <Field
                   label="Produtos importados"
                   value={text(i.produtosImportados)}
@@ -719,17 +716,10 @@ function ScopeDetails({
         </ViewCard>
         <ViewCard title="Financeiro">
           <Grid>
-            {
-              ctabancaria.length > 0 && (
-                ctabancaria.map((conta, index) => (
-                  <Field
-                    label="Dados bancários para devolução de saldo"
-                    value={account(
-                      conta
-                    )}
-                  />
-                ))
-              )}
+            <Field
+              label="Dados bancários para devolução de saldo"
+              value={list((scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? []).map((conta) => account(conta)).filter(Boolean) as string[])}
+            />
             <Field
               label="Observações financeiras"
               value={text(scope.financeiro?.observacoesFinanceiro)}

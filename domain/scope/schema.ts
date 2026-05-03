@@ -16,8 +16,10 @@ export const ResponsavelComercialSchema = z
   .trim()
   .min(1, "Responsável comercial é obrigatório");
 export const TipoOperacaoSchema = z.enum(["IMPORTACAO", "EXPORTACAO"]);
-export const AnalistaDASchema = z.array(z.string().trim()).min(1, "Pelo menos um analista DA deve ser selecionado");
-export const AnalistaAESchema = z.array(z.string().trim()).optional().default([]);
+export const AnalistaResponsavelSchema = z
+  .string()
+  .trim()
+  .min(1, "Analista é obrigatório");
 export const AnuenciaImportacaoSchema = z.enum([
   "ANVISA",
   "MAPA",
@@ -250,8 +252,8 @@ const ServicoOutrosCertificadosSchema = z
 
 export const ImportacaoSchema = z
   .object({
-    analistaDA: AnalistaDASchema,
-    analistaAE: AnalistaAESchema,
+    analistaDA: z.array(AnalistaResponsavelSchema).min(1, "Analista DA é obrigatório"),
+    analistaAE: z.array(AnalistaResponsavelSchema).default([]),
     produtosImportados: z.string().trim().min(1, "Produtos importados é obrigatório"),
     ncms: z
       .array(
@@ -295,9 +297,15 @@ export const ImportacaoSchema = z
         contaPagamento: ContaPagamentoSchema.optional(),
         dadosContaCliente: ContaBancariaSchema.optional(),
         regime: IntegralBeneficioSchema.optional(),
-        recolhida: z.string().trim().optional().nullable(),
-        efetiva: z.string().trim().optional().nullable(),
         observacao: z.string().trim().optional().nullable(),
+        porDestinacao: z
+          .object({
+            REVENDA: z.object({ recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
+            INDUSTRIALIZACAO: z.object({ recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
+            USO_E_CONSUMO: z.object({ recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
+            ATIVO_IMOBILIZADO: z.object({ recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
+          })
+          .optional(),
       }),
     destinacao: DestinacaoSchema,
     subtipoConsumo: SubtipoConsumoSchema,
@@ -355,7 +363,7 @@ export const ImportacaoSchema = z
 
 export const ExportacaoSchema = z
   .object({
-    analistaDA: AnalistaDASchema,
+    analistaDA: z.array(AnalistaResponsavelSchema).min(1, "Analista DA é obrigatório"),
     produtosExportados: z
       .string()
       .trim()
@@ -429,6 +437,7 @@ export const EscopoSchema = z
       cnaeSecundario: z.string().trim().optional().nullable(),
       regimeTributacao: RegimeTributacaoSchema,
       responsavelComercial: ResponsavelComercialSchema,
+      modalidadeRadar: z.enum(["RADAR_INATIVO", "RADAR_LIMITADO_50K", "RADAR_LIMITADO_150K", "RADAR_ILIMITADO"]),
     }),
     contatos: z.array(ContatoSchema).min(1, "Informe ao menos um contato"),
     operacao: z.object({
