@@ -15,6 +15,7 @@ import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
+import { Trash2 } from "lucide-react";
 
 const LOCAIS = [
   ["0917900/0917800|Curitiba/ Paranaguá", "0917900/0917800 • Curitiba/ Paranaguá"],
@@ -90,8 +91,8 @@ export default function StepImportacao({
 
   const data: NonNullable<EscopoForm["operacao"]["importacao"]> = form.operacao
     .importacao ?? {
-    analistaDA: "",
-    analistaAE: "",
+    analistaDA: [],
+    analistaAE: [],
     produtosImportados: "",
     ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
     observacaoNcms: "",
@@ -142,22 +143,115 @@ export default function StepImportacao({
         <p className="text-sm text-muted-foreground sm:text-base">
           Regras e parâmetros da operação de importação.
         </p>
-        <Grid columns={2}>
-          <ResponsiblePicker
-            label="Analista DA"
-            value={data.analistaDA}
-            onChange={(value) => update("analistaDA", value)}
-            options={responsaveis}
-            error={errors["analistaDA"]}
-          />
-          <ResponsiblePicker
-            label="Analista AE"
-            value={data.analistaAE ?? ""}
-            onChange={(value) => update("analistaAE", value)}
-            options={responsaveis}
-            error={errors["analistaAE"]}
-          />
-        </Grid>
+        <div className="grid gap-3">
+          <Field label="Analista DA" error={errors["analistaDA"]}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                update("analistaDA", [
+                  ...data.analistaDA,
+                  "",
+                ])
+              }
+            >
+              + Adicionar Analista
+            </Button>
+            <div className="grid gap-3">
+              {data.analistaDA.map((item, index) => (
+                <Card key={index} className="gap-4 p-4 relative">
+                  <Field
+                    label={`Analista ${index + 1}`}
+                    required
+                    error={index === 0 ? errors["analistaDA"] : undefined}
+                  >
+                    <ResponsiblePicker
+                      label=""
+                      value={data.analistaDA[index] ?? ""}
+                      onChange={(value) => {
+                        const next = [...data.analistaDA];
+                        next[index] = value;
+                        update("analistaDA", next);
+                      }}
+                      options={responsaveis}
+                      error={errors["analistaDA"]}
+                    />
+                  </Field>
+                  {data.analistaDA.length > 1 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() =>
+                        update(
+                          "analistaDA",
+                          data.analistaDA.filter((_, i) => i !== index),
+                        )
+                      }
+                      className="absolute top-2 right-2"
+                    >
+                      <Trash2 className="h-4 w-4" color="red" />
+                    </Button>
+                  ) : null}
+                </Card>
+              ))}
+            </div>
+          </Field>
+        </div>
+
+        <div className="grid gap-3">
+          <Field label="Analista AE" error={errors["analistaAE"]}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                update("analistaAE", [
+                  ...data.analistaAE,
+                  "",
+                ])
+              }
+            >
+              + Adicionar Analista
+            </Button>
+            <div className="grid gap-3">
+              {data.analistaAE.map((item, index) => (
+                <Card key={index} className="gap-4 p-4 relative">
+                  <Field
+                    label={`Analista ${index + 1}`}
+                    required
+                    error={index === 0 ? errors["analistaAE"] : undefined}
+                  >
+                    <ResponsiblePicker
+                      label=""
+                      value={data.analistaAE[index] ?? ""}
+                      onChange={(value) => {
+                        const next = [...data.analistaAE];
+                        next[index] = value;
+                        update("analistaAE", next);
+                      }}
+                      options={responsaveis}
+                      error={errors["analistaAE"]}
+                    />
+                  </Field>
+                  {data.analistaAE.length > 1 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() =>
+                        update(
+                          "analistaAE",
+                          data.analistaAE.filter((_, i) => i !== index),
+                        )
+                      }
+                      className="absolute top-2 right-2"
+                    >
+                      <Trash2 className="h-4 w-4" color="red" />
+                    </Button>
+                  ) : null}
+                </Card>
+              ))}
+            </div>
+          </Field>
+        </div>
         <Field label="Produtos importados" required error={errors["produtosImportados"]}>
           <TextArea
             value={data.produtosImportados ?? ""}
@@ -610,6 +704,6 @@ export default function StepImportacao({
           </Field>
         ) : null}
       </Grid>
-    </main>
+    </main >
   );
 }

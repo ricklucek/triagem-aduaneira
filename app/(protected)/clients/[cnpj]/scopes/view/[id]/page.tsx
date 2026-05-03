@@ -54,12 +54,12 @@ const boolBadge = (value?: boolean | null) =>
   value ? (
     <Badge className="bg-emerald-600 hover:bg-emerald-600">
       <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
-      Habilitado
+      Contrata
     </Badge>
   ) : (
     <Badge variant="secondary">
       <XCircle className="mr-1 h-3.5 w-3.5" />
-      Desabilitado
+      Não contrata
     </Badge>
   );
 
@@ -118,6 +118,8 @@ function ScopeDetails({
   const e = scope.operacao.exportacao;
   const si = scope.servicos.importacao;
   const se = scope.servicos.exportacao;
+
+  const ctabancaria = scope.financeiro?.dadosBancariosClienteDevolucaoSaldo
 
   const { data: metadataResponse } = useScopeMetadata();
 
@@ -236,8 +238,16 @@ function ScopeDetails({
             <>
               <Separator className="my-2" />
               <Grid>
-                <Field label="Analista DA" value={<ResponsibleShow value={i.analistaDA} options={responsaveis} />} />
-                <Field label="Analista AE" value={<ResponsibleShow value={i.analistaAE} options={responsaveis} />} />
+                {
+                  i.analistaDA.length > 0 && (
+                    <Field label="Analista DA" value={i.analistaDA.map((da) => <ResponsibleShow key={da} value={da} options={responsaveis} />)} />
+                  )
+                }
+                {
+                  i.analistaAE.length > 0 && (
+                    <Field label="Analista AE" value={i.analistaAE.map((da) => <ResponsibleShow key={da} value={da} options={responsaveis} />)} />
+                  )
+                }
                 <Field
                   label="Produtos importados"
                   value={text(i.produtosImportados)}
@@ -709,12 +719,17 @@ function ScopeDetails({
         </ViewCard>
         <ViewCard title="Financeiro">
           <Grid>
-            <Field
-              label="Dados bancários para devolução de saldo"
-              value={account(
-                scope.financeiro?.dadosBancariosClienteDevolucaoSaldo,
+            {
+              ctabancaria.length > 0 && (
+                ctabancaria.map((conta, index) => (
+                  <Field
+                    label="Dados bancários para devolução de saldo"
+                    value={account(
+                      conta
+                    )}
+                  />
+                ))
               )}
-            />
             <Field
               label="Observações financeiras"
               value={text(scope.financeiro?.observacoesFinanceiro)}

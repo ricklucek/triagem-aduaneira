@@ -16,10 +16,8 @@ export const ResponsavelComercialSchema = z
   .trim()
   .min(1, "Responsável comercial é obrigatório");
 export const TipoOperacaoSchema = z.enum(["IMPORTACAO", "EXPORTACAO"]);
-export const AnalistaDAImportacaoSchema = z
-  .string()
-  .trim()
-  .min(1, "Analista DA é obrigatório");
+export const AnalistaDASchema = z.array(z.string().trim()).min(1, "Pelo menos um analista DA deve ser selecionado");
+export const AnalistaAESchema = z.array(z.string().trim()).optional().default([]);
 export const AnuenciaImportacaoSchema = z.enum([
   "ANVISA",
   "MAPA",
@@ -252,8 +250,8 @@ const ServicoOutrosCertificadosSchema = z
 
 export const ImportacaoSchema = z
   .object({
-    analistaDA: AnalistaDAImportacaoSchema,
-    analistaAE: z.string().trim().optional().nullable(),
+    analistaDA: AnalistaDASchema,
+    analistaAE: AnalistaAESchema,
     produtosImportados: z.string().trim().min(1, "Produtos importados é obrigatório"),
     ncms: z
       .array(
@@ -357,7 +355,7 @@ export const ImportacaoSchema = z
 
 export const ExportacaoSchema = z
   .object({
-    analistaDA: z.string().trim().min(1, "Analista DA é obrigatório"),
+    analistaDA: AnalistaDASchema,
     produtosExportados: z
       .string()
       .trim()
@@ -445,7 +443,7 @@ export const EscopoSchema = z
       exportacao: ServicosExportacaoSchema.optional(),
     }),
     financeiro: z.object({
-      dadosBancariosClienteDevolucaoSaldo: ContaBancariaSchema,
+      dadosBancariosClienteDevolucaoSaldo: z.array(ContaBancariaSchema).default([]),
       observacoesFinanceiro: z.string().trim().optional().nullable(),
     }),
     geral: z.object({

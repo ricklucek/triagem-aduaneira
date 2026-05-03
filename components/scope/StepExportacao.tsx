@@ -32,7 +32,7 @@ export default function StepExportacao({
       produtosExportados: "",
       ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
       observacaoNcms: "",
-      analistaDA: "",
+      analistaDA: [],
       destinacao: [],
       subtipoConsumo: [],
     };
@@ -54,13 +54,58 @@ export default function StepExportacao({
     <main className="flex flex-col gap-10">
       <div className="flex flex-col gap-5">
         <Grid columns={2}>
-          <ResponsiblePicker
-            label="Analista DA"
-            value={data.analistaDA}
-            onChange={(value) => update("analistaDA", value)}
-            options={responsaveis}
-            error={errors["analistaDA"]}
-          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              update("analistaDA", [
+                ...data.analistaDA,
+                "",
+              ])
+            }
+          >
+            + Adicionar Analista
+          </Button>
+          <div className="grid gap-3">
+            {data.analistaDA.map((item, index) => (
+              <Card key={index} className="gap-4 p-4">
+                <Grid columns={2}>
+                  <Field
+                    label={`Analista ${index + 1}`}
+                    required
+                    error={index === 0 ? errors["analistaDA"] : undefined}
+                  >
+                    <ResponsiblePicker
+                      label="Analista DA"
+                      value={data.analistaDA[index] ?? ""}
+                      onChange={(value) => {
+                        const next = [...data.analistaDA];
+                        next[index] = value;
+                        update("analistaDA", next);
+                      }}
+                      options={responsaveis}
+                      error={errors["analistaDA"]}
+                    />
+                  </Field>
+
+                </Grid>
+                {data.analistaDA.length > 1 ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() =>
+                      update(
+                        "analistaDA",
+                        data.analistaDA.filter((_, i) => i !== index),
+                      )
+                    }
+                  >
+                    Remover
+                  </Button>
+                ) : null}
+              </Card>
+            ))}
+          </div>
         </Grid>
 
         <Field
