@@ -13,6 +13,7 @@ export const escopoFormDefault: EscopoForm = {
     cnaeSecundario: "",
     regimeTributacao: "SIMPLES_NACIONAL",
     responsavelComercial: "",
+    modalidadeRadar: "RADAR_INATIVO"
   },
 
   contatos: [
@@ -31,11 +32,11 @@ export const escopoFormDefault: EscopoForm = {
   servicos: {},
 
   financeiro: {
-    dadosBancariosClienteDevolucaoSaldo: {
+    dadosBancariosClienteDevolucaoSaldo: [{
       banco: "",
       agencia: "",
       conta: "",
-    },
+    }],
     observacoesFinanceiro: "",
   },
 
