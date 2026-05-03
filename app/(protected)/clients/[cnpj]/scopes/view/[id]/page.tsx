@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useParams } from "next/navigation";
-import { CheckCircle2, RotateCw } from "lucide-react";
+import { CheckCircle2, RotateCw, XCircle } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
 import { useScope, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
