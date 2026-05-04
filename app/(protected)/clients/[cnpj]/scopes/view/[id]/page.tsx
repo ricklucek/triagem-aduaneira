@@ -213,10 +213,6 @@ function ScopeDetails({
               value={text(scope.sobreEmpresa?.modalidadeRadar)}
             />
             <Field
-              label="Modalidade RADAR"
-              value={text(scope.sobreEmpresa?.modalidadeRadar)}
-            />
-            <Field
               label="Responsável comercial"
               value={<ResponsibleShow value={scope.sobreEmpresa?.responsavelComercial} options={responsaveis} />}
             />
@@ -351,19 +347,22 @@ function ScopeDetails({
 
               <div className="grid gap-3">
                 {Object.entries(i.icms?.porDestinacao ?? {})
-                  .filter(([, detalhe]) => detalhe)
-                  .map(([destinacao, detalhe]) => (
-                    <Card key={destinacao} className="gap-3 p-3">
-                      <h6 className="text-sm font-semibold">
-                        {ICMS_DESTINACAO_LABEL[destinacao] ?? destinacao}
-                      </h6>
-                      <Grid>
-                        <Field label="Regime" value={text(detalhe?.regime)} />
-                        <Field label="Alíquota recolhida" value={text(detalhe?.recolhida)} />
-                        <Field label="Alíquota efetiva" value={text(detalhe?.efetiva)} />
-                      </Grid>
-                    </Card>
-                  ))}
+                  .filter(([_, detalhe]) => detalhe)
+                  .map(([destinacao, detalhe]) => {
+
+                    if (i.destinacao.includes(destinacao)) return (
+                      <Card key={destinacao} className="gap-3 p-3">
+                        <h6 className="text-sm font-semibold">
+                          {ICMS_DESTINACAO_LABEL[destinacao] ?? destinacao}
+                        </h6>
+                        <Grid>
+                          <Field label="Regime" value={text(detalhe?.regime)} />
+                          <Field label="Alíquota recolhida" value={text(detalhe?.recolhida)} />
+                          <Field label="Alíquota efetiva" value={text(detalhe?.efetiva)} />
+                        </Grid>
+                      </Card>
+                    )
+                  })}
               </div>
             </>
           ) : null}
@@ -818,11 +817,11 @@ export default function ScopeViewPage() {
             <p className="text-sm text-muted-foreground">
               Documento em modo leitura para acompanhamento operacional.
             </p>
-              {createdBy && (
-                <p className="mt-5 text-sm text-muted-foreground">
-                  Criado por {createdBy.nome}
-                </p>
-              )}
+            {createdBy && (
+              <p className="mt-5 text-sm text-muted-foreground">
+                Criado por {createdBy.nome}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2 print:hidden">
             <Button asChild variant="outline">
