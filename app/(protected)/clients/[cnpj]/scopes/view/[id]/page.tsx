@@ -83,26 +83,24 @@ function Field({ label, value }: { label: string; value: React.ReactNode | null 
 
 function TitleField({ label, value }: { label: string; value: React.ReactNode | null }) {
   if (!value) return null;
-  function TitleField({ label, value }: { label: string; value: React.ReactNode | null }) {
-    if (!value) return null;
-    return (
-      <div className="w-full col-span-2 flex flex-col gap-2">
-        <div className="p-3 flex flex-row items-center gap-5">
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-          <div className="text-sm font-medium wrap-break-word whitespace-pre-line text-wrap">{value}</div>
-        </div>
-        <Separator />
+  return (
+    <div className="w-full col-span-2 flex flex-col gap-2">
+      <div className="p-3 flex flex-row items-center gap-5">
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <div className="text-sm font-medium wrap-break-word whitespace-pre-line text-wrap">{value}</div>
       </div>
-    );
-  }
+      <Separator />
+    </div>
+  );
 }
 
 
 function Grid({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-3 md:grid-cols-2">{children}</div>;
 }
+
 function ViewCard({
   title,
   children,
@@ -129,8 +127,6 @@ function ScopeDetails({
   const e = scope.operacao.exportacao;
   const si = scope.servicos.importacao;
   const se = scope.servicos.exportacao;
-
-  const ctabancaria = scope.financeiro?.dadosBancariosClienteDevolucaoSaldo
 
   const { data: metadataResponse } = useScopeMetadata();
 
@@ -794,6 +790,8 @@ export default function ScopeViewPage() {
 
   const selectedScope = useMemo(() => scopeResponse?.draft ?? null, [scopeResponse?.draft]);
 
+  const createdBy = scopeResponse?.created_by;
+
   if (loadingScope)
     return (
       <Card className="p-4 text-sm text-muted-foreground">
@@ -824,6 +822,11 @@ export default function ScopeViewPage() {
             <p className="text-sm text-muted-foreground">
               Documento em modo leitura para acompanhamento operacional.
             </p>
+              {createdBy && (
+                <p className="mt-5 text-sm text-muted-foreground">
+                  Criado por {createdBy.nome}
+                </p>
+              )}
           </div>
           <div className="flex items-center gap-2 print:hidden">
             <Button asChild variant="outline">

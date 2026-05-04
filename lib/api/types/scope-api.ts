@@ -12,6 +12,11 @@ export type ScopeStatus = "draft" | "published" | "archived";
 export interface ScopeDetailResponse {
   id: string;
   draft: EscopoForm;
+  created_by: {
+    id: string;
+    nome: string;
+    email: string;
+  };
   status: ScopeStatus;
 }
 
