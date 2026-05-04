@@ -253,8 +253,6 @@ function ScopeDetails({
               <Grid>
                 <Field label="Analista DA" value={list((i.analistaDA ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
                 <Field label="Analista AE" value={list((i.analistaAE ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
-                <Field label="Analista DA" value={list((i.analistaDA ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
-                <Field label="Analista AE" value={list((i.analistaAE ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
                 <Field
                   label="Produtos importados"
                   value={text(i.produtosImportados)}
