@@ -50,6 +50,13 @@ const account = (
   (!v || (!v.banco && !v.agencia && !v.conta))
     ? null
     : `Banco: ${text(v.banco)} • Agência: ${text(v.agencia)} • Conta: ${text(v.conta)}`;
+const ICMS_DESTINACAO_LABEL: Record<string, string> = {
+  REVENDA: "Revenda",
+  INDUSTRIALIZACAO: "Industrialização",
+  USO_E_CONSUMO: "Uso e consumo",
+  ATIVO_IMOBILIZADO: "Ativo imobilizado",
+};
+
 const boolBadge = (value?: boolean | null) =>
   value ? (
     <Badge className="bg-emerald-600 hover:bg-emerald-600">
@@ -321,6 +328,35 @@ function ScopeDetails({
                   value={i.observacaoNcms}
                 />
               </Grid>
+
+              <Separator className="my-2" />
+              <h5 className="text-sm font-semibold">ICMS</h5>
+              <Grid>
+                <Field label="Conta para pagamento" value={text(i.icms?.contaPagamento)} />
+                <Field label="Regime (geral)" value={text(i.icms?.regime)} />
+                <Field
+                  label="Conta cliente (ICMS)"
+                  value={account(i.icms?.dadosContaCliente)}
+                />
+                <Field label="Observações ICMS" value={text(i.icms?.observacao)} />
+              </Grid>
+
+              <div className="grid gap-3">
+                {Object.entries(i.icms?.porDestinacao ?? {})
+                  .filter(([, detalhe]) => detalhe)
+                  .map(([destinacao, detalhe]) => (
+                    <Card key={destinacao} className="gap-3 p-3">
+                      <h6 className="text-sm font-semibold">
+                        {ICMS_DESTINACAO_LABEL[destinacao] ?? destinacao}
+                      </h6>
+                      <Grid>
+                        <Field label="Regime" value={text(detalhe?.regime)} />
+                        <Field label="Alíquota recolhida" value={text(detalhe?.recolhida)} />
+                        <Field label="Alíquota efetiva" value={text(detalhe?.efetiva)} />
+                      </Grid>
+                    </Card>
+                  ))}
+              </div>
             </>
           ) : null}
           {e ? (
