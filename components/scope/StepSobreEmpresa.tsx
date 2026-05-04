@@ -173,9 +173,6 @@ export default function StepSobreEmpresa({
             <option value="SIMPLES_NACIONAL">Simples Nacional</option>
             <option value="LUCRO_PRESUMIDO">Lucro Presumido</option>
             <option value="LUCRO_REAL">Lucro Real</option>
-            <option value="LUCRO_PRESUMIDO_OU_REAL">
-              Lucro Presumido / Lucro Real
-            </option>
           </Select>
         </Field>
         <Field label="Modalidade Radar" required error={errors["modalidadeRadar"]}>
