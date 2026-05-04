@@ -246,8 +246,6 @@ function ScopeDetails({
               label="Tipos de operação"
               value={list(scope.operacao?.tipos)}
             />
-            <Field label="Importação" value={i ? "Configurada" : "-"} />
-            <Field label="Exportação" value={e ? "Configurada" : "-"} />
           </Grid>
           {i ? (
             <>
