@@ -169,7 +169,7 @@ export default function ScopeWizard({
       return;
     }
 
-    const ok = await persist(form);
+    const ok = await persist(form, true);
     if (ok) {
       toast.success("Formulário válido. Rascunho salvo com sucesso.");
     }
