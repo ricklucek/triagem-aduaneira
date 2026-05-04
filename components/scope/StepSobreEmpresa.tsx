@@ -178,6 +178,18 @@ export default function StepSobreEmpresa({
             </option>
           </Select>
         </Field>
+        <Field label="Modalidade Radar" required error={errors["modalidadeRadar"]}>
+          <Select
+            value={s.modalidadeRadar ?? ""}
+            onChange={(e) => patch({ modalidadeRadar: e.target.value as typeof s.modalidadeRadar })}
+          >
+            <option value="">Selecione</option>
+            <option value="RADAR_INATIVO">RADAR inativo</option>
+            <option value="RADAR_LIMITADO_50K">RADAR Limitado U$50.000,00 CIF</option>
+            <option value="RADAR_LIMITADO_150K">RADAR Limitado U$150.000,00 CIF</option>
+            <option value="RADAR_ILIMITADO">RADAR ILIMITADO</option>
+          </Select>
+        </Field>
         <ResponsiblePicker
           label="Responsável comercial"
           value={s.responsavelComercial}

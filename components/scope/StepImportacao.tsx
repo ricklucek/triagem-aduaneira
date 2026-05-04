@@ -64,6 +64,14 @@ const DEFAULT_AFRMM = {
   regime: "INTEGRAL",
   detalheBeneficio: "",
 } as const;
+const ICMS_DESTINACOES = ["REVENDA", "INDUSTRIALIZACAO", "USO_E_CONSUMO", "ATIVO_IMOBILIZADO"] as const;
+const ICMS_DESTINACAO_LABEL: Record<(typeof ICMS_DESTINACOES)[number], string> = {
+  REVENDA: "Revenda",
+  INDUSTRIALIZACAO: "Industrialização",
+  USO_E_CONSUMO: "Uso e consumo",
+  ATIVO_IMOBILIZADO: "Ativo imobilizado",
+};
+
 const DEFAULT_ICMS = {
   contaPagamento: "CASCO",
   regime: "INTEGRAL",
@@ -90,8 +98,8 @@ export default function StepImportacao({
 
   const data: NonNullable<EscopoForm["operacao"]["importacao"]> = form.operacao
     .importacao ?? {
-    analistaDA: "",
-    analistaAE: "",
+    analistaDA: [""],
+    analistaAE: [],
     produtosImportados: "",
     ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
     observacaoNcms: "",
@@ -114,7 +122,7 @@ export default function StepImportacao({
       observacao: ""
     },
     afrmm: { observacao: "" },
-    icms: { regime: "INTEGRAL", observacao: "" },
+    icms: { regime: "INTEGRAL", observacao: "", porDestinacao: {} },
     destinacao: [],
     subtipoConsumo: [],
   };
@@ -143,20 +151,39 @@ export default function StepImportacao({
           Regras e parâmetros da operação de importação.
         </p>
         <Grid columns={2}>
-          <ResponsiblePicker
-            label="Analista DA"
-            value={data.analistaDA}
-            onChange={(value) => update("analistaDA", value)}
-            options={responsaveis}
-            error={errors["analistaDA"]}
-          />
-          <ResponsiblePicker
-            label="Analista AE"
-            value={data.analistaAE ?? ""}
-            onChange={(value) => update("analistaAE", value)}
-            options={responsaveis}
-            error={errors["analistaAE"]}
-          />
+          <div className="flex flex-col gap-2">
+            {data.analistaDA.map((analista, index) => (
+              <ResponsiblePicker
+                key={`da-${index}`}
+                label={`Analista DA ${index + 1}`}
+                value={analista}
+                onChange={(value) => {
+                  const next = [...data.analistaDA];
+                  next[index] = value;
+                  update("analistaDA", next);
+                }}
+                options={responsaveis}
+                error={index === 0 ? errors["analistaDA"] : undefined}
+              />
+            ))}
+            <Button type="button" variant="outline" onClick={() => update("analistaDA", [...data.analistaDA, ""])}>+ Analista DA</Button>
+          </div>
+          <div className="flex flex-col gap-2">
+            {(data.analistaAE ?? []).map((analista, index) => (
+              <ResponsiblePicker
+                key={`ae-${index}`}
+                label={`Analista AE ${index + 1}`}
+                value={analista}
+                onChange={(value) => {
+                  const next = [...(data.analistaAE ?? [])];
+                  next[index] = value;
+                  update("analistaAE", next);
+                }}
+                options={responsaveis}
+              />
+            ))}
+            <Button type="button" variant="outline" onClick={() => update("analistaAE", [...(data.analistaAE ?? []), ""])}>+ Analista AE</Button>
+          </div>
         </Grid>
         <Field label="Produtos importados" required error={errors["produtosImportados"]}>
           <TextArea
@@ -541,27 +568,7 @@ export default function StepImportacao({
             }
           />
         ) : null}
-        {icmsData.regime === "BENEFICIO" ? (
-          <Grid columns={2}>
-            <Field label="Recolhida" required>
-              <TextInput
-                value={icmsData.recolhida ?? ""}
-                onChange={(e) =>
-                  update("icms", { ...icmsData, recolhida: e.target.value })
-                }
-              />
-            </Field>
-            <Field label="Efetiva" required>
-              <TextInput
-                value={icmsData.efetiva ?? ""}
-                onChange={(e) =>
-                  update("icms", { ...icmsData, efetiva: e.target.value })
-                }
-              />
-            </Field>
-          </Grid>
-        ) : null}
-        <Field label="Observações" hint="Campo opcional">
+                <Field label="Observações" hint="Campo opcional">
           <TextArea
             value={data.icms.observacao ?? ""}
             onChange={(e) => update("icms.observacao", e.target.value)}
@@ -576,13 +583,78 @@ export default function StepImportacao({
             searchLabel="Pesquisar destinação"
             value={data.destinacao}
             options={[
-              { value: "CONSUMO", label: "Consumo" },
               { value: "REVENDA", label: "Revenda" },
+              { value: "INDUSTRIALIZACAO", label: "Industrialização" },
+              { value: "USO_E_CONSUMO", label: "Uso e consumo" },
+              { value: "ATIVO_IMOBILIZADO", label: "Ativo imobilizado" },
+              { value: "CONSUMO", label: "Consumo" },
             ]}
             onChange={(next) => update("destinacao", next)}
             error={errors["destinacao"]}
           />
         </Field>
+        {data.destinacao.filter((d): d is (typeof ICMS_DESTINACOES)[number] => ICMS_DESTINACOES.includes(d as (typeof ICMS_DESTINACOES)[number])).length > 0 ? (
+          <div className="grid gap-3">
+            {data.destinacao
+              .filter((d): d is (typeof ICMS_DESTINACOES)[number] => ICMS_DESTINACOES.includes(d as (typeof ICMS_DESTINACOES)[number]))
+              .map((destino) => {
+                const detalhe = icmsData.porDestinacao?.[destino] ?? { regime: icmsData.regime ?? "INTEGRAL", recolhida: "", efetiva: "" };
+
+                return (
+                  <Card key={destino} className="gap-4 p-4">
+                    <h3 className="text-sm font-semibold">{ICMS_DESTINACAO_LABEL[destino]}</h3>
+                    <Grid columns={3}>
+                      <Field label="Regime" required>
+                        <Select
+                          value={detalhe.regime ?? "INTEGRAL"}
+                          onChange={(e) =>
+                            update("icms", {
+                              ...icmsData,
+                              porDestinacao: {
+                                ...icmsData.porDestinacao,
+                                [destino]: { ...detalhe, regime: e.target.value as "INTEGRAL" | "BENEFICIO" },
+                              },
+                            })
+                          }
+                        >
+                          <option value="INTEGRAL">Integral</option>
+                          <option value="BENEFICIO">Benefício</option>
+                        </Select>
+                      </Field>
+                      <Field label="Alíquota recolhida">
+                        <TextInput
+                          value={detalhe.recolhida ?? ""}
+                          onChange={(e) =>
+                            update("icms", {
+                              ...icmsData,
+                              porDestinacao: {
+                                ...icmsData.porDestinacao,
+                                [destino]: { ...detalhe, recolhida: e.target.value },
+                              },
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field label="Alíquota efetiva">
+                        <TextInput
+                          value={detalhe.efetiva ?? ""}
+                          onChange={(e) =>
+                            update("icms", {
+                              ...icmsData,
+                              porDestinacao: {
+                                ...icmsData.porDestinacao,
+                                [destino]: { ...detalhe, efetiva: e.target.value },
+                              },
+                            })
+                          }
+                        />
+                      </Field>
+                    </Grid>
+                  </Card>
+                );
+              })}
+          </div>
+        ) : null}
         {data.destinacao.includes("CONSUMO") ? (
           <Field
             label="Subtipo de consumo"

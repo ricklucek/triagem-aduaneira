@@ -32,7 +32,7 @@ export default function StepExportacao({
       produtosExportados: "",
       ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
       observacaoNcms: "",
-      analistaDA: "",
+      analistaDA: [""],
       destinacao: [],
       subtipoConsumo: [],
     };
@@ -54,13 +54,23 @@ export default function StepExportacao({
     <main className="flex flex-col gap-10">
       <div className="flex flex-col gap-5">
         <Grid columns={2}>
-          <ResponsiblePicker
-            label="Analista DA"
-            value={data.analistaDA}
-            onChange={(value) => update("analistaDA", value)}
-            options={responsaveis}
-            error={errors["analistaDA"]}
-          />
+          <div className="flex flex-col gap-2">
+            {data.analistaDA.map((analista, index) => (
+              <ResponsiblePicker
+                key={index}
+                label={`Analista DA ${index + 1}`}
+                value={analista}
+                onChange={(value) => {
+                  const next = [...data.analistaDA];
+                  next[index] = value;
+                  update("analistaDA", next);
+                }}
+                options={responsaveis}
+                error={index === 0 ? errors["analistaDA"] : undefined}
+              />
+            ))}
+            <Button type="button" variant="outline" onClick={() => update("analistaDA", [...data.analistaDA, ""])}>+ Analista DA</Button>
+          </div>
         </Grid>
 
         <Field
