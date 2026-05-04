@@ -50,6 +50,13 @@ const account = (
   (!v || (!v.banco && !v.agencia && !v.conta))
     ? null
     : `Banco: ${text(v.banco)} • Agência: ${text(v.agencia)} • Conta: ${text(v.conta)}`;
+const ICMS_DESTINACAO_LABEL: Record<string, string> = {
+  REVENDA: "Revenda",
+  INDUSTRIALIZACAO: "Industrialização",
+  USO_E_CONSUMO: "Uso e consumo",
+  ATIVO_IMOBILIZADO: "Ativo imobilizado",
+};
+
 const boolBadge = (value?: boolean | null) =>
   value ? (
     <Badge className="bg-emerald-600 hover:bg-emerald-600">
@@ -76,17 +83,20 @@ function Field({ label, value }: { label: string; value: React.ReactNode | null 
 
 function TitleField({ label, value }: { label: string; value: React.ReactNode | null }) {
   if (!value) return null;
-  return (
-    <div className="w-full col-span-2 flex flex-col gap-2">
-      <div className="p-3 flex flex-row items-center gap-5">
-        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <div className="text-sm font-medium wrap-break-word whitespace-pre-line text-wrap">{value}</div>
+  function TitleField({ label, value }: { label: string; value: React.ReactNode | null }) {
+    if (!value) return null;
+    return (
+      <div className="w-full col-span-2 flex flex-col gap-2">
+        <div className="p-3 flex flex-row items-center gap-5">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {label}
+          </p>
+          <div className="text-sm font-medium wrap-break-word whitespace-pre-line text-wrap">{value}</div>
+        </div>
+        <Separator />
       </div>
-      <Separator />
-    </div>
-  );
+    );
+  }
 }
 
 
@@ -207,6 +217,10 @@ function ScopeDetails({
               value={text(scope.sobreEmpresa?.modalidadeRadar)}
             />
             <Field
+              label="Modalidade RADAR"
+              value={text(scope.sobreEmpresa?.modalidadeRadar)}
+            />
+            <Field
               label="Responsável comercial"
               value={<ResponsibleShow value={scope.sobreEmpresa?.responsavelComercial} options={responsaveis} />}
             />
@@ -243,6 +257,8 @@ function ScopeDetails({
             <>
               <Separator className="my-2" />
               <Grid>
+                <Field label="Analista DA" value={list((i.analistaDA ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
+                <Field label="Analista AE" value={list((i.analistaAE ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
                 <Field label="Analista DA" value={list((i.analistaDA ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
                 <Field label="Analista AE" value={list((i.analistaAE ?? []).map((id) => responsaveis.find((r) => r.id === id)?.nome ?? id))} />
                 <Field
@@ -328,6 +344,35 @@ function ScopeDetails({
                   value={i.observacaoNcms}
                 />
               </Grid>
+
+              <Separator className="my-2" />
+              <h5 className="text-sm font-semibold">ICMS</h5>
+              <Grid>
+                <Field label="Conta para pagamento" value={text(i.icms?.contaPagamento)} />
+                <Field label="Regime (geral)" value={text(i.icms?.regime)} />
+                <Field
+                  label="Conta cliente (ICMS)"
+                  value={account(i.icms?.dadosContaCliente)}
+                />
+                <Field label="Observações ICMS" value={text(i.icms?.observacao)} />
+              </Grid>
+
+              <div className="grid gap-3">
+                {Object.entries(i.icms?.porDestinacao ?? {})
+                  .filter(([, detalhe]) => detalhe)
+                  .map(([destinacao, detalhe]) => (
+                    <Card key={destinacao} className="gap-3 p-3">
+                      <h6 className="text-sm font-semibold">
+                        {ICMS_DESTINACAO_LABEL[destinacao] ?? destinacao}
+                      </h6>
+                      <Grid>
+                        <Field label="Regime" value={text(detalhe?.regime)} />
+                        <Field label="Alíquota recolhida" value={text(detalhe?.recolhida)} />
+                        <Field label="Alíquota efetiva" value={text(detalhe?.efetiva)} />
+                      </Grid>
+                    </Card>
+                  ))}
+              </div>
             </>
           ) : null}
           {e ? (
@@ -737,7 +782,7 @@ function ScopeDetails({
       </div>
     </Card>
   );
-}
+};
 
 export default function ScopeViewPage() {
   const { cnpj, id } = useParams<{ cnpj: string; id: string }>();
@@ -811,5 +856,6 @@ export default function ScopeViewPage() {
         }
       `}</style>
     </div>
-  );
+  )
 }
+

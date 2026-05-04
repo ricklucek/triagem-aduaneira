@@ -66,6 +66,12 @@ const DEFAULT_AFRMM = {
   detalheBeneficio: "",
 } as const;
 const ICMS_DESTINACOES = ["REVENDA", "INDUSTRIALIZACAO", "USO_E_CONSUMO", "ATIVO_IMOBILIZADO"] as const;
+const ICMS_DESTINACAO_LABEL: Record<(typeof ICMS_DESTINACOES)[number], string> = {
+  REVENDA: "Revenda",
+  INDUSTRIALIZACAO: "Industrialização",
+  USO_E_CONSUMO: "Uso e consumo",
+  ATIVO_IMOBILIZADO: "Ativo imobilizado",
+};
 
 const DEFAULT_ICMS = {
   contaPagamento: "CASCO",
@@ -563,27 +569,7 @@ export default function StepImportacao({
             }
           />
         ) : null}
-        {icmsData.regime === "BENEFICIO" ? (
-          <div className="grid gap-3">
-            {ICMS_DESTINACOES.map((destino) => (
-              <Grid key={destino} columns={2}>
-                <Field label={`${destino} • Alíquota recolhida`}>
-                  <TextInput
-                    value={icmsData.porDestinacao?.[destino]?.recolhida ?? ""}
-                    onChange={(e) => update("icms", { ...icmsData, porDestinacao: { ...icmsData.porDestinacao, [destino]: { ...(icmsData.porDestinacao?.[destino] ?? {}), recolhida: e.target.value } } })}
-                  />
-                </Field>
-                <Field label={`${destino} • Alíquota efetiva`}>
-                  <TextInput
-                    value={icmsData.porDestinacao?.[destino]?.efetiva ?? ""}
-                    onChange={(e) => update("icms", { ...icmsData, porDestinacao: { ...icmsData.porDestinacao, [destino]: { ...(icmsData.porDestinacao?.[destino] ?? {}), efetiva: e.target.value } } })}
-                  />
-                </Field>
-              </Grid>
-            ))}
-          </div>
-        ) : null}
-        <Field label="Observações" hint="Campo opcional">
+                <Field label="Observações" hint="Campo opcional">
           <TextArea
             value={data.icms.observacao ?? ""}
             onChange={(e) => update("icms.observacao", e.target.value)}
@@ -608,6 +594,68 @@ export default function StepImportacao({
             error={errors["destinacao"]}
           />
         </Field>
+        {data.destinacao.filter((d): d is (typeof ICMS_DESTINACOES)[number] => ICMS_DESTINACOES.includes(d as (typeof ICMS_DESTINACOES)[number])).length > 0 ? (
+          <div className="grid gap-3">
+            {data.destinacao
+              .filter((d): d is (typeof ICMS_DESTINACOES)[number] => ICMS_DESTINACOES.includes(d as (typeof ICMS_DESTINACOES)[number]))
+              .map((destino) => {
+                const detalhe = icmsData.porDestinacao?.[destino] ?? { regime: icmsData.regime ?? "INTEGRAL", recolhida: "", efetiva: "" };
+
+                return (
+                  <Card key={destino} className="gap-4 p-4">
+                    <h3 className="text-sm font-semibold">{ICMS_DESTINACAO_LABEL[destino]}</h3>
+                    <Grid columns={3}>
+                      <Field label="Regime" required>
+                        <Select
+                          value={detalhe.regime ?? "INTEGRAL"}
+                          onChange={(e) =>
+                            update("icms", {
+                              ...icmsData,
+                              porDestinacao: {
+                                ...icmsData.porDestinacao,
+                                [destino]: { ...detalhe, regime: e.target.value as "INTEGRAL" | "BENEFICIO" },
+                              },
+                            })
+                          }
+                        >
+                          <option value="INTEGRAL">Integral</option>
+                          <option value="BENEFICIO">Benefício</option>
+                        </Select>
+                      </Field>
+                      <Field label="Alíquota recolhida">
+                        <TextInput
+                          value={detalhe.recolhida ?? ""}
+                          onChange={(e) =>
+                            update("icms", {
+                              ...icmsData,
+                              porDestinacao: {
+                                ...icmsData.porDestinacao,
+                                [destino]: { ...detalhe, recolhida: e.target.value },
+                              },
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field label="Alíquota efetiva">
+                        <TextInput
+                          value={detalhe.efetiva ?? ""}
+                          onChange={(e) =>
+                            update("icms", {
+                              ...icmsData,
+                              porDestinacao: {
+                                ...icmsData.porDestinacao,
+                                [destino]: { ...detalhe, efetiva: e.target.value },
+                              },
+                            })
+                          }
+                        />
+                      </Field>
+                    </Grid>
+                  </Card>
+                );
+              })}
+          </div>
+        ) : null}
         {data.destinacao.includes("CONSUMO") ? (
           <Field
             label="Subtipo de consumo"

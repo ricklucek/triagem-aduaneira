@@ -300,10 +300,10 @@ export const ImportacaoSchema = z
         observacao: z.string().trim().optional().nullable(),
         porDestinacao: z
           .object({
-            REVENDA: z.object({ recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
-            INDUSTRIALIZACAO: z.object({ recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
-            USO_E_CONSUMO: z.object({ recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
-            ATIVO_IMOBILIZADO: z.object({ recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
+            REVENDA: z.object({ regime: IntegralBeneficioSchema.optional(), recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
+            INDUSTRIALIZACAO: z.object({ regime: IntegralBeneficioSchema.optional(), recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
+            USO_E_CONSUMO: z.object({ regime: IntegralBeneficioSchema.optional(), recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
+            ATIVO_IMOBILIZADO: z.object({ regime: IntegralBeneficioSchema.optional(), recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
           })
           .optional(),
       }),
