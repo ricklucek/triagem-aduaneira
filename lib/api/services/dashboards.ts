@@ -28,7 +28,7 @@ export const dashboardApi = {
   ): Promise<AdminDashboardMetricsResponse> {
     const { data } = await http.get<AdminDashboardMetricsResponse>(
       API_ROUTES.dashboards.adminMetrics,
-      { params },
+      { params: { ...params } },
     );
     return data;
   },
@@ -38,7 +38,7 @@ export const dashboardApi = {
   ): Promise<ScopesByUserResponse> {
     const { data } = await http.get<ScopesByUserResponse>(
       API_ROUTES.dashboards.adminScopesByUser,
-      { params },
+      { params: { ...params } },
     );
     return data;
   },
@@ -48,7 +48,7 @@ export const dashboardApi = {
   ): Promise<ServicesMetricsResponse> {
     const { data } = await http.get<ServicesMetricsResponse>(
       API_ROUTES.dashboards.adminServices,
-      { params },
+      { params: { ...params } },
     );
     return data;
   },
@@ -59,7 +59,7 @@ export const dashboardApi = {
   ): Promise<ServicesByScopeResponse> {
     const { data } = await http.get<ServicesByScopeResponse>(
       API_ROUTES.dashboards.adminServicesByScope,
-      { params },
+      { params: { ...params } },
     );
     return data;
   },
