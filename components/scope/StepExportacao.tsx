@@ -189,49 +189,6 @@ export default function StepExportacao({
         />
       </Field>
 
-      <div className="flex flex-col gap-5">
-        <Grid columns={2}>
-          <Field label="Destinação" required>
-            <SearchableCheckboxMenu
-              title="Destinação"
-              searchLabel="Pesquisar destinação"
-              value={data.destinacao}
-              options={[
-                { value: "CONSUMO", label: "Consumo" },
-                { value: "REVENDA", label: "Revenda" },
-              ]}
-              onChange={(next) => update("destinacao", next)}
-              error={errors["destinacao"]}
-            />
-          </Field>
-          {data.destinacao.includes("CONSUMO") ? (
-            <Field
-              label="Subtipo de consumo"
-              required
-              error={errors["subtipoConsumo"]}
-            >
-              <SearchableCheckboxMenu
-                title=""
-                searchLabel="Pesquisar subtipo de consumo"
-                value={data.subtipoConsumo}
-                options={[
-                  {
-                    value: "ATIVO_IMOBILIZADO_FIXO",
-                    label: "Ativo imobilizado/fixo",
-                  },
-                  {
-                    value: "INSUMOS_PARA_INDUSTRIALIZACAO",
-                    label: "Insumos para industrialização",
-                  },
-                  { value: "USO_E_CONSUMO", label: "Uso e consumo" },
-                ]}
-                onChange={(next) => update("subtipoConsumo", next)}
-                error={errors["subtipoConsumo"]}
-              />
-            </Field>
-          ) : null}
-        </Grid>
-      </div>
     </main>
   );
 }
