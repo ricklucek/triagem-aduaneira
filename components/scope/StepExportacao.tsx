@@ -13,6 +13,7 @@ import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 import { ResponsiblePicker } from "./ResponsiblePicker";
 import { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+import { Trash2 } from "lucide-react";
 
 type Props = {
   form: EscopoForm;
@@ -54,20 +55,27 @@ export default function StepExportacao({
     <main className="flex flex-col gap-10">
       <div className="flex flex-col gap-5">
         <Grid columns={2}>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-5">
             {data.analistaDA.map((analista, index) => (
-              <ResponsiblePicker
-                key={index}
-                label={`Analista DA ${index + 1}`}
-                value={analista}
-                onChange={(value) => {
-                  const next = [...data.analistaDA];
-                  next[index] = value;
-                  update("analistaDA", next);
-                }}
-                options={responsaveis}
-                error={index === 0 ? errors["analistaDA"] : undefined}
-              />
+              <div className="relative" key={index}>
+                <ResponsiblePicker
+                  label={`Analista DA ${index + 1}`}
+                  value={analista}
+                  onChange={(value) => {
+                    const next = [...data.analistaDA];
+                    next[index] = value;
+                    update("analistaDA", next);
+                  }}
+                  options={responsaveis}
+                  error={index === 0 ? errors["analistaDA"] : undefined}
+                  onRemove={() => {
+                    const next = [...data.analistaDA];
+                    next.splice(index, 1);
+                    update("analistaDA", next);
+                  }}
+                  removeButton={index > 0}
+                />
+              </div>
             ))}
             <Button type="button" variant="outline" onClick={() => update("analistaDA", [...data.analistaDA, ""])}>+ Analista DA</Button>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
@@ -15,6 +15,8 @@ interface ResponsiblePickerProps {
   error?: string;
   filterRoles?: string[];
   filterSetores?: string[];
+  onRemove?: () => void;
+  removeButton?: boolean;
 }
 
 export function ResponsiblePicker({
@@ -25,6 +27,8 @@ export function ResponsiblePicker({
   error,
   filterRoles,
   filterSetores,
+  onRemove,
+  removeButton,
 }: ResponsiblePickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -55,62 +59,75 @@ export function ResponsiblePicker({
       >
         {label}
       </span>
-      <div
-        className={cn(
-          "rounded-xl border bg-background",
-          error && "border-destructive bg-destructive/5",
-        )}
-      >
-        <button
-          type="button"
-          className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm"
-          onClick={() => setOpen((prev) => !prev)}
+      <div className="flex flex-row gap-5 w-full items-center">
+        <div
+          className={cn(
+            "rounded-xl border bg-background w-full",
+            error && "border-destructive bg-destructive/5",
+          )}
         >
-          <span className={cn(!selected && "text-muted-foreground")}>
-            {selected
-              ? `${selected.nome} • ${selected.setor}`
-              : "Selecione um responsável"}
-          </span>
-          <ChevronDown
-            className={cn("size-4 transition-transform", open && "rotate-180")}
-          />
-        </button>
-        {open ? (
-          <div className="space-y-2 border-t p-3">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar responsável"
+          <button
+            type="button"
+            className="flex w-full flex-row items-center justify-between px-3 py-2.5 text-left text-sm"
+            onClick={() => setOpen((prev) => !prev)}
+          >
+            <span className={cn(!selected && "text-muted-foreground")}>
+              {selected
+                ? `${selected.nome} • ${selected.setor}`
+                : "Selecione um responsável"}
+            </span>
+            <ChevronDown
+              className={cn("size-4 transition-transform", open && "rotate-180")}
             />
-            <div className="max-h-60 space-y-2 overflow-auto">
-              {filtered.map((item) => (
-                <Button
-                  key={item.id}
-                  type="button"
-                  variant={item.id === value ? "default" : "outline"}
-                  className="h-auto w-full justify-start whitespace-normal py-2 text-left"
-                  onClick={() => {
-                    onChange(item.id);
-                    setOpen(false);
-                    setQuery("");
-                  }}
-                >
-                  <div>
-                    <div className="font-medium">{item.nome}</div>
-                    <div className="text-xs opacity-80">
-                      {item.email} • {item.role} • {item.setor}
+          </button>
+          {open ? (
+            <div className="space-y-2 border-t p-3">
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar responsável"
+              />
+              <div className="max-h-60 space-y-2 overflow-auto">
+                {filtered.map((item) => (
+                  <Button
+                    key={item.id}
+                    type="button"
+                    variant={item.id === value ? "default" : "outline"}
+                    className="h-auto w-full justify-start whitespace-normal py-2 text-left"
+                    onClick={() => {
+                      onChange(item.id);
+                      setOpen(false);
+                      setQuery("");
+                    }}
+                  >
+                    <div>
+                      <div className="font-medium">{item.nome}</div>
+                      <div className="text-xs opacity-80">
+                        {item.email} • {item.role} • {item.setor}
+                      </div>
                     </div>
-                  </div>
-                </Button>
-              ))}
-              {filtered.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum responsável encontrado.
-                </p>
-              ) : null}
+                  </Button>
+                ))}
+                {filtered.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum responsável encontrado.
+                  </p>
+                ) : null}
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
+        {
+          removeButton && onRemove && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onRemove}
+            >
+              <Trash2 color="red" />
+            </Button>
+          )
+        }
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
