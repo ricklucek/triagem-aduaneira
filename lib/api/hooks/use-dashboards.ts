@@ -17,27 +17,27 @@ export function useAdminDashboard() {
 }
 
 export function useAdminDashboardMetrics(filters: AdminDashboardMetricsFilters) {
-  return useSWR(["dashboard:admin:metrics", filters], ([, params]) =>
-    dashboardApi.getAdminDashboardMetrics(params),
+  return useSWR(["dashboard:admin:metrics", filters].toLocaleString(), ([, params]) =>
+    dashboardApi.getAdminDashboardMetrics(filters),
   );
 }
 
 export function useAdminScopesByUser(filters: ScopesByUserFilters) {
-  return useSWR(["dashboard:admin:scopes-by-user", filters], ([, params]) =>
-    dashboardApi.getAdminScopesByUser(params),
+  return useSWR(["dashboard:admin:scopes-by-user", filters].toLocaleString(), ([, params]) =>
+    dashboardApi.getAdminScopesByUser(filters),
   );
 }
 
 export function useAdminServicesMetrics(filters: ServicesMetricsFilters) {
-  return useSWR(["dashboard:admin:services", filters], ([, params]) =>
-    dashboardApi.getAdminServicesMetrics(params),
+  return useSWR(["dashboard:admin:services", filters].toLocaleString(), ([, params]) =>
+    dashboardApi.getAdminServicesMetrics(filters),
   );
 }
 
 
 export function useAdminServicesByScope(filters: ServicesByScopeFilters) {
-  return useSWR(["dashboard:admin:services:by-scope", filters], ([, params]) =>
-    dashboardApi.getAdminServicesByScope(params),
+  return useSWR(["dashboard:admin:services:by-scope", filters].toLocaleString(), ([, params]) =>
+    dashboardApi.getAdminServicesByScope(filters),
   );
 }
 

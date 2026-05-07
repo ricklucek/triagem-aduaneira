@@ -233,7 +233,6 @@ export default function AdminDashboardPage() {
                 <TableHead>Operação</TableHead>
                 <TableHead>Ocorrências</TableHead>
                 <TableHead>Escopos</TableHead>
-                <TableHead>Valor total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -243,7 +242,6 @@ export default function AdminDashboardPage() {
                   <TableCell>{item.operationType}</TableCell>
                   <TableCell>{item.totalOccurrences}</TableCell>
                   <TableCell>{item.totalScopes}</TableCell>
-                  <TableCell>{formatMoney(item.totalAmount, item.currency)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
