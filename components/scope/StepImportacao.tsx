@@ -151,37 +151,51 @@ export default function StepImportacao({
         <p className="text-sm text-muted-foreground sm:text-base">
           Regras e parâmetros da operação de importação.
         </p>
-        <Grid columns={2}>
-          <div className="flex flex-col gap-2">
+        <Grid columns={1}>
+          <div className="flex flex-col gap-5">
             {data.analistaDA.map((analista, index) => (
-              <ResponsiblePicker
-                key={`da-${index}`}
-                label={`Analista DA ${index + 1}`}
-                value={analista}
-                onChange={(value) => {
-                  const next = [...data.analistaDA];
-                  next[index] = value;
-                  update("analistaDA", next);
-                }}
-                options={responsaveis}
-                error={index === 0 ? errors["analistaDA"] : undefined}
-              />
+              <div className="relative" key={`da-${index}`}>
+                <ResponsiblePicker
+                  label={`Analista DA ${index + 1}`}
+                  value={analista}
+                  onChange={(value) => {
+                    const next = [...data.analistaDA];
+                    next[index] = value;
+                    update("analistaDA", next);
+                  }}
+                  options={responsaveis}
+                  error={index === 0 ? errors["analistaDA"] : undefined}
+                  onRemove={() => {
+                    const next = [...data.analistaDA];
+                    next.splice(index, 1);
+                    update("analistaDA", next);
+                  }}
+                  removeButton={index > 0}
+                />
+              </div>
             ))}
             <Button type="button" variant="outline" onClick={() => update("analistaDA", [...data.analistaDA, ""])}>+ Analista DA</Button>
           </div>
           <div className="flex flex-col gap-2">
             {(data.analistaAE ?? []).map((analista, index) => (
-              <ResponsiblePicker
-                key={`ae-${index}`}
-                label={`Analista AE ${index + 1}`}
-                value={analista}
-                onChange={(value) => {
-                  const next = [...(data.analistaAE ?? [])];
-                  next[index] = value;
-                  update("analistaAE", next);
-                }}
-                options={responsaveis}
-              />
+              <div className="relative" key={`ae-${index}`}>
+                <ResponsiblePicker
+                  label={`Analista AE ${index + 1}`}
+                  value={analista}
+                  onChange={(value) => {
+                    const next = [...(data.analistaAE ?? [])];
+                    next[index] = value;
+                    update("analistaAE", next);
+                  }}
+                  options={responsaveis}
+                  onRemove={() => {
+                    const next = [...data.analistaAE];
+                    next.splice(index, 1);
+                    update("analistaAE", next);
+                  }}
+                  removeButton={index > 0}
+                />
+              </div>
             ))}
             <Button type="button" variant="outline" onClick={() => update("analistaAE", [...(data.analistaAE ?? []), ""])}>+ Analista AE</Button>
           </div>
@@ -569,7 +583,7 @@ export default function StepImportacao({
             }
           />
         ) : null}
-                <Field label="Observações" hint="Campo opcional">
+        <Field label="Observações" hint="Campo opcional">
           <TextArea
             value={data.icms.observacao ?? ""}
             onChange={(e) => update("icms.observacao", e.target.value)}

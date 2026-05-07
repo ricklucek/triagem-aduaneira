@@ -13,6 +13,7 @@ import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 import { ResponsiblePicker } from "./ResponsiblePicker";
 import { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+import { Trash2 } from "lucide-react";
 
 type Props = {
   form: EscopoForm;
@@ -33,6 +34,7 @@ export default function StepExportacao({
       ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
       observacaoNcms: "",
       analistaDA: [""],
+      analistaAE: [],
       destinacao: [],
       subtipoConsumo: [],
     };
@@ -53,23 +55,53 @@ export default function StepExportacao({
   return (
     <main className="flex flex-col gap-10">
       <div className="flex flex-col gap-5">
-        <Grid columns={2}>
-          <div className="flex flex-col gap-2">
+        <Grid columns={1}>
+          <div className="flex flex-col gap-5">
             {data.analistaDA.map((analista, index) => (
-              <ResponsiblePicker
-                key={index}
-                label={`Analista DA ${index + 1}`}
-                value={analista}
-                onChange={(value) => {
-                  const next = [...data.analistaDA];
-                  next[index] = value;
-                  update("analistaDA", next);
-                }}
-                options={responsaveis}
-                error={index === 0 ? errors["analistaDA"] : undefined}
-              />
+              <div className="relative" key={`da-${index}`}>
+                <ResponsiblePicker
+                  label={`Analista DA ${index + 1}`}
+                  value={analista}
+                  onChange={(value) => {
+                    const next = [...data.analistaDA];
+                    next[index] = value;
+                    update("analistaDA", next);
+                  }}
+                  options={responsaveis}
+                  error={index === 0 ? errors["analistaDA"] : undefined}
+                  onRemove={() => {
+                    const next = [...data.analistaDA];
+                    next.splice(index, 1);
+                    update("analistaDA", next);
+                  }}
+                  removeButton={index > 0}
+                />
+              </div>
             ))}
             <Button type="button" variant="outline" onClick={() => update("analistaDA", [...data.analistaDA, ""])}>+ Analista DA</Button>
+          </div>
+          <div className="flex flex-col gap-2">
+            {(data.analistaAE ?? []).map((analista, index) => (
+              <div className="relative" key={`ae-${index}`}>
+                <ResponsiblePicker
+                  label={`Analista AE ${index + 1}`}
+                  value={analista}
+                  onChange={(value) => {
+                    const next = [...(data.analistaAE ?? [])];
+                    next[index] = value;
+                    update("analistaAE", next);
+                  }}
+                  options={responsaveis}
+                  onRemove={() => {
+                    const next = [...data.analistaAE];
+                    next.splice(index, 1);
+                    update("analistaAE", next);
+                  }}
+                  removeButton={index > 0}
+                />
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={() => update("analistaAE", [...(data.analistaAE ?? []), ""])}>+ Analista AE</Button>
           </div>
         </Grid>
 
@@ -189,49 +221,6 @@ export default function StepExportacao({
         />
       </Field>
 
-      <div className="flex flex-col gap-5">
-        <Grid columns={2}>
-          <Field label="Destinação" required>
-            <SearchableCheckboxMenu
-              title="Destinação"
-              searchLabel="Pesquisar destinação"
-              value={data.destinacao}
-              options={[
-                { value: "CONSUMO", label: "Consumo" },
-                { value: "REVENDA", label: "Revenda" },
-              ]}
-              onChange={(next) => update("destinacao", next)}
-              error={errors["destinacao"]}
-            />
-          </Field>
-          {data.destinacao.includes("CONSUMO") ? (
-            <Field
-              label="Subtipo de consumo"
-              required
-              error={errors["subtipoConsumo"]}
-            >
-              <SearchableCheckboxMenu
-                title=""
-                searchLabel="Pesquisar subtipo de consumo"
-                value={data.subtipoConsumo}
-                options={[
-                  {
-                    value: "ATIVO_IMOBILIZADO_FIXO",
-                    label: "Ativo imobilizado/fixo",
-                  },
-                  {
-                    value: "INSUMOS_PARA_INDUSTRIALIZACAO",
-                    label: "Insumos para industrialização",
-                  },
-                  { value: "USO_E_CONSUMO", label: "Uso e consumo" },
-                ]}
-                onChange={(next) => update("subtipoConsumo", next)}
-                error={errors["subtipoConsumo"]}
-              />
-            </Field>
-          ) : null}
-        </Grid>
-      </div>
     </main>
   );
 }
