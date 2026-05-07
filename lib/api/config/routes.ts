@@ -35,6 +35,10 @@ export const API_ROUTES = {
   },
   dashboards: {
     admin: "/dashboards/admin",
+    adminMetrics: "/dashboards/admin/metrics",
+    adminScopesByUser: "/dashboards/admin/scopes-by-user",
+    adminServices: "/dashboards/admin/services",
+    adminServicesByScope: "/dashboards/admin/services/by-scope",
     comercial: "/dashboards/comercial",
     credenciamento: "/dashboards/credenciamento",
     operacao: "/dashboards/operacao",

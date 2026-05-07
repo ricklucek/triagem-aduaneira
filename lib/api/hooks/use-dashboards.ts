@@ -5,9 +5,40 @@ import { dashboardApi } from "@/lib/api/services/dashboards";
 import { usersApi } from "@/lib/api/services/users";
 import { organizationSettingsApi } from "@/lib/api/services/organization-settings";
 import { publicApi } from "../services/public";
+import type {
+  AdminDashboardMetricsFilters,
+  ScopesByUserFilters,
+  ServicesByScopeFilters,
+  ServicesMetricsFilters,
+} from "../types/dashboard-api";
 
 export function useAdminDashboard() {
   return useSWR("dashboard:admin", dashboardApi.getAdminMetrics);
+}
+
+export function useAdminDashboardMetrics(filters: AdminDashboardMetricsFilters) {
+  return useSWR(["dashboard:admin:metrics", filters], ([, params]) =>
+    dashboardApi.getAdminDashboardMetrics(params),
+  );
+}
+
+export function useAdminScopesByUser(filters: ScopesByUserFilters) {
+  return useSWR(["dashboard:admin:scopes-by-user", filters], ([, params]) =>
+    dashboardApi.getAdminScopesByUser(params),
+  );
+}
+
+export function useAdminServicesMetrics(filters: ServicesMetricsFilters) {
+  return useSWR(["dashboard:admin:services", filters], ([, params]) =>
+    dashboardApi.getAdminServicesMetrics(params),
+  );
+}
+
+
+export function useAdminServicesByScope(filters: ServicesByScopeFilters) {
+  return useSWR(["dashboard:admin:services:by-scope", filters], ([, params]) =>
+    dashboardApi.getAdminServicesByScope(params),
+  );
 }
 
 export function useComercialDashboard() {
@@ -45,14 +76,12 @@ export function usePrepostosLookup(params?: {
   cidade: string;
   operacao: "IMPORTACAO" | "EXPORTACAO";
 }) {
-
-
   return useSWR(
     `prepostos:lookup?cidade=${params?.cidade.trim()}&operacao=${params?.operacao}`,
     () =>
       publicApi.lookupPrepostos({
-        cidade: params?.cidade.trim() ?? '',
+        cidade: params?.cidade.trim() ?? "",
         operacao: params?.operacao as "IMPORTACAO" | "EXPORTACAO",
-      })
+      }),
   );
 }
