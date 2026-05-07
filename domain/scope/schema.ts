@@ -364,6 +364,7 @@ export const ImportacaoSchema = z
 export const ExportacaoSchema = z
   .object({
     analistaDA: z.array(AnalistaResponsavelSchema).min(1, "Analista DA é obrigatório"),
+    analistaAE: z.array(AnalistaResponsavelSchema).default([]),
     produtosExportados: z
       .string()
       .trim()

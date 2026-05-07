@@ -34,6 +34,7 @@ export default function StepExportacao({
       ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
       observacaoNcms: "",
       analistaDA: [""],
+      analistaAE: [],
       destinacao: [],
       subtipoConsumo: [],
     };
@@ -54,10 +55,10 @@ export default function StepExportacao({
   return (
     <main className="flex flex-col gap-10">
       <div className="flex flex-col gap-5">
-        <Grid columns={2}>
+        <Grid columns={1}>
           <div className="flex flex-col gap-5">
             {data.analistaDA.map((analista, index) => (
-              <div className="relative" key={index}>
+              <div className="relative" key={`da-${index}`}>
                 <ResponsiblePicker
                   label={`Analista DA ${index + 1}`}
                   value={analista}
@@ -78,6 +79,29 @@ export default function StepExportacao({
               </div>
             ))}
             <Button type="button" variant="outline" onClick={() => update("analistaDA", [...data.analistaDA, ""])}>+ Analista DA</Button>
+          </div>
+          <div className="flex flex-col gap-2">
+            {(data.analistaAE ?? []).map((analista, index) => (
+              <div className="relative" key={`ae-${index}`}>
+                <ResponsiblePicker
+                  label={`Analista AE ${index + 1}`}
+                  value={analista}
+                  onChange={(value) => {
+                    const next = [...(data.analistaAE ?? [])];
+                    next[index] = value;
+                    update("analistaAE", next);
+                  }}
+                  options={responsaveis}
+                  onRemove={() => {
+                    const next = [...data.analistaAE];
+                    next.splice(index, 1);
+                    update("analistaAE", next);
+                  }}
+                  removeButton={index > 0}
+                />
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={() => update("analistaAE", [...(data.analistaAE ?? []), ""])}>+ Analista AE</Button>
           </div>
         </Grid>
 
