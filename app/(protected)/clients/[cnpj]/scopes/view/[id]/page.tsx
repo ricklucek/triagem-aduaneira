@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import { CheckCircle2, RotateCw, XCircle } from "lucide-react";
 
@@ -70,77 +70,35 @@ const boolBadge = (value?: boolean | null) =>
     </Badge>
   );
 
-function Field({
-  label,
-  value,
-  previewChars = 180,
-}: {
-  label: string;
-  value: React.ReactNode | null;
-  previewChars?: number;
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  if (value == null || value === false || value === "") return null;
-
-  const isPlainText = typeof value === "string" || typeof value === "number";
-  const rawText = isPlainText ? String(value) : null;
-  const shouldCollapse = Boolean(rawText && rawText.length > previewChars);
-  const visibleText =
-    shouldCollapse && !expanded
-      ? `${rawText?.slice(0, previewChars).trimEnd()}...`
-      : rawText;
-
-  return (
-    <div className="inline-block w-full break-inside-avoid rounded-xl border bg-background p-3 align-top shadow-sm">
-      {label ? (
-        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-      ) : null}
-
-      <div className="text-sm font-medium whitespace-pre-line wrap-break-word text-wrap">
-        {isPlainText ? visibleText : value}
-      </div>
-
-      {shouldCollapse ? (
-        <Button
-          type="button"
-          variant="link"
-          size="sm"
-          className="mt-2 h-auto p-0 text-xs font-semibold print:hidden"
-          onClick={() => setExpanded((current) => !current)}
-        >
-          {expanded ? "Ver menos" : "Ver mais"}
-        </Button>
-      ) : null}
+function Field({ label, value }: { label: string; value: React.ReactNode | null }) {
+  if (value) return (
+    <div className="rounded-xl border p-3">
+      <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <div className="text-sm font-medium wrap-break-word whitespace-pre-line text-wrap">{value}</div>
     </div>
   );
 }
 
 function TitleField({ label, value }: { label: string; value: React.ReactNode | null }) {
   if (!value) return null;
-
   return (
-    <div className="inline-block w-full break-inside-avoid rounded-xl border bg-muted/30 p-3 align-top">
-      <div className="flex flex-wrap items-center gap-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="w-full col-span-2 flex flex-col gap-2">
+      <div className="p-3 flex flex-row items-center gap-5">
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <div className="text-sm font-medium whitespace-pre-line wrap-break-word text-wrap">
-          {value}
-        </div>
+        <div className="text-sm font-medium wrap-break-word whitespace-pre-line text-wrap">{value}</div>
       </div>
+      <Separator />
     </div>
   );
 }
 
+
 function Grid({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="columns-1 gap-3 md:columns-2 *:mb-3">
-      {children}
-    </div>
-  );
+  return <div className="grid gap-3 md:grid-cols-2">{children}</div>;
 }
 
 function ViewCard({
@@ -151,7 +109,7 @@ function ViewCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="p-4 md:p-5 print-avoid-break">
+    <Card className="p-4 md:p-5">
       <h4 className="mb-4 text-sm font-semibold">{title}</h4>
       <div className="grid gap-4">{children}</div>
     </Card>
