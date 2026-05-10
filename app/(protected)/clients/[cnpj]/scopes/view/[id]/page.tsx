@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { CheckCircle2, RotateCw, XCircle } from "lucide-react";
 
@@ -70,13 +70,50 @@ const boolBadge = (value?: boolean | null) =>
     </Badge>
   );
 
-function Field({ label, value }: { label: string; value: React.ReactNode | null }) {
-  if (value) return (
-    <div className="rounded-xl border p-3">
-      <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <div className="text-sm font-medium wrap-break-word whitespace-pre-line text-wrap">{value}</div>
+function Field({
+  label,
+  value,
+  previewChars = 180,
+}: {
+  label: string;
+  value: React.ReactNode | null;
+  previewChars?: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (value == null || value === false || value === "") return null;
+
+  const isPlainText = typeof value === "string" || typeof value === "number";
+  const rawText = isPlainText ? String(value) : null;
+  const shouldCollapse = Boolean(rawText && rawText.length > previewChars);
+  const visibleText =
+    shouldCollapse && !expanded
+      ? `${rawText?.slice(0, previewChars).trimEnd()}...`
+      : rawText;
+
+  return (
+    <div className="inline-block w-full break-inside-avoid rounded-xl border bg-background p-3 align-top shadow-sm">
+      {label ? (
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+      ) : null}
+
+      <div className="text-sm font-medium whitespace-pre-line wrap-break-word text-wrap">
+        {isPlainText ? visibleText : value}
+      </div>
+
+      {shouldCollapse ? (
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          className="mt-2 h-auto p-0 text-xs font-semibold print:hidden"
+          onClick={() => setExpanded((current) => !current)}
+        >
+          {expanded ? "Ver menos" : "Ver mais"}
+        </Button>
+      ) : null}
     </div>
   );
 }
