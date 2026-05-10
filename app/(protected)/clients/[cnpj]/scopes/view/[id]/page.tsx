@@ -246,7 +246,7 @@ function ScopeDetails({
               value={list(scope.operacao?.tipos)}
             />
           </Grid>
-          {i && showSI ? (
+          {i ? (
             <>
               <Separator className="my-2" />
               <Grid>
@@ -369,7 +369,7 @@ function ScopeDetails({
               </div>
             </>
           ) : null}
-          {e && showSE ? (
+          {e ? (
             <>
               <Separator className="my-2" />
               <Grid>
@@ -415,7 +415,7 @@ function ScopeDetails({
           ) : null}
         </ViewCard>
         <ViewCard title="Serviços de importação">
-          {si ? (
+          {si && showSI ? (
             <Grid>
               <TitleField
                 label="Despacho aduaneiro importação"
@@ -586,7 +586,7 @@ function ScopeDetails({
           )}
         </ViewCard>
         <ViewCard title="Serviços de exportação">
-          {se ? (
+          {se && showSE ? (
             <Grid>
 
               <TitleField
