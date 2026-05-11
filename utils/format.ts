@@ -8,6 +8,11 @@ export function formatCNPJ(value: string) {
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
 
+export const isCNPJ = (value: string) => {
+  const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$|^\d{14}$/;
+  return cnpjRegex.test(value);
+};
+
 export function formatNCM(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 8);
 

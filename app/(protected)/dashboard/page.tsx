@@ -25,7 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useScopes } from "@/lib/api/hooks/use-scope-api";
-import { formatCNPJ } from "@/utils/format";
+import { formatCNPJ, isCNPJ } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,7 @@ export default function DashboardPage() {
   const params = useMemo(
     () => ({
       status: status === "todos" ? undefined : status,
-      q: q || undefined,
+      q: isCNPJ(q) ? q.replace(/\D/g, '') : q || undefined,
       limit: pageSize,
       offset: (page - 1) * pageSize,
     }),
@@ -125,8 +125,7 @@ export default function DashboardPage() {
                 placeholder="Buscar por razão social ou CNPJ"
                 value={q}
                 onChange={(e) => {
-                  const text = e.target.value.replace(/\D/g, '');
-                  setQ(text);
+                  setQ(e.target.value);
                   setPage(1);
                 }}
                 className="pl-10"
