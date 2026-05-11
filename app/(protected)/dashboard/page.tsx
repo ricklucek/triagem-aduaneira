@@ -125,7 +125,8 @@ export default function DashboardPage() {
                 placeholder="Buscar por razão social ou CNPJ"
                 value={q}
                 onChange={(e) => {
-                  setQ(e.target.value);
+                  const text = e.target.value.replace(/\D/g, '');
+                  setQ(text);
                   setPage(1);
                 }}
                 className="pl-10"
