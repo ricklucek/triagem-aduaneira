@@ -75,6 +75,7 @@ export interface ServiceMetricItem {
   operationType: "IMPORTACAO" | "EXPORTACAO" | "AMBOS";
   currency: string;
   totalOccurrences: number;
+  occurrencesPercentage: number;
   totalScopes: number;
   totalAmount: number;
   averageAmount: number | null;

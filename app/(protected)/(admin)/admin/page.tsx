@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
               <TableRow>
                 <TableHead>Serviço</TableHead>
                 <TableHead>Operação</TableHead>
-                <TableHead>Ocorrências</TableHead>
+                <TableHead>% contratação</TableHead>
                 <TableHead>Escopos</TableHead>
               </TableRow>
             </TableHeader>
@@ -240,7 +240,7 @@ export default function AdminDashboardPage() {
                 <TableRow key={item.serviceCode}>
                   <TableCell>{item.serviceName}</TableCell>
                   <TableCell>{item.operationType}</TableCell>
-                  <TableCell>{item.totalOccurrences}</TableCell>
+                  <TableCell>{item.occurrencesPercentage} %</TableCell>
                   <TableCell>{item.totalScopes}</TableCell>
                 </TableRow>
               ))}
