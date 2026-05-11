@@ -193,7 +193,7 @@ export default function StepImportacao({
                     next.splice(index, 1);
                     update("analistaAE", next);
                   }}
-                  removeButton={index > 0}
+                  removeButton={true}
                 />
               </div>
             ))}
