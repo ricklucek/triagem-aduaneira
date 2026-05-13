@@ -34,7 +34,6 @@ export type ScopeVersionsResponse = ScopeVersion[];
 export interface ScopeSummaryApi {
   id: string;
   status: ScopeStatus;
-  completeness_score: number;
   version?: number | null;
   updated_at?: string | null;
   last_published_at?: string | null;

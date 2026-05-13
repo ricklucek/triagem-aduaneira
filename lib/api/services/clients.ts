@@ -35,7 +35,6 @@ function normalizeScopeSummary(item: ScopeSummaryApi): ScopeSummary {
   return {
     id: item.id,
     status: item.status,
-    completeness_score: item.completeness_score ?? 0,
     client_id: item.client_id ?? null,
     client_cnpj: item.client_cnpj ?? null,
     razao_social: item.client_razao_social ?? null,

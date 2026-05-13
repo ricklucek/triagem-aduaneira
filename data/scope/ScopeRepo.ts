@@ -10,7 +10,6 @@ export type ScopeSummary = {
   last_published_at?: string | null;
   version_count?: number | null;
   version?: number | null;
-  completeness_score: number;
   responsible_user_id?: string | null;
   responsible_user_nome?: string | null;
 };

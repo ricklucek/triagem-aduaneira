@@ -95,7 +95,6 @@
       "updated_at": "2026-01-10T10:00:00Z",
       "last_published_at": null,
       "version_count": 0,
-      "completeness_score": 68
     }
   ],
   "total": 1,

@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Ellipsis, RotateCw } from "lucide-react";
-import CompletenessBadge from "@/components/ui/completeness-badge";
 import {
   PageHeader,
   PageShell,
@@ -157,7 +156,6 @@ export default function DashboardPage() {
                     <TableHead className="px-5 py-4">CNPJ</TableHead>
                     <TableHead className="px-5 py-4">Razão Social</TableHead>
                     <TableHead className="px-5 py-4">Status</TableHead>
-                    <TableHead className="px-5 py-4">Completude</TableHead>
                     <TableHead className="px-5 py-4">Atualizado em</TableHead>
                     <TableHead className="px-5 py-4 text-right">Ações</TableHead>
                   </TableRow>
@@ -181,9 +179,6 @@ export default function DashboardPage() {
                               ? "Publicado"
                               : "Arquivado"}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="px-5 py-4">
-                        <CompletenessBadge value={x.completeness_score} />
                       </TableCell>
                       <TableCell className="px-5 py-4">
                         {formatDate(x.updated_at)}
@@ -247,10 +242,6 @@ export default function DashboardPage() {
                     <div>
                       <p className="text-muted-foreground">Status</p>
                       <p>{x.status}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Completude</p>
-                      <CompletenessBadge value={x.completeness_score} />
                     </div>
                     <div>
                       <p className="text-muted-foreground">Atualizado</p>
