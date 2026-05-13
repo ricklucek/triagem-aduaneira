@@ -17,28 +17,54 @@ export function useAdminDashboard() {
 }
 
 export function useAdminDashboardMetrics(filters: AdminDashboardMetricsFilters) {
-  return useSWR(["dashboard:admin:metrics", filters].toLocaleString(), ([, params]) =>
-    dashboardApi.getAdminDashboardMetrics(filters),
-  );
+  const key = [
+    "dashboard:admin:metrics",
+    filters.status ?? "",
+    filters.dateFrom ?? "",
+    filters.dateTo ?? "",
+  ].toLocaleString();
+
+  return useSWR(key, () => dashboardApi.getAdminDashboardMetrics(filters));
 }
 
 export function useAdminScopesByUser(filters: ScopesByUserFilters) {
-  return useSWR(["dashboard:admin:scopes-by-user", filters].toLocaleString(), ([, params]) =>
-    dashboardApi.getAdminScopesByUser(filters),
-  );
+  const key = [
+    "dashboard:admin:scopes-by-user",
+    filters.status ?? "",
+    filters.groupBy ?? "",
+    filters.dateFrom ?? "",
+    filters.dateTo ?? "",
+    filters.includeScopes ? "includeScopes:true" : "includeScopes:false",
+  ].toLocaleString();
+
+  return useSWR(key, () => dashboardApi.getAdminScopesByUser(filters));
 }
 
 export function useAdminServicesMetrics(filters: ServicesMetricsFilters) {
-  return useSWR(["dashboard:admin:services", filters].toLocaleString(), ([, params]) =>
-    dashboardApi.getAdminServicesMetrics(filters),
-  );
+  const key = [
+    "dashboard:admin:services",
+    filters.status ?? "",
+    filters.dateFrom ?? "",
+    filters.dateTo ?? "",
+    filters.serviceCode ?? "",
+  ].toLocaleString();
+
+  return useSWR(key, () => dashboardApi.getAdminServicesMetrics(filters));
 }
 
-
 export function useAdminServicesByScope(filters: ServicesByScopeFilters) {
-  return useSWR(["dashboard:admin:services:by-scope", filters].toLocaleString(), ([, params]) =>
-    dashboardApi.getAdminServicesByScope(filters),
-  );
+  const key = [
+    "dashboard:admin:services:by-scope",
+    filters.status ?? "",
+    filters.dateFrom ?? "",
+    filters.dateTo ?? "",
+    filters.createdById ?? "",
+    filters.serviceCode ?? "",
+    filters.limit ?? "",
+    filters.offset ?? "",
+  ].toLocaleString();
+
+  return useSWR(key, () => dashboardApi.getAdminServicesByScope(filters));
 }
 
 export function useComercialDashboard() {
@@ -69,19 +95,27 @@ export function useAdminSettings() {
 }
 
 export function useOrganizationSettingsByKey(key: string) {
-  return useSWR(`organization:settings:${key}`, () => organizationSettingsApi.getSettingsByKey(key));
+  return useSWR(
+    key ? ["organization:settings", key].toLocaleString() : null,
+    () => organizationSettingsApi.getSettingsByKey(key),
+  );
 }
 
 export function usePrepostosLookup(params?: {
   cidade: string;
   operacao: "IMPORTACAO" | "EXPORTACAO";
 }) {
+  const cidade = params?.cidade?.trim() ?? "";
+  const operacao = params?.operacao ?? "IMPORTACAO";
+
   return useSWR(
-    `prepostos:lookup?cidade=${params?.cidade.trim()}&operacao=${params?.operacao}`,
+    cidade && operacao
+      ? ["prepostos:lookup", cidade, operacao].toLocaleString()
+      : null,
     () =>
       publicApi.lookupPrepostos({
-        cidade: params?.cidade.trim() ?? "",
-        operacao: params?.operacao as "IMPORTACAO" | "EXPORTACAO",
+        cidade,
+        operacao,
       }),
   );
 }

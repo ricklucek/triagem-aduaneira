@@ -58,6 +58,7 @@ export interface ScopeByUserItem {
 }
 
 export interface ScopesByUserFilters extends AdminDashboardMetricsFilters {
+  groupBy: string | undefined
   includeScopes?: boolean;
   scopesLimitPerUser?: number;
 }

@@ -114,7 +114,7 @@ export function AppShellClient({
               <Separator className="mt-4" />
             </SidebarHeader>
             <SidebarContent>
-              <NavLinks items={nav} pathname={pathname} />
+              <NavLinks items={nav ?? []} pathname={pathname} />
             </SidebarContent>
             <SidebarFooter>
               <p className="mb-2 text-xs text-muted-foreground">
@@ -140,7 +140,7 @@ export function AppShellClient({
                       <Separator className="mt-4" />
                     </div>
                     <div className="px-4 pb-6">
-                      <NavLinks items={nav} pathname={pathname} />
+                      <NavLinks items={nav ?? []} pathname={pathname} />
                     </div>
                   </SheetContent>
                 </Sheet>
