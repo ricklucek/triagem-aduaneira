@@ -33,7 +33,6 @@ function normalizeScopeSummary(item: ScopeSummaryApi | ScopeSummary): ScopeSumma
   return {
     id: item.id,
     status: item.status,
-    completeness_score: item.completeness_score ?? 0,
     client_id: "client_id" in item ? item.client_id ?? null : null,
     client_cnpj: "client_cnpj" in item ? item.client_cnpj ?? null : null,
     razao_social:
