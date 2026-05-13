@@ -33,14 +33,6 @@ import {
 export default function AdminDashboardPage() {
   const { data: settings } = useAdminSettings();
 
-  const [draftFilters, setDraftFilters] = useState({
-    status: "published",
-    dateFrom: "",
-    dateTo: "",
-    serviceCode: "all",
-    userId: "all",
-  });
-
   const [appliedFilters, setAppliedFilters] = useState({
     status: "published",
     dateFrom: "",
@@ -88,71 +80,6 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Painel do Comercial</h1>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="grid gap-3 md:grid-cols-2 xl:grid-cols-6"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setAppliedFilters(draftFilters);
-            }}
-          >
-            <div className="space-y-1">
-              <Label>Status</Label>
-              <Select value={draftFilters.status} onValueChange={(value) => setDraftFilters((prev) => ({ ...prev, status: value }))}>
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="published">Publicados</SelectItem>
-                  <SelectItem value="draft">Rascunhos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Label>Data inicial</Label>
-              <Input type="date" value={draftFilters.dateFrom} onChange={(e) => setDraftFilters((prev) => ({ ...prev, dateFrom: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label>Data final</Label>
-              <Input type="date" value={draftFilters.dateTo} onChange={(e) => setDraftFilters((prev) => ({ ...prev, dateTo: e.target.value }))} />
-            </div>
-
-            <div className="space-y-1">
-              <Label>Serviço</Label>
-              <Select value={draftFilters.serviceCode} onValueChange={(value) => setDraftFilters((prev) => ({ ...prev, serviceCode: value }))}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Todos" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {services.data.items.map((service) => (
-                    <SelectItem key={service.serviceCode} value={service.serviceCode}>{service.serviceName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Label>Usuário</Label>
-              <Select value={draftFilters.userId} onValueChange={(value) => setDraftFilters((prev) => ({ ...prev, userId: value }))}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Todos" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {users.map((user) => (
-                    <SelectItem key={user.userId} value={user.userId}>{user.userName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-end">
-              <Button type="submit" className="w-full">Aplicar filtros</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Metric title="Total de escopos" value={metrics.data.totalScopes} />
