@@ -39,7 +39,7 @@ export default function AdminDashboardPage() {
       dateFrom: "",
       dateTo: "",
       serviceCode: "all",
-      userId: userData?.id ?? "",
+      userId: "950e43ad-52de-4bc7-97a8-b82e032d8961",
       groupBy: "responsible",
     });
 
@@ -137,7 +137,7 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              Escopos cadastrados por {selectedUser.userName}
+              Escopos com {selectedUser.userName}
             </CardTitle>
           </CardHeader>
 
