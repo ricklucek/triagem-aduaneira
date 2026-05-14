@@ -39,7 +39,7 @@ export default function AdminDashboardPage() {
       dateFrom: "",
       dateTo: "",
       serviceCode: "all",
-      userId: "950e43ad-52de-4bc7-97a8-b82e032d8961",
+      userId: userData?.id ?? "",
       groupBy: "responsible",
     });
 
