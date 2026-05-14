@@ -2,17 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import {
   Table,
   TableBody,
@@ -21,14 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { hasRole } from "@/lib/auth/guard";
 import {
   useAdminDashboardMetrics,
   useAdminScopesByUser,
   useAdminServicesByScope,
   useAdminServicesMetrics,
-  useAdminSettings,
 } from "@/lib/api/hooks/use-dashboards";
+import { useCurrentUser } from "@/lib/api/hooks/use-auth";
 
 type AdminDashboardFilters = {
   status: string;
@@ -39,20 +30,18 @@ type AdminDashboardFilters = {
   groupBy: string;
 };
 
-const DEFAULT_FILTERS: AdminDashboardFilters = {
-  status: "published",
-  dateFrom: "",
-  dateTo: "",
-  serviceCode: "all",
-  userId: "all",
-  groupBy: "responsible",
-};
-
 export default function AdminDashboardPage() {
-  const { data: settings } = useAdminSettings();
+  const { data: userData } = useCurrentUser();
 
   const [filters, setFilters] =
-    useState<AdminDashboardFilters>(DEFAULT_FILTERS);
+    useState<AdminDashboardFilters>({
+      status: "published",
+      dateFrom: "",
+      dateTo: "",
+      serviceCode: "all",
+      userId: userData?.id ?? "",
+      groupBy: "responsible",
+    });
 
   const dateFromIso = useMemo(
     () => parseBrazilianDateToIso(filters.dateFrom),
@@ -63,12 +52,6 @@ export default function AdminDashboardPage() {
     () => parseBrazilianDateToIso(filters.dateTo),
     [filters.dateTo],
   );
-
-  const hasInvalidDateFrom =
-    filters.dateFrom.length > 0 && filters.dateFrom.length === 10 && !dateFromIso;
-
-  const hasInvalidDateTo =
-    filters.dateTo.length > 0 && filters.dateTo.length === 10 && !dateToIso;
 
   const sharedFilters = useMemo(
     () => ({
@@ -112,21 +95,7 @@ export default function AdminDashboardPage() {
     selectedUserServices.data?.items ?? [],
   );
 
-  function updateFilter<K extends keyof AdminDashboardFilters>(
-    key: K,
-    value: AdminDashboardFilters[K],
-  ) {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  }
-
-  function clearFilters() {
-    setFilters(DEFAULT_FILTERS);
-  }
-
-  if (!settings || metrics.isLoading || scopesByUser.isLoading || services.isLoading) {
+  if (metrics.isLoading || scopesByUser.isLoading || services.isLoading) {
     return <p>Carregando métricas...</p>;
   }
 
@@ -353,19 +322,6 @@ function parseBrazilianDateToIso(value: string) {
   }
 
   return `${year}-${month}-${day}`;
-}
-
-function getActiveFiltersCount(filters: AdminDashboardFilters) {
-  let count = 0;
-
-  if (filters.status !== DEFAULT_FILTERS.status) count += 1;
-  if (filters.groupBy !== DEFAULT_FILTERS.groupBy) count += 1;
-  if (filters.serviceCode !== DEFAULT_FILTERS.serviceCode) count += 1;
-  if (filters.userId !== DEFAULT_FILTERS.userId) count += 1;
-  if (filters.dateFrom) count += 1;
-  if (filters.dateTo) count += 1;
-
-  return count;
 }
 
 function getTopServicesFromScopeItems(
