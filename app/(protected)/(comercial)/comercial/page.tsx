@@ -126,12 +126,8 @@ export default function AdminDashboardPage() {
     setFilters(DEFAULT_FILTERS);
   }
 
-  if (!hasRole("admin")) {
-    return <p>Acesso restrito ao administrador.</p>;
-  }
-
   if (!settings || metrics.isLoading || scopesByUser.isLoading || services.isLoading) {
-    return <p>Carregando métricas do administrador...</p>;
+    return <p>Carregando métricas...</p>;
   }
 
   if (
@@ -143,16 +139,13 @@ export default function AdminDashboardPage() {
     !scopesByUser.data ||
     !services.data
   ) {
-    return <p>Falha ao carregar o painel administrativo.</p>;
+    return <p>Falha ao carregar o painel de métricas.</p>;
   }
 
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">Painel do Administrador</h1>
-        <p className="text-sm text-muted-foreground">
-          Os indicadores são atualizados automaticamente conforme os filtros são alterados.
-        </p>
+        <h1 className="text-2xl font-semibold">Painel de métricas</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
