@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -94,6 +94,16 @@ export default function AdminDashboardPage() {
   const servicesFromSelectedUser = getTopServicesFromScopeItems(
     selectedUserServices.data?.items ?? [],
   );
+
+  useEffect(() => {
+    if(userData?.id){
+      const updatedFilters = {
+        ...filters,
+        userId: userData.id
+      }
+      setFilters(updatedFilters)
+    }
+  }, [userData?.id])
 
   if (metrics.isLoading || scopesByUser.isLoading || services.isLoading) {
     return <p>Carregando métricas...</p>;
