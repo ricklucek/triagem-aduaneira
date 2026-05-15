@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { scopeApi } from "@/lib/api/services/scopes";
 import { toast } from "@/components/ui/toast";
+import { hasRole } from "@/lib/auth/guard";
 
 type StatusFilter = "todos" | "draft" | "published" | "archived";
 
@@ -200,20 +201,26 @@ export default function DashboardPage() {
                                   <button className="w-full">Visualizar</button>
                                 </Link>
                               </div>
-                              <Link className="cursor-pointer" href={`/scopes/${x.id}?step=SOBRE_EMPRESA`}>
-                                <button className="w-full">Editar</button>
-                              </Link>
-                              <Button
-                                variant="destructive"
-                                onClick={() =>
-                                  setScopeToDelete({
-                                    id: x.id,
-                                    razaoSocial: x.razao_social || x.id,
-                                  })
-                                }
-                              >
-                                <span>Excluir</span>
-                              </Button>
+                              {
+                                hasRole(["comercial", "admin"]) &&
+                                <Link className="cursor-pointer" href={`/scopes/${x.id}?step=SOBRE_EMPRESA`}>
+                                  <button className="w-full">Editar</button>
+                                </Link>
+                              }
+                              {
+                                hasRole(["comercial", "admin"]) &&
+                                <Button
+                                  variant="destructive"
+                                  onClick={() =>
+                                    setScopeToDelete({
+                                      id: x.id,
+                                      razaoSocial: x.razao_social || x.id,
+                                    })
+                                  }
+                                >
+                                  <span>Excluir</span>
+                                </Button>
+                              }
                             </div>
                           </PopoverContent>
                         </Popover>
