@@ -30,19 +30,16 @@ const navByRole = {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/comercial", label: "Métricas", icon: ChartLine },
     { href: "/clients", label: "Clientes", icon: UserRound },
-    { href: "/settings", label: "Configurações", icon: Bolt },
   ],
   credenciamento: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/credenciamento", label: "Métricas", icon: ChartLine },
     { href: "/clients", label: "Clientes", icon: UserRound },
-    { href: "/settings", label: "Configurações", icon: Bolt },
   ],
   operacao: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/operacao", label: "Métricas", icon: ChartLine },
     { href: "/clients", label: "Clientes", icon: UserRound },
-    { href: "/settings", label: "Configurações", icon: Bolt },
   ],
 } as const;
 
