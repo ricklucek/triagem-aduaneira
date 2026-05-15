@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
 import { formatCNPJ } from "@/utils/format";
+import { hasRole } from "@/lib/auth/guard";
 
 function formatISO(iso: string) {
   try {
@@ -40,7 +41,7 @@ function formatISO(iso: string) {
 
 export default function ScopesPage() {
   const { cnpj: clientId } = useParams<{ cnpj: string }>();
-  
+
   const { data, error, isLoading, mutate } = useClientScopes(clientId, {
     limit: 500,
     offset: 0,
@@ -133,21 +134,27 @@ export default function ScopesPage() {
                       <Button asChild variant="secondary" className="rounded-xl">
                         <Link href={`/clients/${clientId}/scopes/view/${r.id}`}>Visualizar</Link>
                       </Button>
-                      <Button asChild variant="outline" className="rounded-xl">
-                        <Link href={`/clients/${clientId}/scopes/edit/${r.id}`}>Editar</Link>
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        className="rounded-xl"
-                        onClick={() =>
-                          setScopeToDelete({
-                            id: r.id,
-                            razaoSocial: r.razao_social || r.id,
-                          })
-                        }
-                      >
-                        Excluir
-                      </Button>
+                      {
+                        hasRole(["comercial", "admin"]) &&
+                        <Button asChild variant="outline" className="rounded-xl">
+                          <Link href={`/clients/${clientId}/scopes/edit/${r.id}`}>Editar</Link>
+                        </Button>
+                      }
+                      {
+                        hasRole(["comercial", "admin"]) &&
+                        <Button
+                          variant="destructive"
+                          className="rounded-xl"
+                          onClick={() =>
+                            setScopeToDelete({
+                              id: r.id,
+                              razaoSocial: r.razao_social || r.id,
+                            })
+                          }
+                        >
+                          Excluir
+                        </Button>
+                      }
                     </TableCell>
                   </TableRow>
                 ))
