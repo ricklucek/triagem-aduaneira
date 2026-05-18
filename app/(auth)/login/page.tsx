@@ -50,7 +50,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle>Entrar na plataforma</CardTitle>
           <CardDescription>
-            Use login e senha para acessar os painéis por perfil.
+            Use login e senha para acessar seu painel.
           </CardDescription>
         </CardHeader>
         <CardContent>
