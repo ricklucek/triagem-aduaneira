@@ -10,12 +10,14 @@ export default function Layout({
   header: ReactNode;
 }) {
   return (
-    <SidebarProvider className="relative h-screen w-full">
-      <AppSidebar />
-      <SidebarInset className="bg-bg">
-        {header}
-        <main className="flex flex-1 bg-bg">{children}</main>
-      </SidebarInset>
+    <SidebarProvider className="relative h-screen w-full flex-col bg-bg">
+      {header}
+      <div className="flex min-h-0 flex-1">
+        <AppSidebar />
+        <SidebarInset className="min-h-0 bg-bg pt-16">
+          <main className="flex min-h-0 flex-1 bg-bg">{children}</main>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }
