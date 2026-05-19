@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { CircleHelp, LayoutDashboard, ShieldCheck, GitCompare, LogOut, FileText } from 'lucide-react';
+import { CircleHelp, LayoutDashboard, GitCompare, LogOut, FileText, Bolt } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@/components/ui/sidebar';
@@ -37,7 +37,7 @@ const toolNavigation = {
 
 const others = [
   { title: 'Suporte', url: '/dashboard/support', icon: CircleHelp },
-  { title: 'Configurações', url: '/dashboard/validators', icon: ShieldCheck },
+  { title: 'Configurações', url: '/dashboard/validators', icon: Bolt },
   { title: 'Logout', url: '/dashboard/validators', icon: LogOut },
 ];
 

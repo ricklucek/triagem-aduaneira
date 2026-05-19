@@ -14,8 +14,8 @@ export default function Layout({
       {header}
       <div className="flex min-h-0 flex-1">
         <AppSidebar />
-        <SidebarInset className="min-h-0 bg-bg pt-16">
-          <main className="flex min-h-0 flex-1 bg-bg">{children}</main>
+        <SidebarInset className="min-h-0 bg-bg">
+          <main className="flex min-h-0 flex-1 bg-card">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>

@@ -25,7 +25,7 @@ export function NavOthers({
           <SidebarMenuButton
             asChild
             tooltip={item.title}
-            className="rounded-2xl px-4 font-semibold text-white-light hover:bg-[#FFF]/10 hover:text-white-light group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:px-0"
+            className="rounded-2xl px-4 font-semibold text-white-light hover:bg-[#FFF]/10 hover:text-white-light data-[active=true]:bg-[#FFF]/10 data-[active=true]:text-white-light group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:px-0"
           >
             <Link href={item.url}>
               {item.icon && <item.icon className="size-6 shrink-0" />}

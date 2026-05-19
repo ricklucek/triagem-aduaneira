@@ -82,7 +82,7 @@ export function NavMain({
                   <SidebarMenuSubItem key={subItem.title}>
                     <SidebarMenuSubButton
                       asChild
-                      className="h-fit rounded-xl text-zinc-200 hover:bg-purple-600/50 hover:text-white-light"
+                      className="h-fit rounded-xl text-zinc-200 hover:bg-primary/10"
                     >
                       <Link href={subItem.url}>{subItem.title}</Link>
                     </SidebarMenuSubButton>
