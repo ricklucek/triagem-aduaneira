@@ -73,7 +73,7 @@ const ICMS_DESTINACAO_LABEL: Record<string, string> = {
 };
 
 const hiredBadge = (
-    <Badge className="bg-emerald-600 hover:bg-emerald-600">
+    <Badge className="bg-emerald-500 text-white">
         <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
         Contrata
     </Badge>

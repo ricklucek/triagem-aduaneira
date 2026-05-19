@@ -12,7 +12,7 @@ import { Separator } from '../ui/separator';
 
 const toolNavigation = {
   scope: {
-    navMain: [{ title: 'Dashboard', url: '/scope/list', icon: LayoutDashboard }],
+    navMain: [{ title: 'Dashboard', url: '/scope/dashboard', icon: LayoutDashboard }],
     settings: {
       title: 'Escopos',
       icon: FileText,

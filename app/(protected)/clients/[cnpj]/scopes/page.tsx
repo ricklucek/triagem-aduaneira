@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { RotateCw } from "lucide-react";
 import { scopeApi } from "@/lib/api/services/scopes";

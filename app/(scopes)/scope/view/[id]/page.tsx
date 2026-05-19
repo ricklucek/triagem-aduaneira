@@ -5,11 +5,9 @@ import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
 import {
-  ArrowLeft,
   CheckCircle2,
   CornerUpLeft,
   Ellipsis,
-  ExternalLink,
   Pencil,
   RotateCw,
 } from "lucide-react";
@@ -130,7 +128,7 @@ function ScopeViewActions({ cnpj, id }: { cnpj: string; id: string }) {
 }
 
 const hiredBadge = (
-  <Badge className="bg-emerald-600 hover:bg-emerald-600">
+  <Badge className="bg-emerald-500 text-white">
     <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
     Contrata
   </Badge>
@@ -973,7 +971,7 @@ export default function ScopeViewPage() {
   }
 
   return (
-    <div className="grid gap-4" id="scope-view-layout">
+    <div className="grid gap-4 w-full" id="scope-view-layout">
       <div className="p-4 print-avoid-break">
         <div className="flex flex-row items-center justify-between gap-3">
 
