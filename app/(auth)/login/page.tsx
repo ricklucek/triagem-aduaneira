@@ -36,7 +36,7 @@ export default function LoginPage() {
 
     try {
       const user = await loginWithPassword({ email, password });
-      router.push(roleRoute[user.role]);
+      router.push('/scope/dashboard');
     } catch {
       setError("Falha no login. Verifique suas credenciais.");
     } finally {

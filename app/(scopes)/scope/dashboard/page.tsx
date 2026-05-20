@@ -29,6 +29,8 @@ import {
   useAdminServicesMetrics,
   useAdminSettings,
 } from "@/lib/api/hooks/use-dashboards";
+import { Search } from "lucide-react";
+import { DashboardCard } from "@/components/dashboard/DashboardCard";
 
 type AdminDashboardFilters = {
   status: string;
@@ -147,181 +149,189 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">Painel do Administrador</h1>
-        <p className="text-sm text-muted-foreground">
-          Os indicadores são atualizados automaticamente conforme os filtros são alterados.
-        </p>
-      </div>
+    <main className="w-full flex flex-col gap-6 p-2 md:p-4">
 
-      <Card>
-        <CardHeader className="space-y-1">
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
+      {/* <div className="flex flex-col bg-background/80 p-2 md:p-4 gap-4 border-b">
+        <div className="flex flex-row items-center gap-2">
+          <Search size={20} />
+          <h2 className="text-sm font-semibold tracking-tight">Filtros</h2>
+        </div>
 
-        <CardContent className="space-y-5">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={filters.status}
-                onValueChange={(value) => updateFilter("status", value)}
-              >
-                <SelectTrigger id="status" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="published">Publicados</SelectItem>
-                  <SelectItem value="draft">Rascunhos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="groupBy">Tipo de usuário</Label>
-              <Select
-                value={filters.groupBy}
-                onValueChange={(value) => updateFilter("groupBy", value)}
-              >
-                <SelectTrigger id="groupBy" className="w-full">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created_by">Criador do Escopo</SelectItem>
-                  <SelectItem value="responsible">Responsável Comercial</SelectItem>
-                  <SelectItem value="analista_da">Analista DA</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="serviceCode">Serviço</Label>
-              <Select
-                value={filters.serviceCode}
-                onValueChange={(value) => updateFilter("serviceCode", value)}
-              >
-                <SelectTrigger id="serviceCode" className="w-full">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {services.data.items.map((service) => (
-                    <SelectItem
-                      key={service.serviceCode}
-                      value={service.serviceCode}
-                    >
-                      {service.serviceName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="userId">Usuário</Label>
-              <Select
-                value={filters.userId}
-                onValueChange={(value) => updateFilter("userId", value)}
-              >
-                <SelectTrigger id="userId" className="w-full">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {users.map((user) => (
-                    <SelectItem key={user.userId} value={user.userId}>
-                      {user.userName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dateFrom">Data inicial</Label>
-              <Input
-                id="dateFrom"
-                inputMode="numeric"
-                placeholder="DD-MM-YYYY"
-                maxLength={10}
-                value={filters.dateFrom}
-                onChange={(event) =>
-                  updateFilter("dateFrom", maskBrazilianDate(event.target.value))
-                }
-                aria-invalid={hasInvalidDateFrom}
-              />
-              {hasInvalidDateFrom ? (
-                <p className="text-xs text-destructive">
-                  Informe uma data inicial válida.
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Exemplo: 01-05-2026
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dateTo">Data final</Label>
-              <Input
-                id="dateTo"
-                inputMode="numeric"
-                placeholder="DD-MM-YYYY"
-                maxLength={10}
-                value={filters.dateTo}
-                onChange={(event) =>
-                  updateFilter("dateTo", maskBrazilianDate(event.target.value))
-                }
-                aria-invalid={hasInvalidDateTo}
-              />
-              {hasInvalidDateTo ? (
-                <p className="text-xs text-destructive">
-                  Informe uma data final válida.
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Exemplo: 31-05-2026
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 border-t pt-4 md:flex-row md:items-center md:justify-between">
-            <div className="text-sm text-muted-foreground">
-              Filtros ativos:{" "}
-              <span className="font-medium text-foreground">
-                {getActiveFiltersCount(filters)}
-              </span>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={clearFilters}
-              className="w-full md:w-auto"
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={filters.status}
+              onValueChange={(value) => updateFilter("status", value)}
             >
-              Limpar filtros
-            </Button>
+              <SelectTrigger id="status" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="published">Publicados</SelectItem>
+                <SelectItem value="draft">Rascunhos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Metric title="Total de escopos" value={metrics.data.totalScopes} />
-        <Metric
-          title="Serviços habilitados"
-          value={metrics.data.totalEnabledServices}
-        />
-        <Metric
-          title="Tipos de serviços"
-          value={metrics.data.totalDistinctServices}
-        />
-        <Metric
-          title="Escopos desatualizados"
-          value={metrics.data.outdatedScopes}
-        />
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="groupBy">Tipo de usuário</Label>
+            <Select
+              value={filters.groupBy}
+              onValueChange={(value) => updateFilter("groupBy", value)}
+            >
+              <SelectTrigger id="groupBy" className="w-full">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="created_by">Criador do Escopo</SelectItem>
+                <SelectItem value="responsible">Responsável Comercial</SelectItem>
+                <SelectItem value="analista_da">Analista DA</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="serviceCode">Serviço</Label>
+            <Select
+              value={filters.serviceCode}
+              onValueChange={(value) => updateFilter("serviceCode", value)}
+            >
+              <SelectTrigger id="serviceCode" className="w-full">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {services.data.items.map((service) => (
+                  <SelectItem
+                    key={service.serviceCode}
+                    value={service.serviceCode}
+                  >
+                    {service.serviceName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="userId">Usuário</Label>
+            <Select
+              value={filters.userId}
+              onValueChange={(value) => updateFilter("userId", value)}
+            >
+              <SelectTrigger id="userId" className="w-full">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.userId} value={user.userId}>
+                    {user.userName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dateFrom">Data inicial</Label>
+            <Input
+              id="dateFrom"
+              inputMode="numeric"
+              placeholder="DD-MM-YYYY"
+              maxLength={10}
+              value={filters.dateFrom}
+              onChange={(event) =>
+                updateFilter("dateFrom", maskBrazilianDate(event.target.value))
+              }
+              aria-invalid={hasInvalidDateFrom}
+            />
+            {hasInvalidDateFrom ? (
+              <p className="text-xs text-destructive">
+                Informe uma data inicial válida.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Exemplo: 01-05-2026
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dateTo">Data final</Label>
+            <Input
+              id="dateTo"
+              inputMode="numeric"
+              placeholder="DD-MM-YYYY"
+              maxLength={10}
+              value={filters.dateTo}
+              onChange={(event) =>
+                updateFilter("dateTo", maskBrazilianDate(event.target.value))
+              }
+              aria-invalid={hasInvalidDateTo}
+            />
+            {hasInvalidDateTo ? (
+              <p className="text-xs text-destructive">
+                Informe uma data final válida.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Exemplo: 31-05-2026
+              </p>
+            )}
+          </div>
+        </div>
+
+      </div> */}
+
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <DashboardCard title="Total de escopos">
+          <div className="flex items-center gap-2 text-3xl font-bold text-high -mt-5">
+            {metrics.data.totalScopes}
+          </div>
+        </DashboardCard>
+        <DashboardCard title="Escopos por mês">
+          <div className="flex items-center gap-2 text-3xl font-bold text-high -mt-5">
+            <div className="text-3xl font-bold text-high">-</div>
+          </div>
+        </DashboardCard>
+        <DashboardCard title="Escopos por semana">
+          <div className="flex items-center gap-2 text-3xl font-bold text-high -mt-5">
+            <div className="text-3xl font-bold text-high">
+              -
+            </div>
+          </div>
+        </DashboardCard>
+        <DashboardCard title="Escopos desatualizados">
+          <div className="flex items-center gap-2 text-3xl font-bold text-high -mt-5">
+            {metrics.data.outdatedScopes}
+          </div>
+        </DashboardCard>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <DashboardCard title="Escopos por setor">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Total escopos</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {users.map((item) => (
+                <TableRow key={item.userId}>
+                  <TableCell>{item.userName}</TableCell>
+                  <TableCell>{item.totalScopes}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DashboardCard>
+      </section>
+
 
       {filters.userId !== "all" && selectedUser?.scopes?.length ? (
         <Card>
@@ -365,36 +375,6 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       ) : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Escopos por usuário</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Usuário</TableHead>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Setor</TableHead>
-                <TableHead>Total escopos</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {users.map((item) => (
-                <TableRow key={item.userId}>
-                  <TableCell>{item.userName}</TableCell>
-                  <TableCell>{item.userEmail}</TableCell>
-                  <TableCell>{item.userSetor}</TableCell>
-                  <TableCell>{item.totalScopes}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
@@ -452,7 +432,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       ) : null}
-    </div>
+    </main>
   );
 }
 
