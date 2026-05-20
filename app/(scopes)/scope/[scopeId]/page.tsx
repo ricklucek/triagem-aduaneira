@@ -69,7 +69,7 @@ export default function ScopeDetailPage() {
     return <div style={{ padding: 24 }}>Escopo não encontrado.</div>;
 
   return (
-    <PageShell className="space-y-4">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] xl:items-start">
         <div className="min-w-0">
           <ScopeWizard
@@ -98,6 +98,6 @@ export default function ScopeDetailPage() {
           />
         </Stack>
       </div>
-    </PageShell>
+    </div>
   );
 }

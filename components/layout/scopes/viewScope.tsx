@@ -86,8 +86,6 @@ function ScopeViewActions({ cnpj, id }: { cnpj: string; id: string }) {
         <Popover open={open} onOpenChange={setOpen}>
             <div
                 className="relative"
-                onMouseEnter={() => setOpen(true)}
-                onMouseLeave={() => setOpen(false)}
             >
                 <PopoverTrigger asChild>
                     <Button

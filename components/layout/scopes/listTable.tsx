@@ -172,7 +172,7 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                                             {hasRole(["comercial", "admin"]) && (
                                                 <Link
                                                     className="popover-menu-item cursor-pointer items-center justify-center flex"
-                                                    href={`/scopes/${x.id}?step=SOBRE_EMPRESA`}
+                                                    href={`/scope/${x.id}?step=SOBRE_EMPRESA`}
                                                 >
                                                     Editar
                                                 </Link>

@@ -323,7 +323,7 @@ export default function ScopeWizard({
   }
 
   return (
-    <div>
+    <div className="pb-10">
       <PageHeader
         title={title}
         subtitle={`${saving ? "Salvando..." : savedMessage}`}
