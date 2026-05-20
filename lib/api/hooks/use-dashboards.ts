@@ -40,6 +40,20 @@ export function useAdminScopesByUser(filters: ScopesByUserFilters) {
   return useSWR(key, () => dashboardApi.getAdminScopesByUser(filters));
 }
 
+export function useAdminUserScopes(userId: string, filters: ScopesByUserFilters) {
+  const key = [
+    "dashboard:admin:user-scopes",
+    userId,
+    filters.status ?? "",
+    filters.groupBy ?? "",
+    filters.dateFrom ?? "",
+    filters.dateTo ?? "",
+    filters.includeScopes ? "includeScopes:true" : "includeScopes:false",
+  ].toLocaleString();
+
+  return useSWR(userId ? key : null, () => dashboardApi.getAdminUserScopes(userId, filters));
+}
+
 export function useAdminServicesMetrics(filters: ServicesMetricsFilters) {
   const key = [
     "dashboard:admin:services",
