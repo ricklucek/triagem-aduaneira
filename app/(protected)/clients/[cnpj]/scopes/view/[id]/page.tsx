@@ -841,15 +841,30 @@ function ScopeDetails({
         <ViewCard title="Financeiro">
           <Grid>
             <Field
-              label="Dados bancários para devolução de saldo"
-              value={list(
-                (
-                  scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? []
-                )
-                  .map((conta) => account(conta))
-                  .filter(Boolean) as string[],
-              )}
+              label="Preferência de pagamento"
+              value={text(scope.financeiro?.preferencia ?? "TRANSFERENCIA")}
             />
+            {
+              (scope.financeiro?.preferencia === "TRANSFERECIA" || !scope.financeiro?.preferencia) &&
+              <Field
+                label="Dados bancários para devolução de saldo"
+                value={list(
+                  (
+                    scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? []
+                  )
+                    .map((conta) => account(conta))
+                    .filter(Boolean) as string[],
+                )}
+              />
+            }
+            {
+              scope.financeiro.preferencia === "PIX" &&
+              <Field
+                label="Chaves PIX para devolução de saldo"
+                value={text(scope.financeiro?.chavePIXClienteDevolucaoSaldo ?? "")}
+              />
+            }
+
             <Field
               label="Observações financeiras"
               value={text(scope.financeiro?.observacoesFinanceiro)}

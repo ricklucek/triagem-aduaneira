@@ -32,6 +32,7 @@ export const escopoFormDefault: EscopoForm = {
   servicos: {},
 
   financeiro: {
+    preferencia: "TRANSFERECIA",
     dadosBancariosClienteDevolucaoSaldo: [{
       banco: "",
       agencia: "",
