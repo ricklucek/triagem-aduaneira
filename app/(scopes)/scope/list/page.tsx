@@ -43,7 +43,7 @@ export default function DashboardPage() {
       <main className="w-full">
         <ListTable
           onSelectScope={(scope) => {
-            router.push(`/clients/${scope.client_id ?? scope.client_cnpj ?? ""}/scopes/view/${scope.id}`);
+            router.push(`/scope/view/${scope.id}`);
           }}
         />
       </main>
