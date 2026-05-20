@@ -57,7 +57,7 @@ export const API_ROUTES = {
   },
   public: {
     cnpjLookup(cnpj: string) {
-      return `https://minhareceita.org/${cnpj}`;
+      return `https://brasilapi.com.br/api/cnpj/v1/${cnpj}`;
     },
     prepostosLookup: "/prepostos/public/lookup",
   },
