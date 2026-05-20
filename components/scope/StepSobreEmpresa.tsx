@@ -53,7 +53,7 @@ export default function StepSobreEmpresa({
             cnaePrincipal:
               data.cnae_fiscal_descricao ?? form.sobreEmpresa.cnaePrincipal,
             cnaeSecundario:
-              data.cnaes_secundarios?.map((c) => c.descricao).join(", ") ??
+              data.cnaes_secundarios?.map((c) => `${c.codigo} - ${c.descricao}`).join(`, {\n}`) ??
               form.sobreEmpresa.cnaeSecundario,
             regimeTributacao:
               data.regimeTributacao ?? form.sobreEmpresa.regimeTributacao,
