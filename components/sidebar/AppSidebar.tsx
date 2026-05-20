@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { CircleHelp, LayoutDashboard, GitCompare, LogOut, FileText, Bolt } from 'lucide-react';
+import { CircleHelp, LayoutDashboard, LogOut, FileText, Bolt } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@/components/ui/sidebar';
@@ -19,20 +19,10 @@ const toolNavigation = {
       items: [
         { title: 'Lista', url: '/scope/list' },
         { title: 'Clientes', url: '/scope/clients' },
+        { title: 'Novo Escopo', url: '/scope/new' },
       ],
     },
-  },
-  default: {
-    navMain: [{ title: 'Overview', url: '/dashboard', icon: LayoutDashboard }],
-    settings: {
-      title: 'Tracking',
-      icon: GitCompare,
-      items: [
-        { title: 'Lista', url: '/dashboard/events' },
-        { title: 'Clientes', url: '/dashboard/events' },
-      ],
-    },
-  },
+  }
 };
 
 const others = [
@@ -43,7 +33,7 @@ const others = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  const navigation = pathname.startsWith('/scope') ? toolNavigation.scope : toolNavigation.default;
+  const navigation = toolNavigation.scope;
 
   return (
     <Sidebar collapsible="icon" className="pt-16 border-r border-[#FFF]/10 bg-[#121214] text-white" {...props}>

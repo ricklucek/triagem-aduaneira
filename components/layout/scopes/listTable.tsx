@@ -37,7 +37,7 @@ type ListTableProps = {
 };
 
 const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
-    const [status, setStatus] = useState<StatusFilter>("todos");
+    const [status, setStatus] = useState<StatusFilter>("published");
     const [q, setQ] = useState("");
     const [page, setPage] = useState(1);
     const [scopeToDelete, setScopeToDelete] = useState<{
@@ -163,15 +163,15 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                                     <PopoverContent className="popover-menu-container right-0 w-56">
                                         <div className="flex w-full flex-col gap-4">
                                             <Link
-                                                className="popover-menu-item cursor-pointer"
-                                                href={`/clients/${x.client_id ?? x.client_cnpj ?? ""}/scopes/view/${x.id}`}
+                                                className="popover-menu-item cursor-pointer items-center justify-center flex"
+                                                href={`/scope/view/${x.id}`}
                                             >
                                                 Visualizar
                                             </Link>
 
                                             {hasRole(["comercial", "admin"]) && (
                                                 <Link
-                                                    className="popover-menu-item cursor-pointer"
+                                                    className="popover-menu-item cursor-pointer items-center justify-center flex"
                                                     href={`/scopes/${x.id}?step=SOBRE_EMPRESA`}
                                                 >
                                                     Editar

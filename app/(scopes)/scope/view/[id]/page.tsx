@@ -950,23 +950,21 @@ export default function ScopeViewPage() {
 
   if (loadingScope) {
     return (
-      <Card className="p-4 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <RotateCw className="h-4 w-4 animate-spin" />
-          Carregando visualização...
-        </div>
-      </Card>
+      <div className="w-full h-full flex flex-col justify-center items-center gap-2">
+        <RotateCw className="h-10 w-10 animate-spin" />
+        Carregando Escopo...
+      </div>
     );
   }
 
   if (scopeError || !selectedScope) {
     return (
-      <Card className="p-4">
-        <p className="font-medium">Escopo não encontrado.</p>
+      <div className="w-full h-full flex flex-col justify-center items-center gap-2">
+        <p className="font-medium">Erro ao carregar o Escopo.</p>
         <Button asChild className="mt-3">
           <Link href={`/scope/list`}>Voltar para escopos</Link>
         </Button>
-      </Card>
+      </div>
     );
   }
 

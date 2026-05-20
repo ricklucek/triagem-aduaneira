@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useAdminDashboardMetrics, useAdminScopesByUser, useAdminServicesMetrics, useAdminUserScopes } from "@/lib/api/hooks/use-dashboards";
-import type { ScopeByUserItem, ServiceMetricItem } from "@/lib/api/types/dashboard-api";
+import { useAdminScopesByUser, useAdminUserScopes } from "@/lib/api/hooks/use-dashboards";
+import type { ScopeByUserItem } from "@/lib/api/types/dashboard-api";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
 import { Filter, RotateCw } from "lucide-react";
@@ -74,7 +73,7 @@ export default function ScopesBySectorSection() {
                 </Card>
             ) : (
                 <ResizablePanelGroup orientation="horizontal" className="min-h-105 rounded-lg border">
-                    <ResizablePanel defaultSize={45} minSize={35}>
+                    <ResizablePanel defaultSize="45%" minSize={35}>
                         <Card className="h-full rounded-none border-0">
                             <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Escopos por setor</CardTitle><SectorFilterDropdown sectorFilter={sectorFilter} onSectorChange={setSectorFilter} /></CardHeader>
                             {
@@ -90,7 +89,7 @@ export default function ScopesBySectorSection() {
                         </Card>
                     </ResizablePanel>
                     <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={55} minSize={35}>
+                    <ResizablePanel defaultSize="55%" minSize={35}>
                         <Card className="h-full rounded-none border-0">
                             <CardHeader><CardTitle>{selectedUser ? `Escopos com ${selectedUser.userName}` : "Selecione um usuário"}</CardTitle></CardHeader>
                             <CardContent>{selectedUser ? <UserScopesTable userId={selectedUser.userId} sectorFilter={sectorFilter} /> : <p className="text-sm text-muted-foreground">Selecione um nome na tabela para abrir os escopos.</p>}</CardContent>

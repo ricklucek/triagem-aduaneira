@@ -1,13 +1,11 @@
 import "./globals.css";
 
 import { ThemeProvider } from "next-themes";
-import { AppShell } from "@/components/app-shell";
 import NextTopLoader from "nextjs-toploader";
 
 import { ToastProvider } from "@/components/ui/toast";
 
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
