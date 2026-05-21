@@ -1,13 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { CircleHelp, LayoutDashboard, FileText, Bolt } from 'lucide-react';
+import { CircleHelp, LayoutDashboard, FileText, Bolt, Info } from 'lucide-react';
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@/components/ui/sidebar';
 import { NavMain } from './nav-main';
 import { NavOthers } from './nav-others';
 import { NavTool } from './nav-tool';
 import { Separator } from '../ui/separator';
+import { usePathname } from "next/navigation";
 
 const toolNavigation = {
   scope: {
@@ -25,16 +26,25 @@ const toolNavigation = {
       title: 'Novo Escopo',
       url: '/scope/new'
     }
-  }
+  },
+  settings: {
+    navMain: [{ title: 'Geral', url: '/settings/general', icon: Info }],
+    settings: undefined,
+    action: undefined
+  },
 };
 
 const others = [
-  { title: 'Suporte', url: '/dashboard/support', icon: CircleHelp },
-  { title: 'Configurações', url: '/dashboard/validators', icon: Bolt },
+  { title: 'Suporte', url: '/support', icon: CircleHelp },
+  { title: 'Configurações', url: '/settings', icon: Bolt },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const navigation = toolNavigation.scope;
+
+  const pathname = usePathname();
+  const currentPath = pathname.split('/')[1];
+
+  const navigation = toolNavigation[currentPath as keyof typeof toolNavigation];
 
   return (
     <Sidebar collapsible="icon" className="pt-16 border-r border-[#FFF]/10 bg-[#121214] text-white" {...props}>
