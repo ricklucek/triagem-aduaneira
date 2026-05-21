@@ -21,6 +21,7 @@ export const API_ROUTES = {
     byPerson: "/scopes/analytics/by-person",
     bySector: "/scopes/analytics/by-sector",
     monthlyCreated: "/scopes/analytics/monthly-created",
+    countUserAssignments: "/scopes/user/assigned-count",
   },
   organizations: {
     me: "/organizations/me",

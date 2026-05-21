@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronsUpDown, FileText, ShieldCheck, BriefcaseBusiness } from 'lucide-react';
+import { ChevronsUpDown, FileText, ShieldCheck, BriefcaseBusiness, Locate } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -21,8 +21,7 @@ import {
 
 const tools = [
   { key: 'scope', label: 'Escopos', description: 'Despachos e cadastros', href: '/scope/list', icon: FileText },
-  { key: 'comercial', label: 'Comercial', description: 'Pipeline e negociações', href: '/comercial', icon: BriefcaseBusiness },
-  { key: 'admin', label: 'Administração', description: 'Usuários e permissões', href: '/admin', icon: ShieldCheck },
+  { key: 'tracker', label: 'Tracker', description: 'Pipeline dos processos', href: '/comercial', icon: Locate },
 ];
 
 export function NavTool() {

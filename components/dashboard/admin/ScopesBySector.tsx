@@ -72,7 +72,7 @@ export default function ScopesBySectorSection() {
                     }
                 </Card>
             ) : (
-                <ResizablePanelGroup orientation="horizontal" className="min-h-105 rounded-lg border">
+                <ResizablePanelGroup orientation="horizontal" className="rounded-lg border">
                     <ResizablePanel defaultSize="45%" minSize={35}>
                         <Card className="h-full rounded-none border-0">
                             <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Escopos por setor</CardTitle><SectorFilterDropdown sectorFilter={sectorFilter} onSectorChange={setSectorFilter} /></CardHeader>

@@ -3,20 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-
-import {
-  CheckCircle2,
-  CornerUpLeft,
-  Ellipsis,
-  Pencil,
-  RotateCw,
-} from "lucide-react";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { CheckCircle2, RotateCw } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
 import { useScope, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
@@ -73,60 +60,8 @@ const ICMS_DESTINACAO_LABEL: Record<string, string> = {
   ATIVO_IMOBILIZADO: "Ativo imobilizado",
 };
 
-function ScopeViewActions({ cnpj, id }: { cnpj: string; id: string }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <div
-        className="relative"
-      >
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-9 w-9"
-            aria-label="Abrir opções do escopo"
-            onClick={() => setOpen((current) => !current)}
-          >
-            <Ellipsis className="h-5 w-5" />
-          </Button>
-        </PopoverTrigger>
-
-        <PopoverContent
-          align="end"
-          sideOffset={8}
-          className="w-56 p-1"
-          onOpenAutoFocus={(event) => event.preventDefault()}
-        >
-          <div className="grid gap-1">
-            <Link
-              href={`/scope/list`}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
-            >
-              <CornerUpLeft className="h-4 w-4 text-muted-foreground" />
-              <span>Voltar para escopos</span>
-            </Link>
-
-            <Separator />
-
-            <Link
-              href={`/clients/${cnpj}/scopes/edit/${id}`}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
-            >
-              <Pencil className="h-4 w-4 text-muted-foreground" />
-              <span>Editar</span>
-            </Link>
-          </div>
-        </PopoverContent>
-      </div>
-    </Popover>
-  );
-}
-
 const hiredBadge = (
-  <Badge className="bg-emerald-500 text-white">
+  <Badge className="bg-emerald-600 hover:bg-emerald-600">
     <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
     Contrata
   </Badge>
@@ -906,15 +841,30 @@ function ScopeDetails({
         <ViewCard title="Financeiro">
           <Grid>
             <Field
-              label="Dados bancários para devolução de saldo"
-              value={list(
-                (
-                  scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? []
-                )
-                  .map((conta) => account(conta))
-                  .filter(Boolean) as string[],
-              )}
+              label="Preferência de pagamento"
+              value={text(scope.financeiro?.preferencia ?? "TRANSFERENCIA")}
             />
+            {
+              (scope.financeiro?.preferencia === "TRANSFERECIA" || !scope.financeiro?.preferencia) &&
+              <Field
+                label="Dados bancários para devolução de saldo"
+                value={list(
+                  (
+                    scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? []
+                  )
+                    .map((conta) => account(conta))
+                    .filter(Boolean) as string[],
+                )}
+              />
+            }
+            {
+              scope.financeiro.preferencia === "PIX" &&
+              <Field
+                label="Chaves PIX para devolução de saldo"
+                value={text(scope.financeiro?.chavePIXClienteDevolucaoSaldo ?? "")}
+              />
+            }
+
             <Field
               label="Observações financeiras"
               value={text(scope.financeiro?.observacoesFinanceiro)}
@@ -948,38 +898,55 @@ export default function ScopeViewPage() {
 
   if (loadingScope) {
     return (
-      <div className="w-full h-full flex flex-col justify-center items-center gap-2">
-        <RotateCw className="h-10 w-10 animate-spin" />
-        Carregando Escopo...
-      </div>
+      <Card className="p-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <RotateCw className="h-4 w-4 animate-spin" />
+          Carregando visualização...
+        </div>
+      </Card>
     );
   }
 
   if (scopeError || !selectedScope) {
     return (
-      <div className="w-full h-full flex flex-col justify-center items-center gap-2">
-        <p className="font-medium">Erro ao carregar o Escopo.</p>
+      <Card className="p-4">
+        <p className="font-medium">Escopo não encontrado.</p>
         <Button asChild className="mt-3">
-          <Link href={`/scope/list`}>Voltar para escopos</Link>
+          <Link href={`/clients/${cnpj}/scopes`}>Voltar para escopos</Link>
         </Button>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="grid gap-4 w-full" id="scope-view-layout">
-      <div className="p-4 print-avoid-break">
-        <div className="flex flex-row items-center justify-between gap-3">
-
-          {createdBy && (
-            <p className="mt-5 text-sm text-muted-foreground">
-              Criado por {createdBy.nome}
+    <div className="grid gap-4" id="scope-view-layout">
+      <Card className="p-4 print-avoid-break">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">
+              Visualização do Escopo
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Documento em modo leitura para acompanhamento operacional.
             </p>
-          )}
 
-          <ScopeViewActions cnpj={cnpj} id={id} />
+            {createdBy && (
+              <p className="mt-5 text-sm text-muted-foreground">
+                Criado por {createdBy.nome}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 print:hidden">
+            <Button asChild variant="outline">
+              <Link href={`/clients/${cnpj}/scopes`}>Voltar</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={`/clients/${cnpj}/scopes/edit/${id}`}>Editar</Link>
+            </Button>
+          </div>
         </div>
-      </div>
+      </Card>
 
       <ScopeDetails scope={selectedScope} versionLabel="Escopo atual" />
 

@@ -90,6 +90,11 @@ export const scopeApi: ScopeApiClient = {
     return normalizeScopeListResponse(data, params);
   },
 
+  async countUserAssignments(): Promise<{type: string; count: number}[]> {
+    const { data } = await http.get<{type: string; count: number}[]>(API_ROUTES.scopes.countUserAssignments);
+    return data;
+  },
+
   async getScope(id: string): Promise<ScopeDetailResponse> {
     const { data } = await http.get<ScopeDetailResponse>(
       API_ROUTES.scopes.detail(id),

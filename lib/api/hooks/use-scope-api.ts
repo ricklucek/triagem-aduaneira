@@ -21,6 +21,13 @@ export function useScope(scopeId: string | null) {
   });
 }
 
+export function useCountUserAssignments() {
+  const key = `user-assignments`;
+  return useSWR(key, async () => {
+    return scopeApi.countUserAssignments();
+  });
+}
+
 export function useScopeVersions(scopeId: string | null) {
   const key = scopeId ? `scope-versions:${scopeId}` : null;
   return useSWR(key, async () => {

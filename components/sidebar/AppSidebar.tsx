@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { CircleHelp, LayoutDashboard, LogOut, FileText, Bolt } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { CircleHelp, LayoutDashboard, FileText, Bolt } from 'lucide-react';
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@/components/ui/sidebar';
 import { NavMain } from './nav-main';
@@ -19,20 +18,22 @@ const toolNavigation = {
       items: [
         { title: 'Lista', url: '/scope/list' },
         { title: 'Clientes', url: '/scope/clients' },
-        { title: 'Novo Escopo', url: '/scope/new' },
+        { title: 'Meus Escopos', url: '/scope/my-scopes' },
       ],
     },
+    action: {
+      title: 'Novo Escopo',
+      url: '/scope/new'
+    }
   }
 };
 
 const others = [
   { title: 'Suporte', url: '/dashboard/support', icon: CircleHelp },
   { title: 'Configurações', url: '/dashboard/validators', icon: Bolt },
-  { title: 'Logout', url: '/dashboard/validators', icon: LogOut },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname();
   const navigation = toolNavigation.scope;
 
   return (
@@ -44,7 +45,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <div className="flex h-full flex-col justify-between">
           <div className="pt-3">
-            <NavMain items={navigation.navMain} settings={navigation.settings} />
+            <NavMain
+              items={navigation.navMain}
+              settings={navigation.settings}
+              action={navigation.action}
+            />
           </div>
         </div>
       </SidebarContent>

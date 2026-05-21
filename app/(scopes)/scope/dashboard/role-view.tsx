@@ -1,6 +1,7 @@
 "use client";
 
 import AdminDashboardPanel from "./sections/admin-dashboard-panel";
+import ComercialDashboardPanel from "./sections/comercial-dashboard-panel";
 import type { UserRole } from "@/lib/api/types/auth-api";
 
 export default function DashboardRoleView({ role }: { role?: UserRole }) {
@@ -9,7 +10,7 @@ export default function DashboardRoleView({ role }: { role?: UserRole }) {
   }
 
   if (role === "comercial") {
-    return <p>Painel comercial em preparação.</p>;
+    return <ComercialDashboardPanel />;
   }
 
   if (role === "operacao") {

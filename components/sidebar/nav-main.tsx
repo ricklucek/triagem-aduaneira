@@ -33,12 +33,17 @@ type SettingsItem = {
 export function NavMain({
   items,
   settings,
+  action,
 }: {
   items: MainItem[];
   settings?: {
     title: string;
     icon?: LucideIcon;
     items: SettingsItem[];
+  };
+  action?: {
+    title: string;
+    url: string;
   };
 }) {
   return (
@@ -92,6 +97,19 @@ export function NavMain({
             </CollapsibleContent>
           </SidebarMenuItem>
         </Collapsible>
+      )}
+
+      {action && (
+        <SidebarMenuItem className="mt-4">
+          <SidebarMenuButton>
+            <Link
+              href={action.url}
+              className="w-full rounded-md bg-primary py-2 text-center font-semibold text-black hover:bg-primary/90"
+            >
+              {action.title}
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
       )}
     </SidebarMenu>
   );

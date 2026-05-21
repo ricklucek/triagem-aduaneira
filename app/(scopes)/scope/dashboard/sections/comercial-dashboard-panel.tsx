@@ -3,11 +3,9 @@
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { useAdminDashboardMetrics } from "@/lib/api/hooks/use-dashboards";
 
-
 import ScopesBySectorSection from "@/components/dashboard/admin/ScopesBySector";
-import ServicesSection from "@/components/dashboard/admin/ServicesSection";
 
-export default function AdminDashboardPanel() {
+export default function ComercialDashboardPanel() {
   const metrics = useAdminDashboardMetrics({ status: "published" });
 
   return (
@@ -23,7 +21,6 @@ export default function AdminDashboardPanel() {
         <ScopesBySectorSection />
       </div>
 
-      <ServicesSection />
     </main>
   );
 }

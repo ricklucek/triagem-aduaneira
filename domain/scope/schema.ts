@@ -453,7 +453,9 @@ export const EscopoSchema = z
       exportacao: ServicosExportacaoSchema.optional(),
     }),
     financeiro: z.object({
+      preferencia: z.enum(["TRANSFERECIA", "BOLETO", "PIX"]).default("TRANSFERECIA"),
       dadosBancariosClienteDevolucaoSaldo: z.array(ContaBancariaSchema).default([]),
+      chavePIXClienteDevolucaoSaldo: z.string().trim().optional().nullable(),
       observacoesFinanceiro: z.string().trim().optional().nullable(),
     }),
     geral: z.object({
