@@ -2,7 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, Search } from "lucide-react";
 
 export function Field({
   label,
@@ -50,6 +50,7 @@ export function TextInput(
       {...rest}
       aria-invalid={invalid}
       className={cn(
+        "relative justify-center",
         baseInputStyle,
         invalid ? "border-destructive bg-destructive/5" : "border-input",
         className,

@@ -36,7 +36,7 @@ export default function LoginPage() {
 
     try {
       const user = await loginWithPassword({ email, password });
-      router.push(roleRoute[user.role]);
+      router.push('/scope/dashboard');
     } catch {
       setError("Falha no login. Verifique suas credenciais.");
     } finally {
@@ -50,7 +50,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle>Entrar na plataforma</CardTitle>
           <CardDescription>
-            Use login e senha para acessar os painéis por perfil.
+            Use login e senha para acessar seu painel.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -21,6 +21,7 @@ export const API_ROUTES = {
     byPerson: "/scopes/analytics/by-person",
     bySector: "/scopes/analytics/by-sector",
     monthlyCreated: "/scopes/analytics/monthly-created",
+    countUserAssignments: "/scopes/user/assigned-count",
   },
   organizations: {
     me: "/organizations/me",
@@ -37,6 +38,7 @@ export const API_ROUTES = {
     admin: "/dashboards/admin",
     adminMetrics: "/dashboards/admin/metrics",
     adminScopesByUser: "/dashboards/admin/scopes-by-user",
+    adminUserScopes: (userId: string) => `/dashboards/admin/users/${userId}/scopes`,
     adminServices: "/dashboards/admin/services",
     adminServicesByScope: "/dashboards/admin/services/by-scope",
     comercial: "/dashboards/comercial",

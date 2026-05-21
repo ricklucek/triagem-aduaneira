@@ -43,6 +43,29 @@ export const dashboardApi = {
     return data;
   },
 
+  async getAdminUserScopes(
+    userId: string,
+    params?: ScopesByUserFilters,
+  ): Promise<{
+    items: {
+      id: string;
+      status: string;
+      clientId: string;
+      clientName: string;
+      clientCnpj: string;
+      responsibleUserId: string | null;
+      createdAt: string;
+      updatedAt: string;
+      lastPublishedAt: string | null;
+    }[]
+  }> {
+    const { data } = await http.get<any>(
+      API_ROUTES.dashboards.adminUserScopes(userId),
+      { params: { ...params } },
+    );
+    return data;
+  },
+
   async getAdminServicesMetrics(
     params?: ServicesMetricsFilters,
   ): Promise<ServicesMetricsResponse> {

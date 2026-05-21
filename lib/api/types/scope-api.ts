@@ -61,6 +61,7 @@ export interface BulkReassignResponsibleResponse {
 export interface ScopeApiClient {
   createScope(initial?: Partial<EscopoForm>): Promise<CreateScopeResponse>;
   listScopes(params: ListScopesParams): Promise<ListScopesResult>;
+  countUserAssignments(): Promise<{type: string; count: number}[]>;
   getScope(id: string): Promise<ScopeDetailResponse>;
   saveScope(payload: SaveScopeDraftPayload): Promise<void>;
   publishScope(id: string): Promise<PublishResult>;

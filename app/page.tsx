@@ -5,7 +5,7 @@ export default async function HomePage() {
   const session = await getServerAuthSession();
 
   if (session?.user) {
-    redirect("/dashboard");
+    redirect("/scope/dashboard");
   }
 
   redirect("/login");
