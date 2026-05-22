@@ -10,6 +10,11 @@ import type { EscopoForm } from "@/domain/scope/types";
 import type {
   BulkReassignResponsiblePayload,
   BulkReassignResponsibleResponse,
+  BulkAssignmentGroupBy,
+  BulkAssignmentScopesResponse,
+  BulkAssignmentSummaryResponse,
+  BulkAssignmentUpdatePayload,
+  BulkAssignmentUpdateResponse,
   CreateScopeResponse,
   SaveScopeDraftPayload,
   ScopeApiClient,
@@ -140,6 +145,37 @@ export const scopeApi: ScopeApiClient = {
   ): Promise<BulkReassignResponsibleResponse> {
     const { data } = await http.post<BulkReassignResponsibleResponse>(
       API_ROUTES.scopes.bulkReassignResponsible,
+      payload,
+    );
+    return data;
+  },
+
+  async getBulkAssignmentSummary(
+    groupBy: BulkAssignmentGroupBy,
+  ): Promise<BulkAssignmentSummaryResponse> {
+    const { data } = await http.get<BulkAssignmentSummaryResponse>(
+      API_ROUTES.scopes.bulkAssignmentSummary,
+      { params: { groupBy } },
+    );
+    return data;
+  },
+
+  async getBulkAssignmentScopes(
+    groupBy: BulkAssignmentGroupBy,
+    userId: string,
+  ): Promise<BulkAssignmentScopesResponse> {
+    const { data } = await http.get<BulkAssignmentScopesResponse>(
+      API_ROUTES.scopes.bulkAssignmentScopes,
+      { params: { groupBy, userId } },
+    );
+    return data;
+  },
+
+  async updateBulkAssignment(
+    payload: BulkAssignmentUpdatePayload,
+  ): Promise<BulkAssignmentUpdateResponse> {
+    const { data } = await http.post<BulkAssignmentUpdateResponse>(
+      API_ROUTES.scopes.bulkAssignmentUpdate,
       payload,
     );
     return data;

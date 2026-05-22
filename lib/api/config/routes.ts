@@ -22,6 +22,9 @@ export const API_ROUTES = {
     bySector: "/scopes/analytics/by-sector",
     monthlyCreated: "/scopes/analytics/monthly-created",
     countUserAssignments: "/scopes/user/assigned-count",
+    bulkAssignmentSummary: "/scopes/bulk/assignment-summary",
+    bulkAssignmentScopes: "/scopes/bulk/assignment-scopes",
+    bulkAssignmentUpdate: "/scopes/bulk/assignment-update",
   },
   organizations: {
     me: "/organizations/me",

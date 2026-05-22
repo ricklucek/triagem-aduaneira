@@ -150,6 +150,82 @@
 ]
 ```
 
+### `GET /scopes/bulk/assignment-summary` _(novo requerido)_
+
+- Endpoint para primeira etapa da **edição em massa** na tela `/scope/list`.
+- **Permissão**: apenas `admin`.
+- **Query params**:
+  - `groupBy`: `responsavel_comercial` | `analista_da` | `analista_ae`.
+- **Response 200**
+
+```json
+{
+  "groupBy": "analista_da",
+  "totalUsers": 2,
+  "totalScopes": 18,
+  "items": [
+    {
+      "userId": "u_10",
+      "userName": "Ana DA",
+      "userRole": "operacao",
+      "userSetor": "DA",
+      "totalScopes": 11
+    }
+  ]
+}
+```
+
+### `GET /scopes/bulk/assignment-scopes` _(novo requerido)_
+
+- Endpoint para listar todos os escopos de um usuário após seleção na tabela de totais.
+- **Permissão**: apenas `admin`.
+- **Query params**:
+  - `groupBy`: `responsavel_comercial` | `analista_da` | `analista_ae`.
+  - `userId`: identificador do usuário origem.
+- **Response 200**
+
+```json
+{
+  "groupBy": "responsavel_comercial",
+  "userId": "u_2",
+  "total": 3,
+  "items": [
+    {
+      "id": "scope_123",
+      "status": "published",
+      "clientName": "Empresa X",
+      "clientCnpj": "12345678000100",
+      "updatedAt": "2026-05-20T14:20:00Z"
+    }
+  ]
+}
+```
+
+### `POST /scopes/bulk/assignment-update` _(novo requerido)_
+
+- Endpoint de confirmação da operação em massa.
+- **Permissão**: apenas `admin`.
+- **Request body**:
+
+```json
+{
+  "groupBy": "analista_ae",
+  "fromUserId": "u_30",
+  "toUserId": "u_44",
+  "scopeIds": ["scope_123", "scope_124", "scope_130"]
+}
+```
+
+- **Response 200**
+
+```json
+{
+  "ok": true,
+  "impactedScopes": 3,
+  "updatedScopeIds": ["scope_123", "scope_124", "scope_130"]
+}
+```
+
 ## Dashboards por perfil
 
 ### `GET /dashboards/admin`
