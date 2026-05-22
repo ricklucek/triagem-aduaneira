@@ -44,6 +44,7 @@ export function NavMain({
   action?: {
     title: string;
     url: string;
+    icon?: LucideIcon;
   };
 }) {
   return (
@@ -104,9 +105,15 @@ export function NavMain({
           <SidebarMenuButton>
             <Link
               href={action.url}
-              className="w-full rounded-md bg-primary py-2 text-center font-semibold text-black hover:bg-primary/90"
+              className="w-full rounded-md bg-primary py-2 text-center font-semibold text-black hover:bg-primary/90 group-data-[collapsible=icon]:hidden"
             >
               {action.title}
+            </Link>
+            <Link
+              href={action.url}
+              className="w-full rounded-full bg-primary text-center font-semibold text-black hover:bg-primary/90 group-data-[collapsible=icon]:flex data-[active=true]:bg-primary/90 hidden"
+            >
+              {action.icon && <action.icon className="size-5 w-full h-full" />}
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>

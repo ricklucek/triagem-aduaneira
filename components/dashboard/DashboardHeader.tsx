@@ -1,11 +1,19 @@
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Avatar, AvatarFallback } from '../ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { BadgeCheck, Headset, LogOut } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '../ui/button';
+import UserMenu from '../user/UserMenu';
+import NotificationsPanel from '../user/NotificationsPanel';
 
 export default function DashboardHeader({
   headerText,
 }: {
   headerText: string;
 }) {
+  
   return (
     <header className="flex h-16 shrink-0 z-10 items-center gap-2 transition-[height] ease-linear">
       <div
@@ -27,6 +35,11 @@ export default function DashboardHeader({
               {headerText}
             </span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <NotificationsPanel />
+          <UserMenu />
         </div>
       </div>
     </header>

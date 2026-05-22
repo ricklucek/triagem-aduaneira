@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { CircleHelp, LayoutDashboard, FileText, Bolt, Info } from 'lucide-react';
+import { CircleHelp, LayoutDashboard, FileText, Bolt, Info, Plus } from 'lucide-react';
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@/components/ui/sidebar';
 import { NavMain } from './nav-main';
@@ -24,7 +24,8 @@ const toolNavigation = {
     },
     action: {
       title: 'Novo Escopo',
-      url: '/scope/new'
+      url: '/scope/new',
+      icon: Plus
     }
   },
   settings: {
