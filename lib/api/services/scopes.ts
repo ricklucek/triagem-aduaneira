@@ -21,17 +21,18 @@ import type {
   ScopeDetailResponse,
   ScopeSummaryApi,
   ScopeVersionsResponse,
+  ScopeDraftResponse,
 } from "@/lib/api/types/scope-api";
 import type { ScopeMetadataResponse } from "@/lib/api/types/scope-metadata";
 
 type ScopeListResponseApi =
   | ListScopesResult
   | {
-      items: ScopeSummaryApi[];
-      total?: number;
-      limit?: number;
-      offset?: number;
-    }
+    items: ScopeSummaryApi[];
+    total?: number;
+    limit?: number;
+    offset?: number;
+  }
   | ScopeSummaryApi[];
 
 function normalizeScopeSummary(item: ScopeSummaryApi | ScopeSummary): ScopeSummary {
@@ -95,14 +96,21 @@ export const scopeApi: ScopeApiClient = {
     return normalizeScopeListResponse(data, params);
   },
 
-  async countUserAssignments(): Promise<{type: string; count: number}[]> {
-    const { data } = await http.get<{type: string; count: number}[]>(API_ROUTES.scopes.countUserAssignments);
+  async countUserAssignments(): Promise<{ type: string; count: number }[]> {
+    const { data } = await http.get<{ type: string; count: number }[]>(API_ROUTES.scopes.countUserAssignments);
     return data;
   },
 
   async getScope(id: string): Promise<ScopeDetailResponse> {
     const { data } = await http.get<ScopeDetailResponse>(
       API_ROUTES.scopes.detail(id),
+    );
+    return data;
+  },
+
+  async getScopeDraft(id: string): Promise<ScopeDraftResponse> {
+    const { data } = await http.get<ScopeDraftResponse>(
+      API_ROUTES.scopes.draft(id),
     );
     return data;
   },
@@ -114,10 +122,17 @@ export const scopeApi: ScopeApiClient = {
     );
   },
 
-  async publishScope(id: string): Promise<PublishResult> {
+  async saveScopeDraft(payload: SaveScopeDraftPayload): Promise<void> {
+    await http.put<void>(
+      API_ROUTES.scopes.saveScopeDraft(payload.id),
+      payload.draft,
+    );
+  },
+
+  async publishScope(id: string, formData: { draft: EscopoForm }): Promise<PublishResult> {
     const { data } = await http.post<PublishResult>(
       API_ROUTES.scopes.publish(id),
-      {},
+      formData,
     );
     return data;
   },

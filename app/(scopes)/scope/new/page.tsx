@@ -11,7 +11,7 @@ export default function NewScopePage() {
   useEffect(() => {
     (async () => {
       const { id } = await scopeApi.createScope();
-      router.replace(`/scope/${id}?step=SOBRE_EMPRESA`);
+      router.replace(`/scope/${id}?step=COMPANY`);
     })();
   }, [router]);
 

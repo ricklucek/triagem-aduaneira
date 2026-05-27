@@ -22,6 +22,14 @@ export function useScope(scopeId: string | null) {
   });
 }
 
+export function useScopeDraft(scopeId: string | null) {
+  const key = scopeId ? `scope-draft:${scopeId}` : null;
+  return useSWR(key, async () => {
+    if (!scopeId) throw new Error("Scope id inválido.");
+    return scopeApi.getScopeDraft(scopeId);
+  });
+}
+
 export function useCountUserAssignments() {
   const key = `user-assignments`;
   return useSWR(key, async () => {

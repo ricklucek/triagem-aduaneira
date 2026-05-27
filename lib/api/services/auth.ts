@@ -1,7 +1,7 @@
 import { API_ROUTES } from "@/lib/api/config/routes";
 import { http } from "@/lib/api/config/http";
 import type {
-  AuthUser,
+  IUser,
   LoginPayload,
   LoginResponse,
   RefreshResponse,
@@ -23,8 +23,8 @@ export const authApi = {
     return data;
   },
 
-  async me(): Promise<AuthUser> {
-    const { data } = await http.get<AuthUser>(API_ROUTES.auth.me);
+  async me(): Promise<IUser> {
+    const { data } = await http.get<IUser>(API_ROUTES.auth.me);
     return data;
   },
 

@@ -91,7 +91,6 @@ export default function DashboardPage() {
               >
                 <ScopeViewPage
                   id={selectedScope.id}
-                  cnpj={selectedScope.client_cnpj ?? ""}
                 />
               </motion.div>
             )}

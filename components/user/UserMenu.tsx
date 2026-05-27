@@ -22,12 +22,12 @@ const UserMenu = () => {
                 >
                     <Avatar className="size-8 rounded-full">
                         <AvatarFallback className="rounded-lg">
-                            {getIniciais(data?.nome ?? '')}
+                            {getIniciais(data?.name ?? '')}
                         </AvatarFallback>
                     </Avatar>
                     <div className="max-w-[150px] hidden sm:flex flex-col gap-1 group-data-[collapsible=icon]:hidden">
                         <span className="text-white-light line-clamp-1">
-                            {data?.nome ?? ''}
+                            {data?.name ?? ''}
                         </span>
                         <span className="text-white-dark text-xs">administrador</span>
                     </div>
@@ -43,11 +43,11 @@ const UserMenu = () => {
                     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                         <Avatar className="h-8 w-8 rounded-lg">
                             <AvatarFallback className="rounded-lg">
-                                {getIniciais(data?.nome ?? '')}
+                                {getIniciais(data?.name ?? '')}
                             </AvatarFallback>
                         </Avatar>
                         <div className="grid flex-1 text-left text-sm leading-tight text-white-light">
-                            <span className="truncate font-medium">{data?.nome}</span>
+                            <span className="truncate font-medium">{data?.name}</span>
                             <span className="truncate text-xs">{data?.email}</span>
                         </div>
                     </div>

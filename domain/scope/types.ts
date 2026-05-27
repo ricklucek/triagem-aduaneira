@@ -1,19 +1,13 @@
-import { z } from "zod";
-import { EscopoSchema } from "./schema";
+import type { ScopeDraftCanonical } from "./schema";
 
-export type EscopoForm = z.infer<typeof EscopoSchema>;
+export type EscopoForm = ScopeDraftCanonical;
 
 export type EtapaFormulario =
-  | "SOBRE_EMPRESA"
-  | "CONTATOS"
-  | "OPERACAO"
-  | "IMPORTACAO"
-  | "SERVICOS_IMPORTACAO"
-  | "EXPORTACAO"
-  | "SERVICOS_EXPORTACAO"
-  | "FINANCEIRO";
-
-export type ResultadoValidacaoEtapa = {
-  ok: boolean;
-  errors: Record<string, string>;
-};
+  | "COMPANY"
+  | "CONTACTS"
+  | "OPERATIONS"
+  | "IMPORT"
+  | "EXPORT"
+  | "TAXES"
+  | "SERVICES"
+  | "FINANCIAL";

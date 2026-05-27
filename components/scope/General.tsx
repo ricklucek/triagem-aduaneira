@@ -1,34 +1,26 @@
 "use client";
 
-import { EscopoForm } from "@/domain/scope/types";
-
-import {
-  Card,
-} from "@/components/ui/form-layout";
-
+import type { EscopoForm } from "@/domain/scope/types";
+import { Card } from "@/components/ui/form-layout";
 import { Field, TextArea } from "@/components/ui/form-fields";
-
 
 type Props = {
   form: EscopoForm;
   onChange: (next: EscopoForm) => void;
 };
 
-export default function ScopeWizard({
-  form,
-  onChange
-}: Props) {
-
+export default function General({ form, onChange }: Props) {
   return (
     <Card>
-      <Field label="Observações gerais" hint="">
+      <Field label="Observações gerais" hint="Informações internas ou complementares sobre o escopo.">
         <TextArea
-          value={form.geral?.descricao ?? ""}
-          onChange={(e) =>
+          value={form.general?.description ?? ""}
+          onChange={(event) =>
             onChange({
               ...form,
-              geral: {
-                descricao: e.target.value,
+              general: {
+                ...form.general,
+                description: event.target.value,
               },
             })
           }

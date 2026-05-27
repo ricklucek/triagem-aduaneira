@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, Ellipsis, Pencil, RotateCw, Search } from "lucide-react";
+import { Ellipsis, RotateCw, Search } from "lucide-react";
 import {
     SecondaryButton,
     Toolbar,
@@ -28,10 +28,8 @@ import { hasRole } from "@/lib/auth/guard";
 import { format } from 'date-fns';
 import { ptBR } from "date-fns/locale";
 import { ScopeSummary } from "@/data/scope/ScopeRepo";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useBulkAssignmentScopes, useBulkAssignmentSummary, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
-import type { BulkAssignmentGroupBy } from "@/lib/api/types/scope-api";
+import BulkEdit from "@/components/scope/operations/BulkEdit";
+
 
 type StatusFilter = "todos" | "draft" | "published" | "archived";
 
@@ -50,12 +48,6 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
     } | null>(null);
     const [deleting, setDeleting] = useState(false);
     const pageSize = 10;
-    const [bulkOpen, setBulkOpen] = useState(false);
-    const [groupBy, setGroupBy] = useState<BulkAssignmentGroupBy | null>(null);
-    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-    const [checkedScopeIds, setCheckedScopeIds] = useState<string[]>([]);
-    const [targetUserId, setTargetUserId] = useState<string>("");
-    const [bulkSaving, setBulkSaving] = useState(false);
 
     const params = useMemo(
         () => ({
@@ -68,9 +60,6 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
     );
 
     const { data, error, isLoading, mutate } = useScopes(params);
-    const { data: scopeMetadata } = useScopeMetadata();
-    const { data: summaryData, isLoading: summaryLoading } = useBulkAssignmentSummary(groupBy);
-    const { data: scopesData, isLoading: scopesLoading } = useBulkAssignmentScopes(groupBy, selectedUserId);
 
     const items = data?.items ?? [];
     const total = data?.total ?? 0;
@@ -91,31 +80,16 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
         }
     }
 
-    async function handleConfirmBulkUpdate() {
-        if (!groupBy || !selectedUserId || !targetUserId || checkedScopeIds.length === 0) return;
-        try {
-            setBulkSaving(true);
-            const result = await scopeApi.updateBulkAssignment({
-                groupBy,
-                fromUserId: selectedUserId,
-                toUserId: targetUserId,
-                scopeIds: checkedScopeIds,
-            });
-            toast.success(`OK! ${result.impactedScopes} escopo(s) atualizado(s).`);
-            setBulkOpen(false);
-        } catch {
-            toast.error("Falha ao atualizar escopos em massa.");
-        } finally {
-            setBulkSaving(false);
-        }
-    }
-
     return (
         <div>
             <div className="flex flex-col bg-background/80 p-2 md:p-4 gap-4 border-b">
-                <div className="flex flex-row items-center gap-2">
-                    <Search size={20} />
-                    <h2 className="text-sm font-semibold tracking-tight">Filtros</h2>
+                <div className="flex flex-row items-center gap-2 justify-between">
+                    <div className="flex items-center gap-2">
+                        <Search size={20} />
+                        <h2 className="text-sm font-semibold tracking-tight">Filtros</h2>
+                    </div>
+                    
+                    <BulkEdit />
                 </div>
 
                 <TextInput
@@ -127,12 +101,6 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                     }}
                     className="pl-10 bg-zinc-800 rounded-md"
                 />
-                {hasRole("admin") && (
-                    <Button type="button" variant="outline" onClick={() => setBulkOpen(true)}>
-                        <Pencil className="size-4 mr-2" />
-                        Edição em massa
-                    </Button>
-                )}
             </div>
 
             {isLoading ? (
@@ -297,65 +265,6 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <Sheet open={bulkOpen} onOpenChange={setBulkOpen}>
-                <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
-                    <SheetHeader>
-                        <SheetTitle>Edição em massa de escopos</SheetTitle>
-                        <SheetDescription>Apenas administradores podem executar esta operação.</SheetDescription>
-                    </SheetHeader>
-                    <div className="space-y-4 py-4">
-                        <Select value={groupBy ?? ""} onValueChange={(value) => {
-                            const next = value as BulkAssignmentGroupBy;
-                            setGroupBy(next);
-                            setSelectedUserId(null);
-                            setCheckedScopeIds([]);
-                        }}>
-                            <SelectTrigger><SelectValue placeholder="Escolha o filtro" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="responsavel_comercial">Responsável Comercial</SelectItem>
-                                <SelectItem value="analista_da">Analista DA</SelectItem>
-                                <SelectItem value="analista_ae">Analista AE</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        {summaryLoading ? <div>Carregando resumo...</div> : summaryData?.items?.map((item) => (
-                            <button key={item.userId} className="w-full border rounded-md p-2 text-left" onClick={() => setSelectedUserId(item.userId)}>
-                                <div className="font-medium">{item.userName}</div>
-                                <div className="text-xs text-muted-foreground">{item.totalScopes} escopo(s)</div>
-                            </button>
-                        ))}
-                        {scopesLoading ? <div>Carregando escopos...</div> : scopesData && (
-                            <div className="space-y-3">
-                                <div className="text-sm font-semibold">Escopos selecionados</div>
-                                {scopesData.items.map((scope) => {
-                                    const checked = checkedScopeIds.includes(scope.id);
-                                    return (
-                                        <button key={scope.id} className="w-full border rounded-md p-2 flex items-center justify-between" onClick={() => {
-                                            setCheckedScopeIds((prev) => checked ? prev.filter((id) => id !== scope.id) : [...prev, scope.id]);
-                                        }}>
-                                            <span>{scope.clientName}</span>
-                                            {checked && <Check className="size-4" />}
-                                        </button>
-                                    );
-                                })}
-                                <Select value={targetUserId} onValueChange={setTargetUserId}>
-                                    <SelectTrigger><SelectValue placeholder="Novo responsável" /></SelectTrigger>
-                                    <SelectContent>
-                                        {(scopeMetadata?.responsaveis ?? []).map((user) => (
-                                            <SelectItem key={user.id} value={user.id}>{user.nome}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <div className="text-sm">
-                                    Impactados: <strong>{checkedScopeIds.length}</strong>
-                                </div>
-                                <Button onClick={handleConfirmBulkUpdate} disabled={bulkSaving || checkedScopeIds.length === 0 || !targetUserId}>
-                                    {bulkSaving ? "Confirmando..." : "Confirmar operação"}
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                </SheetContent>
-            </Sheet>
         </div>
     )
 }

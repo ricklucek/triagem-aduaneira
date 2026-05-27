@@ -1,12 +1,12 @@
 import { useSyncExternalStore } from "react";
-import type { AuthTokens, AuthUser } from "@/lib/api/types/auth-api";
+import type { AuthTokens, IUser } from "@/lib/api/types/auth-api";
 
 const AUTH_STORAGE_KEY = "triagem.auth.session";
 const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const AUTH_EVENT = "triagem.auth.session.changed";
 
 export interface AuthSession {
-  user: AuthUser;
+  user: IUser;
   tokens: AuthTokens;
 }
 

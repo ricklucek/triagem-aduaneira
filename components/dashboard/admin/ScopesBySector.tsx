@@ -137,7 +137,7 @@ function UserScopesTable({ userId, sectorFilter }: { userId: string; sectorFilte
             <TableBody>
                 {scopes.map((scope) => (
                     <TableRow key={scope.id}>
-                        <TableCell><Link href={`/clients/${scope.clientCnpj}/scopes/view/${scope.id}`} className="underline">{scope.clientName}</Link></TableCell>
+                        <TableCell><Link href={`/scope/view/${scope.id}`} className="underline">{scope.clientName}</Link></TableCell>
                         <TableCell>{format(scope.createdAt, "dd/MM/yyyy")}</TableCell>
                     </TableRow>
                 ))}

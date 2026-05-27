@@ -1,11 +1,11 @@
 export type UserRole = "admin" | "comercial" | "credenciamento" | "operacao";
 
-export interface AuthUser {
+export interface IUser {
   id: string;
-  nome: string;
+  name: string;
   email: string;
   role: UserRole;
-  setor?: string;
+  department?: string;
 }
 
 export interface LoginPayload {
@@ -20,7 +20,7 @@ export interface AuthTokens {
 }
 
 export interface LoginResponse {
-  user: AuthUser;
+  user: IUser;
   tokens: AuthTokens;
 }
 
