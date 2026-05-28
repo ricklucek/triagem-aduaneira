@@ -203,6 +203,8 @@ export const NcmDraftSchema = z.object({
   id: optionalId,
   code: requiredTrimmedString("NCM é obrigatório"),
   description: optionalTrimmedString,
+  hasBenefit: optionalBoolean,
+  benefitDescription: optionalTrimmedString,
 });
 
 export const OperationLocationDraftSchema = z.object({
@@ -491,6 +493,7 @@ export const IcmsDestinationRateDraftSchema = z.object({
   destinationPurpose: DestinationPurposeSchema,
   collectedRate: nullableNumberLike,
   effectiveRate: nullableNumberLike,
+  regime: TaxRegimeSchema.optional().nullable(),
   notes: optionalTrimmedString,
 });
 

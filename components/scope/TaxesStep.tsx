@@ -1,99 +1,20 @@
 "use client";
 
 import type { EscopoForm } from "@/domain/scope/types";
-
-import { Field, Select, TextInput } from "@/components/ui/form-fields";
+import { Field, NumberInput, Select, TextInput } from "@/components/ui/form-fields";
 import { Card, Grid, Stack } from "@/components/ui/form-layout";
+import { DESTINATION_LABEL, OPERATION_LABEL, TAX_REGIME_LABEL, emptyOperationTaxes, type OperationType } from "./canonical-draft";
 
-import {
-  OPERATION_LABEL,
-  TAX_REGIME_LABEL,
-  emptyOperationTaxes,
-  type OperationType,
-} from "./canonical-draft";
+function AccountOwnerSelect({ value, onChange }: any) { return <Select value={value ?? "CASCO"} onChange={(e) => onChange(e.target.value)}><option value="CASCO">Conta CASCO</option><option value="CLIENT">Conta do cliente</option></Select>; }
+function TaxRegimeSelect({ value, onChange }: any) { return <Select value={value ?? "FULL"} onChange={(e) => onChange(e.target.value)}>{Object.entries(TAX_REGIME_LABEL).map(([k,l])=><option key={k} value={k}>{l}</option>)}</Select>; }
 
-
-function fieldError(errors: Record<string, string>, ...paths: string[]) {
-  for (const path of paths) {
-    if (errors[path]) return errors[path];
-  }
-  return undefined;
-}
-
-function AccountOwnerSelect({ value, onChange }: { value?: string | null; onChange: (value: string) => void }) {
-  return (
-    <Select value={value ?? "CASCO"} onChange={(e) => onChange(e.target.value)}>
-      <option value="CASCO">Conta CASCO</option>
-      <option value="CLIENT">Conta do cliente</option>
-    </Select>
-  );
-}
-
-function TaxRegimeSelect({ value, onChange }: { value?: string | null; onChange: (value: string) => void }) {
-  return (
-    <Select value={value ?? "FULL"} onChange={(e) => onChange(e.target.value)}>
-      {Object.entries(TAX_REGIME_LABEL).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-    </Select>
-  );
-}
-
-
-export default function TaxesStep({ form, patchForm, errors }: { form: EscopoForm; patchForm: (patch: Partial<EscopoForm>) => void; errors: Record<string, string> }) {
+export default function TaxesStep({ form, patchForm }: { form: EscopoForm; patchForm: (patch: Partial<EscopoForm>) => void; errors: Record<string, string> }) {
   const tabs = form.operations.types.length ? form.operations.types : ["IMPORT"];
-  return (
-    <Stack>
-      {tabs.map((operationType) => {
-        const key = operationType === "IMPORT" ? "importTaxes" : "exportTaxes";
-        const taxes = (form.taxes as any)[key] ?? emptyOperationTaxes();
-        const federal = taxes.federalTaxes ?? emptyOperationTaxes().federalTaxes;
-        const afrmm = taxes.afrmm ?? emptyOperationTaxes().afrmm;
-        const icms = taxes.icms ?? emptyOperationTaxes().icms;
-
-        function patchTaxes(patch: any) {
-          patchForm({ taxes: { ...form.taxes, [key]: { ...taxes, ...patch } } } as Partial<EscopoForm>);
-        }
-
-        return (
-          <Card key={operationType}>
-            <h3 className="text-base font-semibold">Impostos - {OPERATION_LABEL[operationType as OperationType]}</h3>
-            <Grid columns={2}>
-              <Field label="Conta impostos federais">
-                <AccountOwnerSelect value={federal.paymentAccountType} onChange={(paymentAccountType) => patchTaxes({ federalTaxes: { ...federal, paymentAccountType } })} />
-              </Field>
-              <Field label="Observação impostos federais">
-                <TextInput value={federal.notes ?? ""} onChange={(e) => patchTaxes({ federalTaxes: { ...federal, notes: e.target.value } })} />
-              </Field>
-              {(["ii", "ipi", "pis", "cofins"] as const).map((tax) => {
-                const regimeKey = `${tax}Regime`;
-                const benefitKey = `${tax}BenefitDetail`;
-                return (
-                  <div key={tax} className="rounded-xl border p-3">
-                    <Field label={tax.toUpperCase()}>
-                      <TaxRegimeSelect value={(federal as any)[regimeKey]} onChange={(value) => patchTaxes({ federalTaxes: { ...federal, [regimeKey]: value } })} />
-                    </Field>
-                    <Field label={`Benefício ${tax.toUpperCase()}`}>
-                      <TextInput value={(federal as any)[benefitKey] ?? ""} onChange={(e) => patchTaxes({ federalTaxes: { ...federal, [benefitKey]: e.target.value } })} />
-                    </Field>
-                  </div>
-                );
-              })}
-              <Field label="Regime AFRMM">
-                <TaxRegimeSelect value={afrmm.regime} onChange={(regime) => patchTaxes({ afrmm: { ...afrmm, regime } })} />
-              </Field>
-              <Field label="Detalhe benefício AFRMM">
-                <TextInput value={afrmm.benefitDetail ?? ""} onChange={(e) => patchTaxes({ afrmm: { ...afrmm, benefitDetail: e.target.value } })} />
-              </Field>
-              <Field label="Regime ICMS">
-                <TaxRegimeSelect value={icms.regime} onChange={(regime) => patchTaxes({ icms: { ...icms, regime } })} />
-              </Field>
-              <Field label="Observação ICMS">
-                <TextInput value={icms.notes ?? ""} onChange={(e) => patchTaxes({ icms: { ...icms, notes: e.target.value } })} />
-              </Field>
-            </Grid>
-            {fieldError(errors, `taxes.${key}`) ? <p className="mt-2 text-sm text-destructive">{fieldError(errors, `taxes.${key}`)}</p> : null}
-          </Card>
-        );
-      })}
-    </Stack>
-  );
+  return <Stack>{tabs.map((operationType) => { const key = operationType === "IMPORT" ? "importTaxes" : "exportTaxes"; const taxes = (form.taxes as any)[key] ?? emptyOperationTaxes(); const icms = taxes.icms ?? emptyOperationTaxes().icms;
+    const operation = operationType === 'IMPORT' ? form.operations.importOperation : form.operations.exportOperation;
+    const destinations = operation?.destinationPurposes ?? [];
+    const patchTaxes = (patch:any)=> patchForm({ taxes: { ...form.taxes, [key]: { ...taxes, ...patch } } } as Partial<EscopoForm>);
+    return <Card key={operationType}><h3 className="text-base font-semibold">Impostos - {OPERATION_LABEL[operationType as OperationType]}</h3><Grid columns={2}><Field label="Conta impostos federais"><AccountOwnerSelect value={taxes.federalTaxes?.paymentAccountType} onChange={(v:string)=>patchTaxes({federalTaxes:{...taxes.federalTaxes,paymentAccountType:v}})} /></Field><Field label="Regime ICMS"><TaxRegimeSelect value={icms.regime} onChange={(v:string)=>patchTaxes({icms:{...icms,regime:v}})} /></Field></Grid>
+      {operationType==='IMPORT' ? <div className="mt-4 grid gap-3">{destinations.map((d:any)=>{ const found=(icms.destinationRates??[]).find((r:any)=>r.destinationPurpose===d.purpose)??{destinationPurpose:d.purpose,collectedRate:null,effectiveRate:null,regime:icms.regime,notes:null}; const others=(icms.destinationRates??[]).filter((r:any)=>r.destinationPurpose!==d.purpose); const set=(patch:any)=>patchTaxes({icms:{...icms,destinationRates:[...others,{...found,...patch}]}}); return <Card key={d.purpose} className="p-3"><h4 className="font-medium">{DESTINATION_LABEL[d.purpose as keyof typeof DESTINATION_LABEL]}</h4><Grid columns={3}><Field label="Regime"><TaxRegimeSelect value={found.regime} onChange={(v:string)=>set({regime:v})} /></Field><Field label="Alíquota efetiva"><NumberInput value={found.effectiveRate ?? ""} onChange={(e)=>set({effectiveRate:e.target.value})} /></Field><Field label="Alíquota recolhida"><NumberInput value={found.collectedRate ?? ""} onChange={(e)=>set({collectedRate:e.target.value})} /></Field></Grid><Field label="Observação"><TextInput value={found.notes ?? ""} onChange={(e)=>set({notes:e.target.value})} /></Field></Card>})}</div>:null}
+    </Card>})}</Stack>;
 }
