@@ -1,20 +1,38 @@
 "use client";
 
-import { Field, TextArea } from "@/components/ui/form-fields";
-import { Card, Grid } from "@/components/ui/form-layout";
+import { useState } from "react";
 
-export default function OperationExportFields({ operation }: any) {
+import type { OperationDraft } from "@/domain/scope/schema";
+
+import ServicoToggleCard from "./blocks/ServicoToggleCard";
+import OperationNcmSection from "./OperationNcmSection";
+
+type OperationNcm = OperationDraft["ncms"][number];
+
+type OperationExportFieldsProps = {
+  operation: OperationDraft;
+  patchOperation: (patch: Partial<OperationDraft>) => void;
+  errors: Record<string, string>;
+  prefix: string;
+};
+
+export default function OperationExportFields({
+  operation,
+  patchOperation,
+  errors,
+  prefix,
+}: OperationExportFieldsProps) {
+  const [showNcms, setShowNcms] = useState(true);
+
   return (
-    <Card>
-      <h3 className="text-base font-semibold">Parâmetros de exportação</h3>
-      <Grid columns={2}>
-        <Field label="Descrição dos produtos">
-          <TextArea value={operation.productsDescription ?? ""} readOnly />
-        </Field>
-        <Field label="Outro órgão anuente / observação">
-          <TextArea value={operation.otherAuthority ?? ""} readOnly />
-        </Field>
-      </Grid>
-    </Card>
+    <ServicoToggleCard title="NCM e benefícios da exportação" checked={showNcms} onToggle={setShowNcms}>
+      <OperationNcmSection
+        ncms={operation.ncms ?? []}
+        ncmNotes={operation.ncmNotes}
+        onChangeNcms={(next: OperationNcm[]) => patchOperation({ ncms: next })}
+        onChangeNotes={(next) => patchOperation({ ncmNotes: next })}
+        error={errors[`${prefix}.ncms`]}
+      />
+    </ServicoToggleCard>
   );
 }

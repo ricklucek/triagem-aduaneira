@@ -9,6 +9,7 @@ export const DESTINATION_PURPOSE_LABEL: Record<string, string> = {
   INDUSTRIALIZATION: "Industrialização",
   USE_AND_CONSUMPTION: "Uso e consumo",
   FIXED_ASSET: "Ativo imobilizado",
+  CONSUMPTION: "Consumo",
 };
 
 export const TAX_REGIME_LABEL: Record<string, string> = {

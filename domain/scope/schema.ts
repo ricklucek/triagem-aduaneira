@@ -78,7 +78,10 @@ export const DestinationPurposeSchema = z.enum([
   "INDUSTRIALIZATION",
   "USE_AND_CONSUMPTION",
   "FIXED_ASSET",
+  "CONSUMPTION",
 ]);
+
+export const ConsumptionSubtypeSchema = z.string().trim().min(1);
 
 export const AccountOwnerTypeSchema = z.enum(["CASCO", "CLIENT"]);
 
@@ -225,6 +228,7 @@ export const DestinationPurposeDraftSchema = z.object({
   id: optionalId,
   purpose: DestinationPurposeSchema,
   consumptionSubtype: optionalTrimmedString,
+  consumptionSubtypes: z.array(ConsumptionSubtypeSchema).default([]),
 });
 
 export const OperationDraftSchema = z
@@ -265,21 +269,15 @@ export const OperationDraftSchema = z
       });
     }
 
-    const hasUseAndConsumption = value.destinationPurposes.some(
-      (item) => item.purpose === "USE_AND_CONSUMPTION",
-    );
-
-    if (hasUseAndConsumption) {
-      value.destinationPurposes.forEach((item, index) => {
-        if (item.purpose === "USE_AND_CONSUMPTION" && !item.consumptionSubtype) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["destinationPurposes", index, "consumptionSubtype"],
-            message: "Subtipo de consumo é obrigatório",
-          });
-        }
-      });
-    }
+    value.destinationPurposes.forEach((item, index) => {
+      if (item.purpose === "CONSUMPTION" && item.consumptionSubtypes.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["destinationPurposes", index, "consumptionSubtypes"],
+          message: "Informe ao menos um subtipo de consumo",
+        });
+      }
+    });
 
     if (value.operationType === "IMPORT") {
       if (value.hasExporterRelationship == null) {

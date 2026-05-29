@@ -1,10 +1,27 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox, Field, Select, TextArea, TextInput } from "@/components/ui/form-fields";
-import { Card, Stack } from "@/components/ui/form-layout";
+import { useState } from "react";
+
+import type { OperationDraft } from "@/domain/scope/schema";
+
+import { Checkbox, Field, Select } from "@/components/ui/form-fields";
+import { Grid, Stack } from "@/components/ui/form-layout";
+
 import SearchableCheckboxMenu from "./blocks/SearchableCheckboxMenu";
-import { formatNCM } from "@/utils/format";
+import ServicoToggleCard from "./blocks/ServicoToggleCard";
+import OperationNcmSection from "./OperationNcmSection";
+
+type OperationNcm = OperationDraft["ncms"][number];
+type OperationLocation = OperationDraft["entryLocations"][number];
+type DestinationPurpose = OperationDraft["destinationPurposes"][number]["purpose"];
+type DestinationPurposeItem = OperationDraft["destinationPurposes"][number];
+
+type OperationImportFieldsProps = {
+  operation: OperationDraft;
+  patchOperation: (patch: Partial<OperationDraft>) => void;
+  errors: Record<string, string>;
+  prefix: string;
+};
 
 const LOCAIS = [
   ["0917900/0917800|Curitiba/ Paranaguá", "0917900/0917800 • Curitiba/ Paranaguá"],
@@ -13,64 +30,228 @@ const LOCAIS = [
   ["0927700|Itapoá", "0927700 • Itapoá"],
 ] as const;
 
-const DESTINATIONS = [
+const DESTINATION_OPTIONS: ReadonlyArray<{ value: DestinationPurpose; label: string }> = [
   { value: "RESALE", label: "Revenda" },
   { value: "INDUSTRIALIZATION", label: "Industrialização" },
   { value: "USE_AND_CONSUMPTION", label: "Uso e consumo" },
   { value: "FIXED_ASSET", label: "Ativo imobilizado" },
+  { value: "CONSUMPTION", label: "Consumo" },
 ];
 
-export default function OperationImportFields({ operation, patchOperation, errors, prefix }: any) {
-  const options = LOCAIS.map(([value, label]) => ({ value, label }));
-  const destinations = operation.destinationPurposes ?? [];
+const CONSUMPTION_SUBTYPE_OPTIONS = [
+  { value: "ATIVO_IMOBILIZADO_FIXO", label: "Ativo imobilizado/fixo" },
+  { value: "INSUMOS_PARA_INDUSTRIALIZACAO", label: "Insumos para industrialização" },
+  { value: "USO_E_CONSUMO", label: "Uso e consumo" },
+] as const;
 
-  const updateNcm = (index: number, patch: any) => {
-    const next = [...(operation.ncms ?? [])];
-    next[index] = { ...next[index], ...patch };
-    patchOperation({ ncms: next });
+function booleanSelectValue(value: boolean | null | undefined) {
+  if (value === true) return "true";
+  if (value === false) return "false";
+  return "";
+}
+
+function booleanFromSelect(value: string) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return null;
+}
+
+function parseLocation(rawValue: string, type: OperationLocation["type"]): OperationLocation {
+  const [code, name] = rawValue.includes("|") ? rawValue.split("|") : [null, rawValue];
+
+  return {
+    type,
+    rawValue,
+    code,
+    name,
   };
+}
+
+function locationValue(location: OperationLocation) {
+  return location.rawValue ?? [location.code, location.name].filter(Boolean).join("|");
+}
+
+export default function OperationImportFields({
+  operation,
+  patchOperation,
+  errors,
+  prefix,
+}: OperationImportFieldsProps) {
+  const [sections, setSections] = useState({
+    ncms: true,
+    parameters: true,
+    destination: true,
+  });
+
+  const locationOptions = LOCAIS.map(([value, label]) => ({ value, label }));
+  const destinations = operation.destinationPurposes ?? [];
+  const consumptionDestination = destinations.find((item) => item.purpose === "CONSUMPTION");
+
+  function toggleSection(section: keyof typeof sections, checked: boolean) {
+    setSections((current) => ({ ...current, [section]: checked }));
+  }
+
+  function patchDestinations(next: DestinationPurposeItem[]) {
+    patchOperation({ destinationPurposes: next });
+  }
+
+  function toggleDestination(purpose: DestinationPurpose, checked: boolean) {
+    if (checked) {
+      patchDestinations([
+        ...destinations,
+        {
+          purpose,
+          consumptionSubtype: null,
+          consumptionSubtypes: [],
+        },
+      ]);
+      return;
+    }
+
+    patchDestinations(destinations.filter((item) => item.purpose !== purpose));
+  }
+
+  function updateConsumptionSubtypes(next: string[]) {
+    const updated = destinations.map((item) =>
+      item.purpose === "CONSUMPTION"
+        ? {
+            ...item,
+            consumptionSubtype: next[0] ?? null,
+            consumptionSubtypes: next,
+          }
+        : item,
+    );
+
+    patchDestinations(updated);
+  }
 
   return (
     <Stack>
-      <Card>
-        <h3 className="text-base font-semibold">NCM e benefícios</h3>
+      <ServicoToggleCard
+        title="NCM e benefícios"
+        checked={sections.ncms}
+        onToggle={(checked) => toggleSection("ncms", checked)}
+      >
+        <OperationNcmSection
+          ncms={operation.ncms ?? []}
+          ncmNotes={operation.ncmNotes}
+          onChangeNcms={(next: OperationNcm[]) => patchOperation({ ncms: next })}
+          onChangeNotes={(next) => patchOperation({ ncmNotes: next })}
+          error={errors[`${prefix}.ncms`]}
+        />
+      </ServicoToggleCard>
+
+      <ServicoToggleCard
+        title="Parâmetros de importação"
+        checked={sections.parameters}
+        onToggle={(checked) => toggleSection("parameters", checked)}
+      >
+        <Grid columns={2}>
+          <Field label="Vínculo com exportador" required error={errors[`${prefix}.hasExporterRelationship`]}>
+            <Select
+              value={booleanSelectValue(operation.hasExporterRelationship)}
+              onChange={(event) => patchOperation({ hasExporterRelationship: booleanFromSelect(event.target.value) })}
+            >
+              <option value="">Selecione</option>
+              <option value="true">Sim</option>
+              <option value="false">Não</option>
+            </Select>
+          </Field>
+
+          <Field label="Necessidade de DTA" required error={errors[`${prefix}.requiresDta`]}>
+            <Select
+              value={booleanSelectValue(operation.requiresDta)}
+              onChange={(event) => patchOperation({ requiresDta: booleanFromSelect(event.target.value) })}
+            >
+              <option value="">Selecione</option>
+              <option value="true">Sim</option>
+              <option value="false">Não</option>
+            </Select>
+          </Field>
+
+          <Field label="Necessidade de DTC" required error={errors[`${prefix}.requiresDtc`]}>
+            <Select
+              value={booleanSelectValue(operation.requiresDtc)}
+              onChange={(event) => patchOperation({ requiresDtc: booleanFromSelect(event.target.value) })}
+            >
+              <option value="">Selecione</option>
+              <option value="true">Sim</option>
+              <option value="false">Não</option>
+            </Select>
+          </Field>
+
+          <Field label="Necessidade de LI/LPCO" required error={errors[`${prefix}.requiresLiLpco`]}>
+            <Select
+              value={booleanSelectValue(operation.requiresLiLpco)}
+              onChange={(event) => patchOperation({ requiresLiLpco: booleanFromSelect(event.target.value) })}
+            >
+              <option value="">Selecione</option>
+              <option value="true">Sim</option>
+              <option value="false">Não</option>
+            </Select>
+          </Field>
+        </Grid>
+
+        <SearchableCheckboxMenu
+          title="Locais de entrada"
+          searchLabel="Pesquisar local"
+          value={(operation.entryLocations ?? []).map(locationValue)}
+          options={locationOptions}
+          onChange={(next) => patchOperation({ entryLocations: next.map((rawValue) => parseLocation(rawValue, "ENTRY")) })}
+          error={errors[`${prefix}.entryLocations`]}
+        />
+
+        <SearchableCheckboxMenu
+          title="Locais de desembaraço"
+          searchLabel="Pesquisar local"
+          value={(operation.customsClearanceLocations ?? []).map(locationValue)}
+          options={locationOptions}
+          onChange={(next) =>
+            patchOperation({
+              customsClearanceLocations: next.map((rawValue) => parseLocation(rawValue, "CUSTOMS_CLEARANCE")),
+            })
+          }
+          error={errors[`${prefix}.customsClearanceLocations`]}
+        />
+      </ServicoToggleCard>
+
+      <ServicoToggleCard
+        title="Destinação"
+        checked={sections.destination}
+        onToggle={(checked) => toggleSection("destination", checked)}
+      >
         <div className="grid gap-3">
-          {(operation.ncms ?? []).map((item: any, index: number) => (
-            <Card key={index} className="p-4">
-              <div className="grid gap-3">
-                <Field label={index === 0 ? "NCM principal" : `NCM ${index + 1}`}>
-                  <TextInput value={formatNCM(item.code ?? "")} onChange={(e) => updateNcm(index, { code: e.target.value })} />
-                </Field>
-                <Field label="Possui benefício?">
-                  <Select value={item.hasBenefit ? "true" : item.hasBenefit === false ? "false" : ""} onChange={(e) => updateNcm(index, { hasBenefit: e.target.value === "" ? null : e.target.value === "true", benefitDescription: e.target.value === "true" ? item.benefitDescription ?? "" : null })}>
-                    <option value="">Selecione</option><option value="true">Sim</option><option value="false">Não</option>
-                  </Select>
-                </Field>
-                {item.hasBenefit ? <Field label="Descrição do benefício"><TextInput value={item.benefitDescription ?? ""} onChange={(e) => updateNcm(index, { benefitDescription: e.target.value })} /></Field> : null}
-                {(operation.ncms?.length ?? 0) > 1 ? <Button type="button" variant="destructive" onClick={() => patchOperation({ ncms: operation.ncms.filter((_: any, i: number) => i !== index) })}>Remover</Button> : null}
-              </div>
-            </Card>
-          ))}
-          <Button type="button" variant="outline" onClick={() => patchOperation({ ncms: [...(operation.ncms ?? []), { code: "", description: null, hasBenefit: null, benefitDescription: null }] })}>+ Adicionar NCM</Button>
-          <Field label="Observação sobre NCMs"><TextArea value={operation.ncmNotes ?? ""} onChange={(e) => patchOperation({ ncmNotes: e.target.value })} /></Field>
-        </div>
-      </Card>
+          {DESTINATION_OPTIONS.map((option) => {
+            const selected = destinations.some((item) => item.purpose === option.value);
 
-      <Card>
-        <h3 className="text-base font-semibold">Parâmetros de importação</h3>
-        <div className="grid gap-3 md:grid-cols-2">
-          <Field label="Vínculo com exportador"><Select value={operation.hasExporterRelationship === true ? "true" : operation.hasExporterRelationship === false ? "false" : ""} onChange={(e) => patchOperation({ hasExporterRelationship: e.target.value === "" ? null : e.target.value === "true" })}><option value="">Selecione</option><option value="true">Sim</option><option value="false">Não</option></Select></Field>
-          <Field label="Necessidade de DTA"><Select value={operation.requiresDta === true ? "true" : operation.requiresDta === false ? "false" : ""} onChange={(e) => patchOperation({ requiresDta: e.target.value === "" ? null : e.target.value === "true" })}><option value="">Selecione</option><option value="true">Sim</option><option value="false">Não</option></Select></Field>
-          <Field label="Necessidade de DTC"><Select value={operation.requiresDtc === true ? "true" : operation.requiresDtc === false ? "false" : ""} onChange={(e) => patchOperation({ requiresDtc: e.target.value === "" ? null : e.target.value === "true" })}><option value="">Selecione</option><option value="true">Sim</option><option value="false">Não</option></Select></Field>
-          <Field label="Necessidade de LI/LPCO"><Select value={operation.requiresLiLpco === true ? "true" : operation.requiresLiLpco === false ? "false" : ""} onChange={(e) => patchOperation({ requiresLiLpco: e.target.value === "" ? null : e.target.value === "true" })}><option value="">Selecione</option><option value="true">Sim</option><option value="false">Não</option></Select></Field>
+            return (
+              <Checkbox
+                key={option.value}
+                label={option.label}
+                checked={selected}
+                onChange={(checked) => toggleDestination(option.value, checked)}
+              />
+            );
+          })}
         </div>
-        <div className="mt-4 grid gap-4">
-          <SearchableCheckboxMenu title="Locais de entrada" searchLabel="Pesquisar local" value={(operation.entryLocations ?? []).map((l: any) => l.rawValue ?? l.name)} options={options} onChange={(next) => patchOperation({ entryLocations: next.map((raw: string) => ({ type: "ENTRY", rawValue: raw, name: raw.includes("|") ? raw.split("|")[1] : raw, code: raw.includes("|") ? raw.split("|")[0] : null })) })} error={errors?.[`${prefix}.entryLocations`]} />
-          <SearchableCheckboxMenu title="Locais de desembaraço" searchLabel="Pesquisar local" value={(operation.customsClearanceLocations ?? []).map((l: any) => l.rawValue ?? l.name)} options={options} onChange={(next) => patchOperation({ customsClearanceLocations: next.map((raw: string) => ({ type: "CUSTOMS_CLEARANCE", rawValue: raw, name: raw.includes("|") ? raw.split("|")[1] : raw, code: raw.includes("|") ? raw.split("|")[0] : null })) })} error={errors?.[`${prefix}.customsClearanceLocations`]} />
-        </div>
-      </Card>
 
-      <Card><h3 className="text-base font-semibold">Destinação</h3><div className="grid gap-3">{DESTINATIONS.map((option) => { const selected = destinations.some((d: any) => d.purpose === option.value); return <div key={option.value} className="rounded-xl border p-3"><Checkbox label={option.label} checked={selected} onChange={(checked)=>patchOperation({destinationPurposes: checked?[...destinations,{purpose:option.value,consumptionSubtype:null}]:destinations.filter((d:any)=>d.purpose!==option.value)})}/>{selected && option.value==='USE_AND_CONSUMPTION'?<TextInput className="mt-2" placeholder="Subtipo de consumo" value={destinations.find((d:any)=>d.purpose===option.value)?.consumptionSubtype??""} onChange={(e)=>patchOperation({destinationPurposes:destinations.map((d:any)=>d.purpose===option.value?{...d,consumptionSubtype:e.target.value}:d)})}/>:null}</div>;})}</div></Card>
+        {consumptionDestination ? (
+          <Field
+            label="Subtipo de consumo"
+            required
+            error={errors[`${prefix}.destinationPurposes.consumptionSubtypes`]}
+          >
+            <SearchableCheckboxMenu
+              title=""
+              searchLabel="Pesquisar subtipo de consumo"
+              value={consumptionDestination.consumptionSubtypes ?? []}
+              options={CONSUMPTION_SUBTYPE_OPTIONS}
+              onChange={updateConsumptionSubtypes}
+              error={errors[`${prefix}.destinationPurposes.consumptionSubtypes`]}
+            />
+          </Field>
+        ) : null}
+      </ServicoToggleCard>
     </Stack>
   );
 }

@@ -195,7 +195,9 @@ function OperationView({
             operation.destinationPurposes?.map((item) =>
               [
                 label(DESTINATION_PURPOSE_LABEL, item.purpose),
-                item.consumptionSubtype,
+                item.consumptionSubtypes?.length
+                  ? item.consumptionSubtypes.join(", ")
+                  : item.consumptionSubtype,
               ]
                 .filter(Boolean)
                 .join(" - "),
@@ -341,6 +343,10 @@ function TaxesView({
                   </h6>
 
                   <Grid>
+                    <Field
+                      label="Regime"
+                      value={label(TAX_REGIME_LABEL, rate.regime)}
+                    />
                     <Field
                       label="Alíquota recolhida"
                       value={percent(rate.collectedRate)}

@@ -17,7 +17,8 @@ export type DestinationPurpose =
   | "RESALE"
   | "INDUSTRIALIZATION"
   | "USE_AND_CONSUMPTION"
-  | "FIXED_ASSET";
+  | "FIXED_ASSET"
+  | "CONSUMPTION";
 
 export type LocationType = "ENTRY" | "CUSTOMS_CLEARANCE";
 
@@ -111,6 +112,8 @@ export interface ScopeOperationNcm {
   id: string;
   code: string;
   description: string | null;
+  hasBenefit?: boolean | null;
+  benefitDescription?: string | null;
 }
 
 export interface ScopeOperationLocation {
@@ -131,6 +134,7 @@ export interface ScopeOperationDestinationPurpose {
   id: string;
   purpose: DestinationPurpose;
   consumptionSubtype: string | null;
+  consumptionSubtypes?: string[];
 }
 
 export interface ScopeOperationDetail {
@@ -195,6 +199,7 @@ export interface IcmsDestinationRate {
   destinationPurpose: DestinationPurpose;
   collectedRate: number | null;
   effectiveRate: number | null;
+  regime?: TaxRegime | null;
   notes: string | null;
 }
 
@@ -441,7 +446,7 @@ export interface BulkAssignmentUpdateResponse {
 
 export interface ScopeApiClient {
   createScope(initial?: Partial<EscopoForm>): Promise<CreateScopeResponse>;
-  saveScopeDraft(data: any): Promise<any>;
+  saveScopeDraft(payload: SaveScopeDraftPayload): Promise<void>;
   listScopes(params: ListScopesParams): Promise<ListScopesResult>;
   countUserAssignments(): Promise<{ type: string; count: number }[]>;
   getScope(id: string): Promise<ScopeDetailResponse>;

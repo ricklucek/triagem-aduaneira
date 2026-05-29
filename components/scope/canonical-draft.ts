@@ -42,6 +42,7 @@ export const DESTINATION_LABEL: Record<string, string> = {
   INDUSTRIALIZATION: "Industrialização",
   USE_AND_CONSUMPTION: "Uso e consumo",
   FIXED_ASSET: "Ativo imobilizado",
+  CONSUMPTION: "Consumo",
 };
 
 export const TAX_REGIME_LABEL: Record<string, string> = {
@@ -194,6 +195,7 @@ export function emptyOperationTaxes() {
         { destinationPurpose: "INDUSTRIALIZATION", collectedRate: null, effectiveRate: null, notes: null },
         { destinationPurpose: "USE_AND_CONSUMPTION", collectedRate: null, effectiveRate: null, notes: null },
         { destinationPurpose: "FIXED_ASSET", collectedRate: null, effectiveRate: null, notes: null },
+        { destinationPurpose: "CONSUMPTION", collectedRate: null, effectiveRate: null, notes: null },
       ],
     },
   };
