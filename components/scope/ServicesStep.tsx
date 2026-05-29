@@ -1,13 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
-
 import type { EscopoForm } from "@/domain/scope/types";
+import type { ServicesDraft } from "@/domain/scope/schema";
 
-import { Badge } from "@/components/ui/badge";
-import { Checkbox, Field, NumberInput, Select, TextArea, TextInput } from "@/components/ui/form-fields";
+import { Field, NumberInput, Select, TextArea, TextInput } from "@/components/ui/form-fields";
 import { Card, Grid, Stack } from "@/components/ui/form-layout";
 
+import ServicoToggleCard from "./blocks/ServicoToggleCard";
 import {
   OPERATION_LABEL,
   PRICING_LABEL,
@@ -17,27 +16,6 @@ import {
   type OperationType,
   type ServiceType,
 } from "./canonical-draft";
-
-type EtapaFormulario =
-  | "COMPANY"
-  | "CONTACTS"
-  | "OPERATIONS"
-  | "IMPORT"
-  | "EXPORT"
-  | "TAXES"
-  | "SERVICES"
-  | "FINANCIAL";
-
-const STEP_LABELS: Record<EtapaFormulario, string> = {
-  COMPANY: "Empresa",
-  CONTACTS: "Contatos",
-  OPERATIONS: "Operações",
-  IMPORT: "Importação",
-  EXPORT: "Exportação",
-  TAXES: "Impostos",
-  SERVICES: "Serviços",
-  FINANCIAL: "Financeiro",
-};
 
 const IMPORT_SERVICES: ServiceType[] = [
   "CUSTOMS_CLEARANCE",
@@ -61,15 +39,36 @@ const EXPORT_SERVICES: ServiceType[] = [
   "OTHER_CERTIFICATE",
 ];
 
+type ServiceItemDraft = ServicesDraft["items"][number];
+type PrepostoDraft = ServicesDraft["prepostos"][number];
+
+type ServicesStepProps = {
+  form: EscopoForm;
+  patchForm: (patch: Partial<EscopoForm>) => void;
+  errors: Record<string, string>;
+};
+
 function boolFromSelect(value: string) {
   if (value === "true") return true;
   if (value === "false") return false;
   return null;
 }
 
-function BooleanSelect({ value, onChange }: { value?: boolean | null; onChange: (value: boolean | null) => void }) {
+function boolSelectValue(value?: boolean | null) {
+  if (value === true) return "true";
+  if (value === false) return "false";
+  return "";
+}
+
+function BooleanSelect({
+  value,
+  onChange,
+}: {
+  value?: boolean | null;
+  onChange: (value: boolean | null) => void;
+}) {
   return (
-    <Select value={boolSelectValue(value)} onChange={(e) => onChange(boolFromSelect(e.target.value))}>
+    <Select value={boolSelectValue(value)} onChange={(event) => onChange(boolFromSelect(event.target.value))}>
       <option value="">Selecione</option>
       <option value="true">Sim</option>
       <option value="false">Não</option>
@@ -84,106 +83,155 @@ function fieldError(errors: Record<string, string>, ...paths: string[]) {
   return undefined;
 }
 
-function boolSelectValue(value?: boolean | null) {
-  if (value === true) return "true";
-  if (value === false) return "false";
-  return "";
-}
-
-export default function ServicesStep({ form, patchForm, errors }: { form: EscopoForm; patchForm: (patch: Partial<EscopoForm>) => void; errors: Record<string, string> }) {
-  function upsertService(serviceType: ServiceType, operationType: OperationType, enabled: boolean) {
-    const items = [...(form.services.items ?? [])];
-    const index = items.findIndex((item: any) => item.serviceType === serviceType && item.operationType === operationType);
-    if (index >= 0) items[index] = { ...items[index], enabled };
-    else if (enabled) items.push(buildServiceItem(serviceType, operationType));
-    patchForm({ services: { ...form.services, items } } as Partial<EscopoForm>);
+export default function ServicesStep({ form, patchForm, errors }: ServicesStepProps) {
+  function patchServices(patch: Partial<EscopoForm["services"]>) {
+    patchForm({ services: { ...form.services, ...patch } } as Partial<EscopoForm>);
   }
 
-  function updateService(index: number, patch: any) {
+  function upsertService(serviceType: ServiceType, operationType: OperationType, enabled: boolean) {
+    const items = [...(form.services.items ?? [])];
+    const index = items.findIndex(
+      (item) => item.serviceType === serviceType && item.operationType === operationType,
+    );
+
+    if (index >= 0) {
+      items[index] = { ...items[index], enabled };
+    } else {
+      items.push({ ...(buildServiceItem(serviceType, operationType) as ServiceItemDraft), enabled });
+    }
+
+    patchServices({ items });
+  }
+
+  function updateService(index: number, patch: Partial<ServiceItemDraft>) {
     const items = [...(form.services.items ?? [])];
     items[index] = { ...items[index], ...patch };
-    patchForm({ services: { ...form.services, items } } as Partial<EscopoForm>);
+    patchServices({ items });
   }
 
   function upsertPreposto(operationType: OperationType, enabled: boolean) {
     const prepostos = [...(form.services.prepostos ?? [])];
-    const index = prepostos.findIndex((item: any) => item.operationType === operationType);
-    if (index >= 0) prepostos[index] = { ...prepostos[index], enabled };
-    else if (enabled) prepostos.push(buildPreposto(operationType));
-    patchForm({ services: { ...form.services, prepostos } } as Partial<EscopoForm>);
+    const index = prepostos.findIndex((item) => item.operationType === operationType);
+
+    if (index >= 0) {
+      prepostos[index] = { ...prepostos[index], enabled };
+    } else {
+      prepostos.push({ ...(buildPreposto(operationType) as PrepostoDraft), enabled });
+    }
+
+    patchServices({ prepostos });
   }
 
-  function updatePreposto(index: number, patch: any) {
+  function updatePreposto(index: number, patch: Partial<PrepostoDraft>) {
     const prepostos = [...(form.services.prepostos ?? [])];
     prepostos[index] = { ...prepostos[index], ...patch };
-    patchForm({ services: { ...form.services, prepostos } } as Partial<EscopoForm>);
+    patchServices({ prepostos });
+  }
+
+  function renderService(operationType: OperationType, serviceType: ServiceType) {
+    const index = (form.services.items ?? []).findIndex(
+      (item) => item.serviceType === serviceType && item.operationType === operationType,
+    );
+    const service = index >= 0
+      ? form.services.items[index]
+      : (buildServiceItem(serviceType, operationType) as ServiceItemDraft);
+
+    return (
+      <ServicoToggleCard
+        key={`${operationType}-${serviceType}`}
+        title={SERVICE_LABEL[serviceType]}
+        checked={Boolean(service.enabled)}
+        onToggle={(checked) => upsertService(serviceType, operationType, checked)}
+      >
+        {index >= 0 ? (
+          <Grid columns={3}>
+            <Field label="Tipo de cobrança">
+              <Select
+                value={service.pricingType ?? ""}
+                onChange={(event) => updateService(index, { pricingType: event.target.value as ServiceItemDraft["pricingType"] })}
+              >
+                {Object.entries(PRICING_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Valor">
+              <NumberInput value={service.amount ?? ""} onChange={(event) => updateService(index, { amount: event.target.value })} />
+            </Field>
+            <Field label="Última atualização">
+              <TextInput
+                type="date"
+                value={service.lastUpdatedOn ?? ""}
+                onChange={(event) => updateService(index, { lastUpdatedOn: event.target.value })}
+              />
+            </Field>
+            <Field label="Observações">
+              <TextArea value={service.notes ?? ""} onChange={(event) => updateService(index, { notes: event.target.value })} />
+            </Field>
+          </Grid>
+        ) : null}
+      </ServicoToggleCard>
+    );
+  }
+
+  function renderPreposto(operationType: OperationType) {
+    const prepostoIndex = (form.services.prepostos ?? []).findIndex((item) => item.operationType === operationType);
+    const preposto = prepostoIndex >= 0
+      ? form.services.prepostos[prepostoIndex]
+      : (buildPreposto(operationType) as PrepostoDraft);
+
+    return (
+      <ServicoToggleCard
+        title="Preposto"
+        checked={Boolean(preposto.enabled)}
+        onToggle={(checked) => upsertPreposto(operationType, checked)}
+      >
+        {prepostoIndex >= 0 ? (
+          <Grid columns={2}>
+            <Field label="Incluso no desembaraço CASCO">
+              <BooleanSelect
+                value={preposto.includedInCascoCustomsClearance}
+                onChange={(value) => updatePreposto(prepostoIndex, { includedInCascoCustomsClearance: value })}
+              />
+            </Field>
+            <Field label="Valor">
+              <NumberInput value={preposto.amount ?? ""} onChange={(event) => updatePreposto(prepostoIndex, { amount: event.target.value })} />
+            </Field>
+            <Field label="Nome do preposto manual">
+              <TextInput
+                value={preposto.manualPrepostoName ?? ""}
+                onChange={(event) => updatePreposto(prepostoIndex, { manualPrepostoName: event.target.value, origin: "MANUAL" })}
+              />
+            </Field>
+            <Field label="Observações do preposto">
+              <TextInput
+                value={preposto.manualPrepostoNotes ?? ""}
+                onChange={(event) => updatePreposto(prepostoIndex, { manualPrepostoNotes: event.target.value })}
+              />
+            </Field>
+            <Field label="Outro porto">
+              <TextInput value={preposto.otherPort ?? ""} onChange={(event) => updatePreposto(prepostoIndex, { otherPort: event.target.value })} />
+            </Field>
+            <Field label="Outra fronteira">
+              <TextInput value={preposto.otherBorder ?? ""} onChange={(event) => updatePreposto(prepostoIndex, { otherBorder: event.target.value })} />
+            </Field>
+          </Grid>
+        ) : null}
+      </ServicoToggleCard>
+    );
   }
 
   function renderOperation(operationType: OperationType, services: ServiceType[]) {
     if (!form.operations.types.includes(operationType)) return null;
-    const prepostoIndex = (form.services.prepostos ?? []).findIndex((item: any) => item.operationType === operationType);
-    const preposto = prepostoIndex >= 0 ? form.services.prepostos[prepostoIndex] : buildPreposto(operationType);
 
     return (
       <Card key={operationType}>
         <h3 className="text-base font-semibold">Serviços de {OPERATION_LABEL[operationType]}</h3>
         <div className="grid gap-4">
-          {services.map((serviceType) => {
-            const index = (form.services.items ?? []).findIndex((item: any) => item.serviceType === serviceType && item.operationType === operationType);
-            const service = index >= 0 ? form.services.items[index] : buildServiceItem(serviceType, operationType);
-            return (
-              <div key={`${operationType}-${serviceType}`} className="rounded-xl border p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <Checkbox label={SERVICE_LABEL[serviceType]} checked={Boolean(service.enabled)} onChange={(checked) => upsertService(serviceType, operationType, checked)} />
-                  {service.enabled ? <Badge><Check className="mr-1 h-3 w-3" />Contrata</Badge> : null}
-                </div>
-                {service.enabled && index >= 0 ? (
-                  <Grid columns={3}>
-                    <Field label="Tipo de cobrança">
-                      <Select value={service.pricingType ?? ""} onChange={(e) => updateService(index, { pricingType: e.target.value })}>
-                        {Object.entries(PRICING_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                      </Select>
-                    </Field>
-                    <Field label="Valor">
-                      <NumberInput value={service.amount ?? ""} onChange={(e) => updateService(index, { amount: e.target.value })} />
-                    </Field>
-                    <Field label="Última atualização">
-                      <TextInput type="date" value={service.lastUpdatedOn ?? ""} onChange={(e) => updateService(index, { lastUpdatedOn: e.target.value })} />
-                    </Field>
-                    <Field label="Observações">
-                      <TextArea value={service.notes ?? ""} onChange={(e) => updateService(index, { notes: e.target.value })} />
-                    </Field>
-                  </Grid>
-                ) : null}
-              </div>
-            );
-          })}
-
-          <div className="rounded-xl border p-4">
-            <Checkbox label="Preposto" checked={Boolean(preposto.enabled)} onChange={(checked) => upsertPreposto(operationType, checked)} />
-            {preposto.enabled ? (
-              <Grid columns={2}>
-                <Field label="Incluso no desembaraço CASCO">
-                  <BooleanSelect value={preposto.includedInCascoCustomsClearance} onChange={(value) => prepostoIndex >= 0 && updatePreposto(prepostoIndex, { includedInCascoCustomsClearance: value })} />
-                </Field>
-                <Field label="Valor">
-                  <NumberInput value={preposto.amount ?? ""} onChange={(e) => prepostoIndex >= 0 && updatePreposto(prepostoIndex, { amount: e.target.value })} />
-                </Field>
-                <Field label="Nome do preposto manual">
-                  <TextInput value={preposto.manualPrepostoName ?? ""} onChange={(e) => prepostoIndex >= 0 && updatePreposto(prepostoIndex, { manualPrepostoName: e.target.value, origin: "MANUAL" })} />
-                </Field>
-                <Field label="Observações do preposto">
-                  <TextInput value={preposto.manualPrepostoNotes ?? ""} onChange={(e) => prepostoIndex >= 0 && updatePreposto(prepostoIndex, { manualPrepostoNotes: e.target.value })} />
-                </Field>
-                <Field label="Outro porto">
-                  <TextInput value={preposto.otherPort ?? ""} onChange={(e) => prepostoIndex >= 0 && updatePreposto(prepostoIndex, { otherPort: e.target.value })} />
-                </Field>
-                <Field label="Outra fronteira">
-                  <TextInput value={preposto.otherBorder ?? ""} onChange={(e) => prepostoIndex >= 0 && updatePreposto(prepostoIndex, { otherBorder: e.target.value })} />
-                </Field>
-              </Grid>
-            ) : null}
-          </div>
+          {services.map((serviceType) => renderService(operationType, serviceType))}
+          {renderPreposto(operationType)}
         </div>
       </Card>
     );

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-
 import type { OperationDraft } from "@/domain/scope/schema";
 
-import ServicoToggleCard from "./blocks/ServicoToggleCard";
+import { Card } from "@/components/ui/form-layout";
+
 import OperationNcmSection from "./OperationNcmSection";
 
 type OperationNcm = OperationDraft["ncms"][number];
@@ -22,10 +21,9 @@ export default function OperationExportFields({
   errors,
   prefix,
 }: OperationExportFieldsProps) {
-  const [showNcms, setShowNcms] = useState(true);
-
   return (
-    <ServicoToggleCard title="NCM e benefícios da exportação" checked={showNcms} onToggle={setShowNcms}>
+    <Card>
+      <h3 className="text-base font-semibold">NCM e benefícios da exportação</h3>
       <OperationNcmSection
         ncms={operation.ncms ?? []}
         ncmNotes={operation.ncmNotes}
@@ -33,6 +31,6 @@ export default function OperationExportFields({
         onChangeNotes={(next) => patchOperation({ ncmNotes: next })}
         error={errors[`${prefix}.ncms`]}
       />
-    </ServicoToggleCard>
+    </Card>
   );
 }

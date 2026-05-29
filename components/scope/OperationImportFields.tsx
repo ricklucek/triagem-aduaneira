@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
-
 import type { OperationDraft } from "@/domain/scope/schema";
 
 import { Checkbox, Field, Select } from "@/components/ui/form-fields";
-import { Grid, Stack } from "@/components/ui/form-layout";
+import { Card, Grid, Stack } from "@/components/ui/form-layout";
 
 import SearchableCheckboxMenu from "./blocks/SearchableCheckboxMenu";
-import ServicoToggleCard from "./blocks/ServicoToggleCard";
 import OperationNcmSection from "./OperationNcmSection";
 
 type OperationNcm = OperationDraft["ncms"][number];
@@ -77,19 +74,9 @@ export default function OperationImportFields({
   errors,
   prefix,
 }: OperationImportFieldsProps) {
-  const [sections, setSections] = useState({
-    ncms: true,
-    parameters: true,
-    destination: true,
-  });
-
   const locationOptions = LOCAIS.map(([value, label]) => ({ value, label }));
   const destinations = operation.destinationPurposes ?? [];
   const consumptionDestination = destinations.find((item) => item.purpose === "CONSUMPTION");
-
-  function toggleSection(section: keyof typeof sections, checked: boolean) {
-    setSections((current) => ({ ...current, [section]: checked }));
-  }
 
   function patchDestinations(next: DestinationPurposeItem[]) {
     patchOperation({ destinationPurposes: next });
@@ -127,11 +114,8 @@ export default function OperationImportFields({
 
   return (
     <Stack>
-      <ServicoToggleCard
-        title="NCM e benefícios"
-        checked={sections.ncms}
-        onToggle={(checked) => toggleSection("ncms", checked)}
-      >
+      <Card>
+        <h3 className="text-base font-semibold">NCM e benefícios</h3>
         <OperationNcmSection
           ncms={operation.ncms ?? []}
           ncmNotes={operation.ncmNotes}
@@ -139,13 +123,10 @@ export default function OperationImportFields({
           onChangeNotes={(next) => patchOperation({ ncmNotes: next })}
           error={errors[`${prefix}.ncms`]}
         />
-      </ServicoToggleCard>
+      </Card>
 
-      <ServicoToggleCard
-        title="Parâmetros de importação"
-        checked={sections.parameters}
-        onToggle={(checked) => toggleSection("parameters", checked)}
-      >
+      <Card>
+        <h3 className="text-base font-semibold">Parâmetros de importação</h3>
         <Grid columns={2}>
           <Field label="Vínculo com exportador" required error={errors[`${prefix}.hasExporterRelationship`]}>
             <Select
@@ -213,13 +194,10 @@ export default function OperationImportFields({
           }
           error={errors[`${prefix}.customsClearanceLocations`]}
         />
-      </ServicoToggleCard>
+      </Card>
 
-      <ServicoToggleCard
-        title="Destinação"
-        checked={sections.destination}
-        onToggle={(checked) => toggleSection("destination", checked)}
-      >
+      <Card>
+        <h3 className="text-base font-semibold">Destinação</h3>
         <div className="grid gap-3">
           {DESTINATION_OPTIONS.map((option) => {
             const selected = destinations.some((item) => item.purpose === option.value);
@@ -251,7 +229,7 @@ export default function OperationImportFields({
             />
           </Field>
         ) : null}
-      </ServicoToggleCard>
+      </Card>
     </Stack>
   );
 }
