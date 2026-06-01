@@ -57,6 +57,7 @@ export const SERVICE_DETAIL_TYPE_LABEL: Record<string, string> = {
   INSURANCE: "Seguro",
   CUSTOMS_BROKER: "Despachante aduaneiro",
   CERTIFICATE: "Certificado",
+  SPECIAL_REGIME: "Regime especial",
 };
 
 export const PAYMENT_PREFERENCE_LABEL: Record<string, string> = {

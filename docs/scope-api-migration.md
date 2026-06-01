@@ -33,3 +33,14 @@
 - Modelo antigo (`StepImportacao`/`StepExportacao`) tinha `ncms[].possuiBeneficio` / `descricaoBeneficio`; no canônico usar `hasBenefit` / `benefitDescription`.
 - Locais antes eram strings selecionadas; agora devem ser persistidos como objetos de localização.
 - Subtipos de consumo antes estavam em `subtipoConsumo`; agora devem alimentar `destinationPurposes[].consumptionSubtypes` no item `CONSUMPTION`.
+
+## SERVICES / Regime especial
+- `buildServiceItem` e `buildPreposto` agora inicializam registros com `enabled: false`; a contratação só deve ser considerada quando o usuário habilitar um serviço ou adicionar regra de regime especial.
+- `PREPOSTO` deve ser considerado apenas em `IMPORT`; a UI não envia/edita preposto para `EXPORT`.
+- Regime especial é representado por um item em `services.items[]` com:
+  - `serviceType: SPECIAL_REGIME`
+  - `operationType: IMPORT` ou `EXPORT`
+  - `enabled: true` quando houver ao menos uma regra
+  - `pricingType: FIXED`
+  - `details.type: SPECIAL_REGIME`
+  - `details.regimes[]` contendo `{ name, amount }`

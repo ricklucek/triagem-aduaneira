@@ -152,6 +152,7 @@ export const ServiceDetailTypeSchema = z.enum([
   "INSURANCE",
   "CUSTOMS_BROKER",
   "CERTIFICATE",
+  "SPECIAL_REGIME",
 ]);
 
 export const FreightModeSchema = z.enum(["YES", "CASE_BY_CASE", "CASO_A_CASO"]);
@@ -559,11 +560,24 @@ export const CertificateServiceDetailDraftSchema = z.object({
   notes: optionalTrimmedString,
 });
 
+export const SpecialRegimeRuleDraftSchema = z.object({
+  id: optionalId,
+  name: requiredTrimmedString("Nome do regime é obrigatório"),
+  amount: positiveNumberLike("Valor do regime é obrigatório"),
+});
+
+export const SpecialRegimeServiceDetailDraftSchema = z.object({
+  type: z.literal("SPECIAL_REGIME"),
+  id: optionalId,
+  regimes: z.array(SpecialRegimeRuleDraftSchema).default([]),
+});
+
 export const ServiceDetailDraftSchema = z.discriminatedUnion("type", [
   FreightServiceDetailDraftSchema,
   InsuranceServiceDetailDraftSchema,
   CustomsBrokerServiceDetailDraftSchema,
   CertificateServiceDetailDraftSchema,
+  SpecialRegimeServiceDetailDraftSchema,
 ]);
 
 export const ServiceItemDraftSchema = z
@@ -654,6 +668,24 @@ export const ServiceItemDraftSchema = z
           code: z.ZodIssueCode.custom,
           path: ["details", "cfrPercentage"],
           message: "% sobre frete + mercadoria é obrigatório",
+        });
+      }
+    }
+
+    if (value.serviceType === "SPECIAL_REGIME") {
+      const detail = value.details;
+
+      if (!detail || detail.type !== "SPECIAL_REGIME") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["details"],
+          message: "Detalhes do regime especial são obrigatórios",
+        });
+      } else if (detail.regimes.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["details", "regimes"],
+          message: "Informe ao menos uma regra de regime especial",
         });
       }
     }

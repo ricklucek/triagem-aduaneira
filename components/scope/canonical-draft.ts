@@ -1,3 +1,4 @@
+import type { ServicesDraft } from "@/domain/scope/schema";
 import type { EscopoForm } from "@/domain/scope/types";
 
 export type OperationType = "IMPORT" | "EXPORT";
@@ -112,8 +113,8 @@ export function emptyCanonicalDraft(): EscopoForm {
 }
 
 export function normalizeCanonicalDraft(value?: Partial<EscopoForm> | null): EscopoForm {
-  const base = emptyCanonicalDraft() as any;
-  const incoming = (value ?? {}) as any;
+  const base = emptyCanonicalDraft();
+  const incoming = value ?? {};
   return deepMerge(base, incoming) as EscopoForm;
 }
 
@@ -201,11 +202,13 @@ export function emptyOperationTaxes() {
   };
 }
 
-export function buildServiceItem(serviceType: ServiceType, operationType: OperationType) {
-  const base: any = {
+export function buildServiceItem(serviceType: ServiceType, operationType: OperationType): ServicesDraft["items"][number] {
+  const base: ServicesDraft["items"][number] = {
+    catalogId: null,
+    code: null,
     serviceType,
     operationType,
-    enabled: true,
+    enabled: false,
     pricingType: defaultPricingType(serviceType),
     amount: null,
     currency: "BRL",
@@ -255,13 +258,21 @@ export function buildServiceItem(serviceType: ServiceType, operationType: Operat
     };
   }
 
+  if (serviceType === "SPECIAL_REGIME") {
+    base.pricingType = "FIXED";
+    base.details = {
+      type: "SPECIAL_REGIME",
+      regimes: [],
+    };
+  }
+
   return base;
 }
 
 export function buildPreposto(operationType: OperationType) {
   return {
     operationType,
-    enabled: true,
+    enabled: false,
     prepostoId: null,
     prepostoName: null,
     manualPrepostoName: null,
@@ -312,10 +323,10 @@ export function joinLines(values?: Array<string | null | undefined>) {
   return (values ?? []).filter(Boolean).join("\n");
 }
 
-export function responsibleName(user: any) {
+export function responsibleName(user?: { name?: string | null; nome?: string | null } | null) {
   return user?.name ?? user?.nome ?? "";
 }
 
-export function responsibleDepartment(user: any) {
+export function responsibleDepartment(user?: { department?: string | null; setor?: string | null } | null) {
   return user?.department ?? user?.setor ?? "";
 }

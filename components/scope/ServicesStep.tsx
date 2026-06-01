@@ -3,6 +3,7 @@
 import type { EscopoForm } from "@/domain/scope/types";
 import type { ServicesDraft } from "@/domain/scope/schema";
 
+import { Button } from "@/components/ui/button";
 import { Field, NumberInput, Select, TextArea, TextInput } from "@/components/ui/form-fields";
 import { Card, Grid, Stack } from "@/components/ui/form-layout";
 
@@ -41,11 +42,18 @@ const EXPORT_SERVICES: ServiceType[] = [
 
 type ServiceItemDraft = ServicesDraft["items"][number];
 type PrepostoDraft = ServicesDraft["prepostos"][number];
+type SpecialRegimeDetail = Extract<NonNullable<ServiceItemDraft["details"]>, { type: "SPECIAL_REGIME" }>;
+type SpecialRegimeRule = SpecialRegimeDetail["regimes"][number];
 
 type ServicesStepProps = {
   form: EscopoForm;
   patchForm: (patch: Partial<EscopoForm>) => void;
   errors: Record<string, string>;
+};
+
+const emptySpecialRegimeRule: SpecialRegimeRule = {
+  name: "",
+  amount: null,
 };
 
 function boolFromSelect(value: string) {
@@ -81,6 +89,15 @@ function fieldError(errors: Record<string, string>, ...paths: string[]) {
     if (errors[path]) return errors[path];
   }
   return undefined;
+}
+
+function specialRegimeDetail(service: ServiceItemDraft): SpecialRegimeDetail {
+  if (service.details?.type === "SPECIAL_REGIME") return service.details;
+
+  return {
+    type: "SPECIAL_REGIME",
+    regimes: [],
+  };
 }
 
 export default function ServicesStep({ form, patchForm, errors }: ServicesStepProps) {
@@ -128,6 +145,31 @@ export default function ServicesStep({ form, patchForm, errors }: ServicesStepPr
     patchServices({ prepostos });
   }
 
+  function updateSpecialRegimes(operationType: OperationType, regimes: SpecialRegimeRule[]) {
+    const items = [...(form.services.items ?? [])];
+    const index = items.findIndex(
+      (item) => item.serviceType === "SPECIAL_REGIME" && item.operationType === operationType,
+    );
+    const enabled = regimes.length > 0;
+
+    if (index >= 0) {
+      items[index] = {
+        ...items[index],
+        enabled,
+        pricingType: "FIXED",
+        details: { type: "SPECIAL_REGIME", regimes },
+      };
+    } else {
+      items.push({
+        ...(buildServiceItem("SPECIAL_REGIME", operationType) as ServiceItemDraft),
+        enabled,
+        details: { type: "SPECIAL_REGIME", regimes },
+      });
+    }
+
+    patchServices({ items });
+  }
+
   function renderService(operationType: OperationType, serviceType: ServiceType) {
     const index = (form.services.items ?? []).findIndex(
       (item) => item.serviceType === serviceType && item.operationType === operationType,
@@ -173,6 +215,79 @@ export default function ServicesStep({ form, patchForm, errors }: ServicesStepPr
           </Grid>
         ) : null}
       </ServicoToggleCard>
+    );
+  }
+
+  function renderSpecialRegime(operationType: OperationType) {
+    const specialRegimeIndex = (form.services.items ?? []).findIndex(
+      (item) => item.serviceType === "SPECIAL_REGIME" && item.operationType === operationType,
+    );
+    const service = specialRegimeIndex >= 0
+      ? form.services.items[specialRegimeIndex]
+      : (buildServiceItem("SPECIAL_REGIME", operationType) as ServiceItemDraft);
+    const detail = specialRegimeDetail(service);
+    const errorPrefix = `services.items.${specialRegimeIndex}.details.regimes`;
+
+    return (
+      <Card className="gap-4 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4">
+          <h4 className="text-sm font-semibold">Regime Especial</h4>
+          <Button
+            type="button"
+            onClick={() => updateSpecialRegimes(operationType, [...detail.regimes, emptySpecialRegimeRule])}
+          >
+            + Adicionar regime especial
+          </Button>
+        </div>
+
+        {detail.regimes.map((regime, index) => (
+          <Card key={index} className="gap-4 p-4">
+            <Grid columns={2}>
+              <Field
+                label="Nome do Regime"
+                required
+                error={specialRegimeIndex >= 0 ? errors[`${errorPrefix}.${index}.name`] : undefined}
+              >
+                <TextInput
+                  value={regime.name ?? ""}
+                  onChange={(event) => {
+                    const next = [...detail.regimes];
+                    next[index] = { ...regime, name: event.target.value };
+                    updateSpecialRegimes(operationType, next);
+                  }}
+                />
+              </Field>
+              <Field
+                label="Valor"
+                required
+                error={specialRegimeIndex >= 0 ? errors[`${errorPrefix}.${index}.amount`] : undefined}
+              >
+                <NumberInput
+                  value={regime.amount ?? ""}
+                  onChange={(event) => {
+                    const next = [...detail.regimes];
+                    next[index] = { ...regime, amount: event.target.value };
+                    updateSpecialRegimes(operationType, next);
+                  }}
+                />
+              </Field>
+            </Grid>
+            <div>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => updateSpecialRegimes(operationType, detail.regimes.filter((_, currentIndex) => currentIndex !== index))}
+              >
+                Remover
+              </Button>
+            </div>
+          </Card>
+        ))}
+
+        {specialRegimeIndex >= 0 && errors[errorPrefix] ? (
+          <p className="text-sm text-destructive">{errors[errorPrefix]}</p>
+        ) : null}
+      </Card>
     );
   }
 
@@ -231,7 +346,8 @@ export default function ServicesStep({ form, patchForm, errors }: ServicesStepPr
         <h3 className="text-base font-semibold">Serviços de {OPERATION_LABEL[operationType]}</h3>
         <div className="grid gap-4">
           {services.map((serviceType) => renderService(operationType, serviceType))}
-          {renderPreposto(operationType)}
+          {renderSpecialRegime(operationType)}
+          {operationType === "IMPORT" ? renderPreposto(operationType) : null}
         </div>
       </Card>
     );

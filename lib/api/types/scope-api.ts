@@ -66,7 +66,8 @@ export type ServiceDetailType =
   | "FREIGHT"
   | "INSURANCE"
   | "CUSTOMS_BROKER"
-  | "CERTIFICATE";
+  | "CERTIFICATE"
+  | "SPECIAL_REGIME";
 
 export interface ContactInfo {
   id: string;
@@ -259,11 +260,24 @@ export interface ScopeServiceCertificateDetail {
   notes: string | null;
 }
 
+export interface ScopeServiceSpecialRegimeRule {
+  id: string;
+  name: string;
+  amount: number | null;
+}
+
+export interface ScopeServiceSpecialRegimeDetail {
+  type: "SPECIAL_REGIME";
+  id: string;
+  regimes: ScopeServiceSpecialRegimeRule[];
+}
+
 export type ScopeServiceDetail =
   | ScopeServiceFreightDetail
   | ScopeServiceInsuranceDetail
   | ScopeServiceCustomsBrokerDetail
-  | ScopeServiceCertificateDetail;
+  | ScopeServiceCertificateDetail
+  | ScopeServiceSpecialRegimeDetail;
 
 export interface ScopeServiceItem {
   id: string;
