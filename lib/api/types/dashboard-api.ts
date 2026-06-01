@@ -33,6 +33,8 @@ export interface AdminDashboardMetricsResponse {
   totalDistinctServices: number;
   totalServicesAmount: number;
   outdatedScopes: number;
+  monthCreatedScopes: number;
+  weekCreatedScopes: number;
 }
 
 export interface ScopeByUserItem {
