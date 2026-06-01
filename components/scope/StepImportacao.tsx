@@ -15,7 +15,6 @@ import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
-import { Trash2 } from "lucide-react";
 
 const LOCAIS = [
   ["0917900/0917800|Curitiba/ Paranaguá", "0917900/0917800 • Curitiba/ Paranaguá"],

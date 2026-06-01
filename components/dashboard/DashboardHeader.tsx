@@ -1,5 +1,7 @@
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import UserMenu from '../user/userMenu';
+import NotificationsPanel from '../user/NotificationsPanel';
 
 export default function DashboardHeader({
   headerText,
@@ -27,6 +29,11 @@ export default function DashboardHeader({
               {headerText}
             </span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <NotificationsPanel />
+          <UserMenu />
         </div>
       </div>
     </header>
