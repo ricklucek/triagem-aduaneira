@@ -9,6 +9,7 @@ export const DESTINATION_PURPOSE_LABEL: Record<string, string> = {
   INDUSTRIALIZATION: "Industrialização",
   USE_AND_CONSUMPTION: "Uso e consumo",
   FIXED_ASSET: "Ativo imobilizado",
+  CONSUMPTION: "Consumo",
 };
 
 export const TAX_REGIME_LABEL: Record<string, string> = {
@@ -56,6 +57,7 @@ export const SERVICE_DETAIL_TYPE_LABEL: Record<string, string> = {
   INSURANCE: "Seguro",
   CUSTOMS_BROKER: "Despachante aduaneiro",
   CERTIFICATE: "Certificado",
+  SPECIAL_REGIME: "Regime especial",
 };
 
 export const PAYMENT_PREFERENCE_LABEL: Record<string, string> = {

@@ -17,7 +17,8 @@ export type DestinationPurpose =
   | "RESALE"
   | "INDUSTRIALIZATION"
   | "USE_AND_CONSUMPTION"
-  | "FIXED_ASSET";
+  | "FIXED_ASSET"
+  | "CONSUMPTION";
 
 export type LocationType = "ENTRY" | "CUSTOMS_CLEARANCE";
 
@@ -65,7 +66,8 @@ export type ServiceDetailType =
   | "FREIGHT"
   | "INSURANCE"
   | "CUSTOMS_BROKER"
-  | "CERTIFICATE";
+  | "CERTIFICATE"
+  | "SPECIAL_REGIME";
 
 export interface ContactInfo {
   id: string;
@@ -111,6 +113,8 @@ export interface ScopeOperationNcm {
   id: string;
   code: string;
   description: string | null;
+  hasBenefit?: boolean | null;
+  benefitDescription?: string | null;
 }
 
 export interface ScopeOperationLocation {
@@ -131,6 +135,7 @@ export interface ScopeOperationDestinationPurpose {
   id: string;
   purpose: DestinationPurpose;
   consumptionSubtype: string | null;
+  consumptionSubtypes?: string[];
 }
 
 export interface ScopeOperationDetail {
@@ -195,6 +200,7 @@ export interface IcmsDestinationRate {
   destinationPurpose: DestinationPurpose;
   collectedRate: number | null;
   effectiveRate: number | null;
+  regime?: TaxRegime | null;
   notes: string | null;
 }
 
@@ -254,11 +260,24 @@ export interface ScopeServiceCertificateDetail {
   notes: string | null;
 }
 
+export interface ScopeServiceSpecialRegimeRule {
+  id: string;
+  name: string;
+  amount: number | null;
+}
+
+export interface ScopeServiceSpecialRegimeDetail {
+  type: "SPECIAL_REGIME";
+  id: string;
+  regimes: ScopeServiceSpecialRegimeRule[];
+}
+
 export type ScopeServiceDetail =
   | ScopeServiceFreightDetail
   | ScopeServiceInsuranceDetail
   | ScopeServiceCustomsBrokerDetail
-  | ScopeServiceCertificateDetail;
+  | ScopeServiceCertificateDetail
+  | ScopeServiceSpecialRegimeDetail;
 
 export interface ScopeServiceItem {
   id: string;
@@ -441,7 +460,7 @@ export interface BulkAssignmentUpdateResponse {
 
 export interface ScopeApiClient {
   createScope(initial?: Partial<EscopoForm>): Promise<CreateScopeResponse>;
-  saveScopeDraft(data: any): Promise<any>;
+  saveScopeDraft(payload: SaveScopeDraftPayload): Promise<void>;
   listScopes(params: ListScopesParams): Promise<ListScopesResult>;
   countUserAssignments(): Promise<{ type: string; count: number }[]>;
   getScope(id: string): Promise<ScopeDetailResponse>;

@@ -78,7 +78,10 @@ export const DestinationPurposeSchema = z.enum([
   "INDUSTRIALIZATION",
   "USE_AND_CONSUMPTION",
   "FIXED_ASSET",
+  "CONSUMPTION",
 ]);
+
+export const ConsumptionSubtypeSchema = z.string().trim().min(1);
 
 export const AccountOwnerTypeSchema = z.enum(["CASCO", "CLIENT"]);
 
@@ -149,6 +152,7 @@ export const ServiceDetailTypeSchema = z.enum([
   "INSURANCE",
   "CUSTOMS_BROKER",
   "CERTIFICATE",
+  "SPECIAL_REGIME",
 ]);
 
 export const FreightModeSchema = z.enum(["YES", "CASE_BY_CASE", "CASO_A_CASO"]);
@@ -203,6 +207,8 @@ export const NcmDraftSchema = z.object({
   id: optionalId,
   code: requiredTrimmedString("NCM é obrigatório"),
   description: optionalTrimmedString,
+  hasBenefit: optionalBoolean,
+  benefitDescription: optionalTrimmedString,
 });
 
 export const OperationLocationDraftSchema = z.object({
@@ -223,6 +229,7 @@ export const DestinationPurposeDraftSchema = z.object({
   id: optionalId,
   purpose: DestinationPurposeSchema,
   consumptionSubtype: optionalTrimmedString,
+  consumptionSubtypes: z.array(ConsumptionSubtypeSchema).default([]),
 });
 
 export const OperationDraftSchema = z
@@ -263,21 +270,15 @@ export const OperationDraftSchema = z
       });
     }
 
-    const hasUseAndConsumption = value.destinationPurposes.some(
-      (item) => item.purpose === "USE_AND_CONSUMPTION",
-    );
-
-    if (hasUseAndConsumption) {
-      value.destinationPurposes.forEach((item, index) => {
-        if (item.purpose === "USE_AND_CONSUMPTION" && !item.consumptionSubtype) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["destinationPurposes", index, "consumptionSubtype"],
-            message: "Subtipo de consumo é obrigatório",
-          });
-        }
-      });
-    }
+    value.destinationPurposes.forEach((item, index) => {
+      if (item.purpose === "CONSUMPTION" && item.consumptionSubtypes.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["destinationPurposes", index, "consumptionSubtypes"],
+          message: "Informe ao menos um subtipo de consumo",
+        });
+      }
+    });
 
     if (value.operationType === "IMPORT") {
       if (value.hasExporterRelationship == null) {
@@ -491,6 +492,7 @@ export const IcmsDestinationRateDraftSchema = z.object({
   destinationPurpose: DestinationPurposeSchema,
   collectedRate: nullableNumberLike,
   effectiveRate: nullableNumberLike,
+  regime: TaxRegimeSchema.optional().nullable(),
   notes: optionalTrimmedString,
 });
 
@@ -558,11 +560,24 @@ export const CertificateServiceDetailDraftSchema = z.object({
   notes: optionalTrimmedString,
 });
 
+export const SpecialRegimeRuleDraftSchema = z.object({
+  id: optionalId,
+  name: requiredTrimmedString("Nome do regime é obrigatório"),
+  amount: positiveNumberLike("Valor do regime é obrigatório"),
+});
+
+export const SpecialRegimeServiceDetailDraftSchema = z.object({
+  type: z.literal("SPECIAL_REGIME"),
+  id: optionalId,
+  regimes: z.array(SpecialRegimeRuleDraftSchema).default([]),
+});
+
 export const ServiceDetailDraftSchema = z.discriminatedUnion("type", [
   FreightServiceDetailDraftSchema,
   InsuranceServiceDetailDraftSchema,
   CustomsBrokerServiceDetailDraftSchema,
   CertificateServiceDetailDraftSchema,
+  SpecialRegimeServiceDetailDraftSchema,
 ]);
 
 export const ServiceItemDraftSchema = z
@@ -653,6 +668,24 @@ export const ServiceItemDraftSchema = z
           code: z.ZodIssueCode.custom,
           path: ["details", "cfrPercentage"],
           message: "% sobre frete + mercadoria é obrigatório",
+        });
+      }
+    }
+
+    if (value.serviceType === "SPECIAL_REGIME") {
+      const detail = value.details;
+
+      if (!detail || detail.type !== "SPECIAL_REGIME") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["details"],
+          message: "Detalhes do regime especial são obrigatórios",
+        });
+      } else if (detail.regimes.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["details", "regimes"],
+          message: "Informe ao menos uma regra de regime especial",
         });
       }
     }

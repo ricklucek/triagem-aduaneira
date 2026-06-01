@@ -195,7 +195,9 @@ function OperationView({
             operation.destinationPurposes?.map((item) =>
               [
                 label(DESTINATION_PURPOSE_LABEL, item.purpose),
-                item.consumptionSubtype,
+                item.consumptionSubtypes?.length
+                  ? item.consumptionSubtypes.join(", ")
+                  : item.consumptionSubtype,
               ]
                 .filter(Boolean)
                 .join(" - "),
@@ -342,6 +344,10 @@ function TaxesView({
 
                   <Grid>
                     <Field
+                      label="Regime"
+                      value={label(TAX_REGIME_LABEL, rate.regime)}
+                    />
+                    <Field
                       label="Alíquota recolhida"
                       value={percent(rate.collectedRate)}
                     />
@@ -441,6 +447,30 @@ function ServiceDetailsView({
         <Field label="Nome do certificado" value={text(details.certificateName)} />
         <Field label="Órgão emissor" value={text(details.issuingAuthority)} />
         <Field label="Observações" value={text(details.notes)} />
+      </>
+    );
+  }
+
+  if (details.type === "SPECIAL_REGIME") {
+    return (
+      <>
+        <Field
+          label="Tipo de detalhe"
+          value={label(SERVICE_DETAIL_TYPE_LABEL, details.type)}
+        />
+
+        {details.regimes?.length ? (
+          <div className="grid gap-3 md:col-span-2">
+            {details.regimes.map((regime) => (
+              <Card key={regime.id ?? regime.name} className="p-3">
+                <Grid>
+                  <Field label="Nome do regime" value={text(regime.name)} />
+                  <Field label="Valor" value={currency(regime.amount)} />
+                </Grid>
+              </Card>
+            ))}
+          </div>
+        ) : null}
       </>
     );
   }
@@ -553,21 +583,16 @@ export default function ViewScope({
   versionLabel: string;
 }) {
   const importServices =
-    scope.services?.items?.filter((service) => service.operationType === "IMPORT") ??
+    scope.services?.items?.filter((service) => service.enabled && service.operationType === "IMPORT") ??
     [];
 
   const exportServices =
-    scope.services?.items?.filter((service) => service.operationType === "EXPORT") ??
+    scope.services?.items?.filter((service) => service.enabled && service.operationType === "EXPORT") ??
     [];
 
   const importPrepostos =
     scope.services?.prepostos?.filter(
-      (preposto) => preposto.operationType === "IMPORT",
-    ) ?? [];
-
-  const exportPrepostos =
-    scope.services?.prepostos?.filter(
-      (preposto) => preposto.operationType === "EXPORT",
+      (preposto) => preposto.enabled && preposto.operationType === "IMPORT",
     ) ?? [];
 
   const { data: salarioMinimoData } = useOrganizationSettingsByKey(
@@ -697,7 +722,7 @@ export default function ViewScope({
         <ServicesView
           title="Serviços de exportação"
           services={exportServices}
-          prepostos={exportPrepostos}
+          prepostos={[]}
         />
 
         <ViewCard title="Financeiro">
