@@ -1,5 +1,5 @@
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 
 export default function DefaultDashboardHeader() {
-  return <DashboardHeader headerText="Pipeline" />;
+  return <DashboardHeader headerText="Rastreador de Processo" />;
 }
