@@ -942,7 +942,7 @@ export default function ScopeViewPage() {
               <Link href={`/clients/${cnpj}/scopes`}>Voltar</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href={`/clients/${cnpj}/scopes/edit/${id}`}>Editar</Link>
+              <Link href={`/scope/${id}?step=SOBRE_EMPRESA`}>Editar</Link>
             </Button>
           </div>
         </div>
