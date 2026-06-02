@@ -118,7 +118,7 @@ function ScopeViewActions({ cnpj, id }: { cnpj: string; id: string }) {
                         <Separator />
 
                         <Link
-                            href={`/clients/${cnpj}/scopes/edit/${id}`}
+                            href={`/scope/${id}?step=SOBRE_EMPRESA`}
                             className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
                         >
                             <Pencil className="h-4 w-4 text-muted-foreground" />
