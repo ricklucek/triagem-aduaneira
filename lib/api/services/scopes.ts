@@ -10,6 +10,11 @@ import type { EscopoForm } from "@/domain/scope/types";
 import type {
   BulkReassignResponsiblePayload,
   BulkReassignResponsibleResponse,
+  BulkAssignmentGroupBy,
+  BulkAssignmentScopesResponse,
+  BulkAssignmentSummaryResponse,
+  BulkAssignmentUpdatePayload,
+  BulkAssignmentUpdateResponse,
   CreateScopeResponse,
   SaveScopeDraftPayload,
   ScopeApiClient,
@@ -22,11 +27,11 @@ import type { ScopeMetadataResponse } from "@/lib/api/types/scope-metadata";
 type ScopeListResponseApi =
   | ListScopesResult
   | {
-      items: ScopeSummaryApi[];
-      total?: number;
-      limit?: number;
-      offset?: number;
-    }
+    items: ScopeSummaryApi[];
+    total?: number;
+    limit?: number;
+    offset?: number;
+  }
   | ScopeSummaryApi[];
 
 function normalizeScopeSummary(item: ScopeSummaryApi | ScopeSummary): ScopeSummary {
@@ -90,8 +95,8 @@ export const scopeApi: ScopeApiClient = {
     return normalizeScopeListResponse(data, params);
   },
 
-  async countUserAssignments(): Promise<{type: string; count: number}[]> {
-    const { data } = await http.get<{type: string; count: number}[]>(API_ROUTES.scopes.countUserAssignments);
+  async countUserAssignments(): Promise<{ type: string; count: number }[]> {
+    const { data } = await http.get<{ type: string; count: number }[]>(API_ROUTES.scopes.countUserAssignments);
     return data;
   },
 
@@ -112,7 +117,6 @@ export const scopeApi: ScopeApiClient = {
   async publishScope(id: string): Promise<PublishResult> {
     const { data } = await http.post<PublishResult>(
       API_ROUTES.scopes.publish(id),
-      {},
     );
     return data;
   },
@@ -140,6 +144,37 @@ export const scopeApi: ScopeApiClient = {
   ): Promise<BulkReassignResponsibleResponse> {
     const { data } = await http.post<BulkReassignResponsibleResponse>(
       API_ROUTES.scopes.bulkReassignResponsible,
+      payload,
+    );
+    return data;
+  },
+
+  async getBulkAssignmentSummary(
+    groupBy: BulkAssignmentGroupBy,
+  ): Promise<BulkAssignmentSummaryResponse> {
+    const { data } = await http.get<BulkAssignmentSummaryResponse>(
+      API_ROUTES.scopes.bulkAssignmentSummary,
+      { params: { groupBy } },
+    );
+    return data;
+  },
+
+  async getBulkAssignmentScopes(
+    groupBy: BulkAssignmentGroupBy,
+    userId: string,
+  ): Promise<BulkAssignmentScopesResponse> {
+    const { data } = await http.get<BulkAssignmentScopesResponse>(
+      API_ROUTES.scopes.bulkAssignmentScopes,
+      { params: { groupBy, userId } },
+    );
+    return data;
+  },
+
+  async updateBulkAssignment(
+    payload: BulkAssignmentUpdatePayload,
+  ): Promise<BulkAssignmentUpdateResponse> {
+    const { data } = await http.post<BulkAssignmentUpdateResponse>(
+      API_ROUTES.scopes.bulkAssignmentUpdate,
       payload,
     );
     return data;

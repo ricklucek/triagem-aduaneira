@@ -27,6 +27,11 @@ const toolNavigation = {
       url: '/scope/new'
     }
   },
+  tracker: {
+    navMain: [],
+    settings: undefined,
+    action: undefined
+  },
   settings: {
     navMain: [{ title: 'Geral', url: '/settings/general', icon: Info }],
     settings: undefined,

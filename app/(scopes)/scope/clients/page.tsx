@@ -31,8 +31,6 @@ function useMediaQuery(query: string) {
 export default function DashboardPage() {
   const [selectedClient, setSelectedClient] = useState<ClientApi | null>(null);
 
-  console.log("Selected client:", selectedClient);
-
   const router = useRouter();
   const isDesktop = useMediaQuery("(min-width: 1280px)");
 

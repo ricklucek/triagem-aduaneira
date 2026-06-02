@@ -58,10 +58,66 @@ export interface BulkReassignResponsibleResponse {
   scope_ids: string[];
 }
 
+export interface BulkReassignResponsiblePayload {
+  old_user_id: string;
+  new_user_id: string;
+  apply_status?: ScopeStatus[];
+  only_active_assignments?: boolean;
+  dry_run?: boolean;
+}
+
+export type BulkAssignmentGroupBy =
+  | "responsavel_comercial"
+  | "analista_da"
+  | "analista_ae";
+
+export interface BulkAssignmentSummaryItem {
+  userId: string;
+  userName: string;
+  userRole: string;
+  userSetor: string;
+  totalScopes: number;
+}
+
+export interface BulkAssignmentSummaryResponse {
+  groupBy: BulkAssignmentGroupBy;
+  totalUsers: number;
+  totalScopes: number;
+  items: BulkAssignmentSummaryItem[];
+}
+
+export interface BulkAssignmentScopeItem {
+  id: string;
+  status: ScopeStatus;
+  clientName: string;
+  clientCnpj: string;
+  updatedAt: string;
+}
+
+export interface BulkAssignmentScopesResponse {
+  groupBy: BulkAssignmentGroupBy;
+  userId: string;
+  total: number;
+  items: BulkAssignmentScopeItem[];
+}
+
+export interface BulkAssignmentUpdatePayload {
+  groupBy: BulkAssignmentGroupBy;
+  fromUserId: string;
+  toUserId: string;
+  scopeIds: string[];
+}
+
+export interface BulkAssignmentUpdateResponse {
+  ok: boolean;
+  impactedScopes: number;
+  updatedScopeIds: string[];
+}
+
 export interface ScopeApiClient {
   createScope(initial?: Partial<EscopoForm>): Promise<CreateScopeResponse>;
   listScopes(params: ListScopesParams): Promise<ListScopesResult>;
-  countUserAssignments(): Promise<{type: string; count: number}[]>;
+  countUserAssignments(): Promise<{ type: string; count: number }[]>;
   getScope(id: string): Promise<ScopeDetailResponse>;
   saveScope(payload: SaveScopeDraftPayload): Promise<void>;
   publishScope(id: string): Promise<PublishResult>;
@@ -71,4 +127,14 @@ export interface ScopeApiClient {
   bulkReassignResponsible(
     payload: BulkReassignResponsiblePayload,
   ): Promise<BulkReassignResponsibleResponse>;
+  getBulkAssignmentSummary(
+    groupBy: BulkAssignmentGroupBy,
+  ): Promise<BulkAssignmentSummaryResponse>;
+  getBulkAssignmentScopes(
+    groupBy: BulkAssignmentGroupBy,
+    userId: string,
+  ): Promise<BulkAssignmentScopesResponse>;
+  updateBulkAssignment(
+    payload: BulkAssignmentUpdatePayload,
+  ): Promise<BulkAssignmentUpdateResponse>;
 }

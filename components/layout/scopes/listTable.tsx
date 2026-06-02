@@ -28,6 +28,7 @@ import { hasRole } from "@/lib/auth/guard";
 import { format } from 'date-fns';
 import { ptBR } from "date-fns/locale";
 import { ScopeSummary } from "@/data/scope/ScopeRepo";
+import BulkEdit from "@/components/scope/operations/BulkEdit";
 
 type StatusFilter = "todos" | "draft" | "published" | "archived";
 
@@ -80,9 +81,13 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
     return (
         <div>
             <div className="flex flex-col bg-background/80 p-2 md:p-4 gap-4 border-b">
-                <div className="flex flex-row items-center gap-2">
-                    <Search size={20} />
-                    <h2 className="text-sm font-semibold tracking-tight">Filtros</h2>
+                <div className="flex flex-row items-center gap-2 justify-between">
+                    <div className="flex items-center gap-2">
+                        <Search size={20} />
+                        <h2 className="text-sm font-semibold tracking-tight">Filtros</h2>
+                    </div>
+                    
+                    <BulkEdit />
                 </div>
 
                 <TextInput

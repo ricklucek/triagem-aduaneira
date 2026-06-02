@@ -21,7 +21,7 @@ import {
 
 const tools = [
   { key: 'scope', label: 'Escopos', description: 'Despachos e cadastros', href: '/scope/list', icon: FileText },
-  { key: 'tracker', label: 'Tracker', description: 'Pipeline dos processos', href: '/comercial', icon: Locate },
+  { key: 'tracker', label: 'Tracker', description: 'Pipeline dos processos', href: '/tracker/dashboard', icon: Locate },
 ];
 
 export function NavTool() {
