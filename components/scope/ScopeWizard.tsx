@@ -191,7 +191,7 @@ export default function ScopeWizard({
       setSavedMessage("Publicado");
       toast.success("Escopo publicado com sucesso.");
     }
-    router.replace('/scope/dashboard');
+    router.replace('/scope/list');
   }
 
   function focusErrorAt(path: string) {
