@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { ChevronsUpDown, FileText, ShieldCheck, BriefcaseBusiness, Locate } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import { ChevronsUpDown, FileText, Locate } from "lucide-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 import {
   DropdownMenu,
@@ -11,24 +11,37 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 
 const tools = [
-  { key: 'scope', label: 'Escopos', description: 'Despachos e cadastros', href: '/scope/list', icon: FileText },
-  { key: 'tracker', label: 'Tracker', description: 'Pipeline dos processos', href: '/tracker/dashboard', icon: Locate },
+  {
+    key: "scope",
+    label: "Escopos",
+    description: "Despachos e cadastros",
+    href: "/scope/list",
+    icon: FileText,
+  },
+  {
+    key: "tracker",
+    label: "Tracker",
+    description: "Pipeline dos processos",
+    href: "/tracker/pipeline",
+    icon: Locate,
+  },
 ];
 
 export function NavTool() {
   const { isMobile } = useSidebar();
   const pathname = usePathname();
 
-  const active = tools.find((tool) => pathname.startsWith(tool.href)) ?? tools[0];
+  const active =
+    tools.find((tool) => pathname.startsWith(tool.href)) ?? tools[0];
   const Icon = active.icon;
 
   return (
@@ -36,20 +49,32 @@ export function NavTool() {
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton size="lg" className="cursor-pointer bg-primary/10">
+            <SidebarMenuButton
+              size="lg"
+              className="cursor-pointer bg-primary/10"
+            >
               <div className="flex items-center gap-2">
                 <div className="text-primary size-8 rounded-full border flex items-center justify-center">
                   <Icon className="size-5" />
                 </div>
                 <div className="flex flex-col text-left leading-tight">
-                  <span className="text-white font-semibold">{active.label}</span>
-                  <span className="text-xs text-white/70">{active.description}</span>
+                  <span className="text-white font-semibold">
+                    {active.label}
+                  </span>
+                  <span className="text-xs text-white/70">
+                    {active.description}
+                  </span>
                 </div>
               </div>
               <ChevronsUpDown className="text-white" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="min-w-72 rounded-lg" side={isMobile ? 'bottom' : 'right'} align="start" sideOffset={4}>
+          <DropdownMenuContent
+            className="min-w-72 rounded-lg"
+            side={isMobile ? "bottom" : "right"}
+            align="start"
+            sideOffset={4}
+          >
             <DropdownMenuLabel>Selecionar ferramenta</DropdownMenuLabel>
             <DropdownMenuGroup>
               {tools.map((tool) => {
@@ -60,7 +85,9 @@ export function NavTool() {
                       <ToolIcon className="size-4" />
                       <div className="flex flex-col leading-tight">
                         <span>{tool.label}</span>
-                        <span className="text-xs text-muted-foreground">{tool.description}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {tool.description}
+                        </span>
                       </div>
                     </Link>
                   </DropdownMenuItem>

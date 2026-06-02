@@ -37,11 +37,15 @@ export const API_ROUTES = {
     update: (clientId: string) => `/clients/${clientId}`,
     scopes: (clientId: string) => `/clients/${clientId}/scopes`,
   },
+  tracker: {
+    importProcesses: "/tracker/import-processes",
+  },
   dashboards: {
     admin: "/dashboards/admin",
     adminMetrics: "/dashboards/admin/metrics",
     adminScopesByUser: "/dashboards/admin/scopes-by-user",
-    adminUserScopes: (userId: string) => `/dashboards/admin/users/${userId}/scopes`,
+    adminUserScopes: (userId: string) =>
+      `/dashboards/admin/users/${userId}/scopes`,
     adminServices: "/dashboards/admin/services",
     adminServicesByScope: "/dashboards/admin/services/by-scope",
     comercial: "/dashboards/comercial",
