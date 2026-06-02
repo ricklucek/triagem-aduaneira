@@ -22,4 +22,12 @@ export const importProcessesApi = {
 
     return normalizeImportProcesses(data);
   },
+
+  async getProcess(processId: string) {
+    const { data } = await http.get<ImportProcess>(
+      API_ROUTES.tracker.importProcessDetail(processId),
+    );
+
+    return data;
+  },
 };

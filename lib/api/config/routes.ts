@@ -39,6 +39,8 @@ export const API_ROUTES = {
   },
   tracker: {
     importProcesses: "/tracker/import-processes",
+    importProcessDetail: (processId: string) =>
+      `/tracker/import-processes/${processId}`,
   },
   dashboards: {
     admin: "/dashboards/admin",

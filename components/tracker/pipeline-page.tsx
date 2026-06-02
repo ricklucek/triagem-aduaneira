@@ -7,7 +7,10 @@ import {
   Grid2X2,
   LayoutPanelTop,
   List,
+  RotateCw,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -171,7 +174,10 @@ function Header({
 
 function PipelineCard({ process }: { process: ImportProcess }) {
   return (
-    <article className="rounded-2xl border border-border border-t-[5px] border-t-primary/60 bg-background p-4 shadow-sm shadow-black/20 transition-colors hover:bg-muted/30">
+    <Link
+      href={`/tracker/process/${process.id}`}
+      className="block rounded-2xl border border-border border-t-[5px] border-t-primary/60 bg-background p-4 shadow-sm shadow-black/20 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring"
+    >
       <div className="mb-1 flex items-start justify-between gap-2">
         <strong className="text-base text-foreground">
           {process.processNumber}
@@ -190,7 +196,7 @@ function PipelineCard({ process }: { process: ImportProcess }) {
         <span>ETD {formatShortDate(processEtd(process))}</span>
         <span>ETA {formatShortDate(processEta(process))}</span>
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -228,6 +234,8 @@ function KanbanView({ processes }: { processes: ImportProcess[] }) {
 }
 
 function ListView({ processes }: { processes: ImportProcess[] }) {
+  const router = useRouter();
+
   return (
     <div className="min-w-[1280px] bg-card/40">
       <Table>
@@ -261,7 +269,8 @@ function ListView({ processes }: { processes: ImportProcess[] }) {
           {processes.map((process) => (
             <TableRow
               key={process.id}
-              className="h-[54px] odd:bg-card even:bg-muted/20 hover:bg-muted/40"
+              className="h-[54px] cursor-pointer odd:bg-card even:bg-muted/20 hover:bg-muted/40"
+              onClick={() => router.push(`/tracker/process/${process.id}`)}
             >
               <TableCell className="px-4 font-medium">
                 {process.processNumber}
@@ -356,12 +365,15 @@ function TimelineView({ processes }: { processes: ImportProcess[] }) {
               style={{ left: `${8 + (index % 7) * 12}%` }}
             >
               <div className="h-10 border-l border-primary" />
-              <div className="rounded-xl border border-border bg-background px-3 py-2 shadow-sm shadow-black/20">
+              <Link
+                href={`/tracker/process/${process.id}`}
+                className="block rounded-xl border border-border bg-background px-3 py-2 shadow-sm shadow-black/20 transition-colors hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-ring"
+              >
                 <strong>{process.processNumber}</strong>
                 <p className="text-xs text-muted-foreground">
                   ETA {formatShortDate(processEta(process))}
                 </p>
-              </div>
+              </Link>
             </div>
           ))}
         </div>
@@ -371,6 +383,7 @@ function TimelineView({ processes }: { processes: ImportProcess[] }) {
 }
 
 function GroupedView({ processes }: { processes: ImportProcess[] }) {
+  const router = useRouter();
   const [groupBy, setGroupBy] = useState<GroupBy>("client");
   const groups = useMemo(() => {
     return processes.reduce<Record<string, ImportProcess[]>>((acc, process) => {
@@ -414,7 +427,8 @@ function GroupedView({ processes }: { processes: ImportProcess[] }) {
             {groupProcesses.map((process) => (
               <div
                 key={process.id}
-                className="grid grid-cols-[140px_1fr_1fr_1fr_120px] items-center border-b border-border px-4 py-3 transition-colors last:border-b-0 odd:bg-background even:bg-muted/20 hover:bg-muted/40"
+                className="grid cursor-pointer grid-cols-[140px_1fr_1fr_1fr_120px] items-center border-b border-border px-4 py-3 transition-colors last:border-b-0 odd:bg-background even:bg-muted/20 hover:bg-muted/40"
+                onClick={() => router.push(`/tracker/process/${process.id}`)}
               >
                 <strong>{process.processNumber}</strong>
                 <span>{stageLabels[process.currentStage]}</span>
@@ -447,8 +461,8 @@ export function TrackerPipelinePage() {
         <Header view={view} onViewChange={setView} total={processes.length} />
 
         {isLoading ? (
-          <div className="sticky left-0 p-6 text-sm text-muted-foreground">
-            Carregando processos...
+          <div className="sticky left-0 flex h-40 items-center justify-center p-6 text-muted-foreground">
+            <RotateCw className="size-5 animate-spin" />
           </div>
         ) : error ? (
           <div className="sticky left-0 p-6 text-sm text-destructive">

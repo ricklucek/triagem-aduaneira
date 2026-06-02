@@ -9,3 +9,12 @@ export function useImportProcesses(params?: ListImportProcessesParams) {
 
   return useSWR(key, () => importProcessesApi.listProcesses(params));
 }
+
+export function useImportProcess(processId: string | null) {
+  const key = processId ? `tracker:import-process:${processId}` : null;
+
+  return useSWR(key, () => {
+    if (!processId) throw new Error("Processo inválido.");
+    return importProcessesApi.getProcess(processId);
+  });
+}
