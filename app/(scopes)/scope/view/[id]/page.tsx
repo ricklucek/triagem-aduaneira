@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { CheckCircle2, RotateCw } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
@@ -881,7 +881,9 @@ function ScopeDetails({
 }
 
 export default function ScopeViewPage() {
-  const { cnpj, id } = useParams<{ cnpj: string; id: string }>();
+  const { id } = useParams<{ id: string }>();
+
+  const router = useRouter();
 
   const {
     data: scopeResponse,
@@ -911,8 +913,8 @@ export default function ScopeViewPage() {
     return (
       <Card className="p-4">
         <p className="font-medium">Escopo não encontrado.</p>
-        <Button asChild className="mt-3">
-          <Link href={`/clients/${cnpj}/scopes`}>Voltar para escopos</Link>
+        <Button className="mt-3" onClick={() => router.back()}>
+          Voltar para escopos
         </Button>
       </Card>
     );
@@ -938,8 +940,8 @@ export default function ScopeViewPage() {
           </div>
 
           <div className="flex items-center gap-2 print:hidden">
-            <Button asChild variant="outline">
-              <Link href={`/clients/${cnpj}/scopes`}>Voltar</Link>
+            <Button variant="outline" onClick={() => router.back()}>
+              Voltar
             </Button>
             <Button asChild variant="outline">
               <Link href={`/scope/${id}?step=SOBRE_EMPRESA`}>Editar</Link>
