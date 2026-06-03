@@ -40,7 +40,7 @@ export default function DashboardPage() {
 
   if (!isDesktop) {
     return (
-      <main className="w-full">
+      <main className="w-full h-screen">
         <ListTable
           onSelectScope={(scope) => {
             router.push(`/scope/view/${scope.id}`);

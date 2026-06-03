@@ -40,7 +40,7 @@ export default function DashboardPage() {
 
   if (!isDesktop) {
     return (
-      <main className="w-full">
+      <main className="w-full h-screen">
         <ClientsPage
           onSelectClient={(client) => {
             router.push(`/scope/clients/${client.id}`);
@@ -51,7 +51,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="w-full">
+    <main className="w-full h-screen">
       <ResizablePanelGroup
         orientation="horizontal"
         className="min-h-[calc(100vh-120px)] rounded-lg border"
