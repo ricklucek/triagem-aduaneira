@@ -453,12 +453,15 @@ function GroupedView({ processes }: { processes: ImportProcess[] }) {
 
 export function TrackerPipelinePage() {
   const [view, setView] = useState<PipelineView>("kanban");
-  const { data: processes = [], error, isLoading } = useImportProcesses();
+  const { data, error, isLoading } = useImportProcesses();
+
+  const processes = data?.items ?? [];
+  const total = data?.total ?? processes.length;
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background">
       <div className="h-full min-h-0 w-full overflow-x-auto overflow-y-auto">
-        <Header view={view} onViewChange={setView} total={processes.length} />
+        <Header view={view} onViewChange={setView} total={total} />
 
         {isLoading ? (
           <div className="sticky left-0 flex h-40 items-center justify-center p-6 text-muted-foreground">

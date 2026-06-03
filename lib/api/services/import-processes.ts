@@ -6,13 +6,6 @@ import type {
   ListImportProcessesParams,
 } from "@/lib/api/types/import-process-api";
 
-function normalizeImportProcesses(
-  response: ImportProcessesResponse,
-): ImportProcess[] {
-  if (Array.isArray(response)) return response;
-  return response.data ?? response.items ?? response.processes ?? [];
-}
-
 export const importProcessesApi = {
   async listProcesses(params?: ListImportProcessesParams) {
     const { data } = await http.get<ImportProcessesResponse>(
@@ -20,7 +13,7 @@ export const importProcessesApi = {
       { params: params ? { ...params } : undefined },
     );
 
-    return normalizeImportProcesses(data);
+    return data;
   },
 
   async getProcess(processId: string) {

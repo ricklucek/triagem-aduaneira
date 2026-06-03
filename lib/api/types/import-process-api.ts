@@ -111,9 +111,11 @@ export interface ListImportProcessesParams {
 }
 
 export type ImportProcessesResponse =
-  | ImportProcess[]
-  | {
-      data?: ImportProcess[];
-      items?: ImportProcess[];
-      processes?: ImportProcess[];
-    };
+  {
+    items: ImportProcess[],
+    total: number,
+    limit: number,
+    offset: number,
+  }
+
+
