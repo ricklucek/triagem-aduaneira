@@ -6,11 +6,11 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import ListTable from "@/components/layout/scopes/listTable";
-import ScopeViewPage from "@/components/layout/scopes/viewScope";
 import { ScopeSummary } from "@/data/scope/ScopeRepo";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import ViewScope from "@/components/layout/scopes/viewScope";
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState<boolean | null>(null);
@@ -89,9 +89,8 @@ export default function DashboardPage() {
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="h-full overflow-auto"
               >
-                <ScopeViewPage
+                <ViewScope
                   id={selectedScope.id}
-                  cnpj={selectedScope.client_cnpj ?? ""}
                 />
               </motion.div>
             )}
