@@ -18,22 +18,63 @@ const rawHttp = axios.create({
 });
 
 let refreshPromise: Promise<string | null> | null = null;
+let isRedirectingToLogin = false;
+
+function getAxiosStatus(error: unknown): number | undefined {
+  if (!(error instanceof AxiosError)) return undefined;
+
+  return error.status;
+}
+
+function forceLogoutAndRedirect() {
+  clearAuthSession();
+
+  /**
+   * Evita erro durante SSR/build do Next.js.
+   * Esse arquivo pode ser importado em contextos onde `window` não existe.
+   */
+  if (typeof window === "undefined") return;
+
+  /**
+   * Evita múltiplos redirects simultâneos caso várias requests retornem 401
+   * ao mesmo tempo.
+   */
+  if (isRedirectingToLogin) return;
+
+  isRedirectingToLogin = true;
+
+  const currentPath = window.location.pathname + window.location.search;
+
+  /**
+   * Evita loop caso o usuário já esteja na tela de login.
+   */
+  if (window.location.pathname === "/login") return;
+
+  const loginUrl = `/login?redirect=${encodeURIComponent(currentPath)}`;
+
+  window.location.replace(loginUrl);
+}
 
 async function withAuth<T>(
   fn: (headers: Record<string, string>) => Promise<T>,
 ): Promise<T> {
   const session = getAuthSession();
+
   const initialHeaders: Record<string, string> = {};
+
   if (session?.tokens.accessToken) {
     initialHeaders.Authorization = `Bearer ${session.tokens.accessToken}`;
+  } else {
+    forceLogoutAndRedirect();
   }
 
   try {
     return await fn(initialHeaders);
   } catch (error) {
+    const status = getAxiosStatus(error);
+
     if (
-      !(error instanceof AxiosError) ||
-      error.status !== 401 ||
+      status !== 401 ||
       !session?.tokens.refreshToken
     ) {
       throw error;
@@ -45,11 +86,15 @@ async function withAuth<T>(
           refreshToken: session.tokens.refreshToken,
         })
         .then(({ data }) => {
-          setAuthSession({ ...session, tokens: data.tokens });
+          setAuthSession({
+            ...session,
+            tokens: data.tokens,
+          });
+
           return data.tokens.accessToken;
         })
         .catch(() => {
-          clearAuthSession();
+          forceLogoutAndRedirect();
           return null;
         })
         .finally(() => {
@@ -58,9 +103,14 @@ async function withAuth<T>(
     }
 
     const accessToken = await refreshPromise;
-    if (!accessToken) throw error;
 
-    return fn({ Authorization: `Bearer ${accessToken}` });
+    if (!accessToken) {
+      throw error;
+    }
+
+    return fn({
+      Authorization: `Bearer ${accessToken}`,
+    });
   }
 }
 
@@ -83,21 +133,25 @@ export const http = {
       rawHttp.get<T>(url, mergeConfig(config, headers)),
     );
   },
+
   post<T>(url: string, body?: unknown, config?: AxiosRequestConfig) {
     return withAuth((headers) =>
       rawHttp.post<T>(url, body, mergeConfig(config, headers)),
     );
   },
+
   put<T>(url: string, body?: unknown, config?: AxiosRequestConfig) {
     return withAuth((headers) =>
       rawHttp.put<T>(url, body, mergeConfig(config, headers)),
     );
   },
+
   patch<T>(url: string, body?: unknown, config?: AxiosRequestConfig) {
     return withAuth((headers) =>
       rawHttp.patch<T>(url, body, mergeConfig(config, headers)),
     );
   },
+
   delete<T>(url: string, config?: AxiosRequestConfig) {
     return withAuth((headers) =>
       rawHttp.delete<T>(url, mergeConfig(config, headers)),

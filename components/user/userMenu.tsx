@@ -7,10 +7,17 @@ import { Button } from "../ui/button";
 import { useCurrentUser } from "@/lib/api/hooks/use-auth";
 import { getIniciais } from "@/utils/functions";
 import Link from "next/link";
+import { clearAuthSession } from "@/lib/auth/session-storage";
 
 const UserMenu = () => {
 
     const { data } = useCurrentUser();
+
+    const handleLoggout = () => {
+        clearAuthSession();
+
+        window.location.replace("/login");
+    }
 
     return (
         <DropdownMenu>
@@ -79,7 +86,7 @@ const UserMenu = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     className="text-[#F10000]"
-                    onClick={() => {}}
+                    onClick={handleLoggout}
                 >
                     <LogOut color="#F10000" />
                     Sair
