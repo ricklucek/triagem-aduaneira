@@ -18,6 +18,7 @@ import { NavTool } from "./nav-tool";
 import { Separator } from "../ui/separator";
 import { SidebarNavigation } from "./sidebar-types";
 import { useRouter } from "next/navigation";
+import { hasRole } from "@/lib/auth/guard";
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   navigation: SidebarNavigation;
@@ -90,7 +91,7 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter className="border-t border-[#FFF]/10">
-        <NavOthers items={footerItems} />
+        <NavOthers items={hasRole("admin") ? footerItems : []} />
       </SidebarFooter>
 
       <SidebarRail />
