@@ -103,6 +103,14 @@ export interface ImportProcess {
   updatedAt?: string;
 }
 
+export type CreateImportProcessPayload = Omit<
+  ImportProcess,
+  "id" | "tasks" | "createdAt" | "updatedAt"
+> & {
+  tasks?: ImportProcessTask[];
+  metadata?: Record<string, unknown>;
+};
+
 export interface ListImportProcessesParams {
   search?: string;
   stage?: ImportProcessStage;
@@ -110,12 +118,9 @@ export interface ListImportProcessesParams {
   tag?: ImportProcessTagType;
 }
 
-export type ImportProcessesResponse =
-  {
-    items: ImportProcess[],
-    total: number,
-    limit: number,
-    offset: number,
-  }
-
-
+export type ImportProcessesResponse = {
+  items: ImportProcess[];
+  total: number;
+  limit: number;
+  offset: number;
+};
