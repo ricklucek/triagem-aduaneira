@@ -6,7 +6,9 @@ import {
     LayoutDashboard,
     Locate,
     MessageSquare,
+    ShieldCheck,
     User2,
+    UserCog,
 } from "lucide-react";
 
 import { SidebarNavigation } from "./sidebar-types";
@@ -68,7 +70,7 @@ export const settingsSidebarNavigation: SidebarNavigation = {
         {
             title: "Prepostos",
             url: "/settings/prepostos",
-            icon: User2,
+            icon: UserCog,
         },
         {
             title: "Minha organização",
@@ -76,9 +78,9 @@ export const settingsSidebarNavigation: SidebarNavigation = {
             icon: Building2,
         },
         {
-            title: "Acesso as ferramentas",
+            title: "Controle de acesso",
             url: "/settings/tools-access",
-            icon: Bolt,
+            icon: ShieldCheck,
         },
     ],
 };
