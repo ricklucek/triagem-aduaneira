@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,6 @@ const ADMIN_ROLES = new Set(["admin", "administrador"]);
 
 export default function SettingsUsersPage() {
   const { data: usersData, isLoading, mutate } = useUsers();
-  const { data: adminsData } = useAdmins();
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -101,8 +100,6 @@ export default function SettingsUsersPage() {
           <TableHead>Nome</TableHead>
           <TableHead>E-mail</TableHead>
           <TableHead>Perfil</TableHead>
-          <TableHead>Setor</TableHead>
-          <TableHead>Status</TableHead>
           <TableHead className="w-20">Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -117,8 +114,6 @@ export default function SettingsUsersPage() {
               <TableCell>{user.nome}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.role}</TableCell>
-              <TableCell>{user.setor}</TableCell>
-              <TableCell>{user.ativo ? "Ativo" : "Inativo"}</TableCell>
               <TableCell>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -158,57 +153,55 @@ export default function SettingsUsersPage() {
   );
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Gerenciar usuários</CardTitle>
-        <Button onClick={openCreate}>Criar usuário</Button>
-      </CardHeader>
-      <CardContent className="space-y-8">
-        {isLoading ? (
-          <p>Carregando usuários...</p>
-        ) : (
-          <>
+    <main className="w-full min-h-screen">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Gerenciar usuários</CardTitle>
+          <Button onClick={openCreate}>Criar usuário</Button>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {isLoading ? (
+            <div className="flex items-center gap-2 p-5 justify-center">
+              <RotateCw className="size-5 animate-spin" />
+            </div>
+          ) : (
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Administradores</h3>
-              {renderTable(adminsData ?? [])}
-            </section>
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Demais usuários</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Usuários</h3>
               {renderTable(usersData ?? [])}
             </section>
-          </>
-        )}
-      </CardContent>
+          )}
+        </CardContent>
 
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent className="w-full sm:max-w-xl">
-          <SheetHeader className="p-5">
-            <SheetTitle>{editingId ? "Editar usuário" : "Criar usuário"}</SheetTitle>
-          </SheetHeader>
-          <form className="mt-6 grid gap-3 p-5" onSubmit={onSubmit}>
-            <Field label="Nome"><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required /></Field>
-            <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></Field>
-            <Field label="Senha"><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required={!editingId} /></Field>
-            <Field label="Setor"><Input value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} required /></Field>
-            <div className="space-y-2">
-              <Label>Perfil</Label>
-              <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value as CreateUserPayload["role"] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="administrador">Administrador</SelectItem>
-                  <SelectItem value="comercial">Comercial</SelectItem>
-                  <SelectItem value="credenciamento">Credenciamento</SelectItem>
-                  <SelectItem value="operacao">Operação</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Salvando..." : "Salvar"}
-            </Button>
-          </form>
-        </SheetContent>
-      </Sheet>
-    </Card>
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent className="w-full sm:max-w-xl">
+            <SheetHeader className="p-5">
+              <SheetTitle>{editingId ? "Editar usuário" : "Criar usuário"}</SheetTitle>
+            </SheetHeader>
+            <form className="mt-6 grid gap-3 p-5" onSubmit={onSubmit}>
+              <Field label="Nome"><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required /></Field>
+              <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></Field>
+              <Field label="Senha"><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required={!editingId} /></Field>
+              <Field label="Setor"><Input value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} required /></Field>
+              <div className="space-y-2">
+                <Label>Perfil</Label>
+                <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value as CreateUserPayload["role"] })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="administrador">Administrador</SelectItem>
+                    <SelectItem value="comercial">Comercial</SelectItem>
+                    <SelectItem value="credenciamento">Credenciamento</SelectItem>
+                    <SelectItem value="operacao">Operação</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Salvando..." : "Salvar"}
+              </Button>
+            </form>
+          </SheetContent>
+        </Sheet>
+      </Card>
+    </main>
   );
 }
 
