@@ -1,81 +1,26 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import { Ellipsis, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { hasRole } from "@/lib/auth/guard";
-import { useAdmins, useUsers } from "@/lib/api/hooks/use-dashboards";
+import { useUsers } from "@/lib/api/hooks/use-dashboards";
 import { usersApi } from "@/lib/api/services/users";
-import type { CreateUserPayload, UserSummary } from "@/lib/api/types/dashboard-api";
+import type { UserSummary } from "@/lib/api/types/dashboard-api";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/toast";
-
-const emptyForm: CreateUserPayload = {
-  nome: "",
-  email: "",
-  password: "",
-  role: "comercial",
-  setor: "",
-};
+import { UserFormSheet } from "@/components/settings/user-form-sheet";
 
 const ADMIN_ROLES = new Set(["admin", "administrador"]);
 
 export default function SettingsUsersPage() {
   const { data: usersData, isLoading, mutate } = useUsers();
 
-  const [open, setOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<CreateUserPayload>(emptyForm);
-  const [submitting, setSubmitting] = useState(false);
-
   if (!hasRole("admin")) return <p>Acesso restrito ao administrador.</p>;
 
-  const onSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setSubmitting(true);
-
-    try {
-      if (editingId) {
-        await usersApi.updateUser(editingId, form);
-        toast.success("Usuário atualizado com sucesso.");
-      } else {
-        await usersApi.createUser(form);
-        toast.success("Usuário criado com sucesso.");
-      }
-
-      setOpen(false);
-      setEditingId(null);
-      setForm(emptyForm);
-      await mutate();
-    } catch {
-      toast.error("Não foi possível salvar o usuário.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const openCreate = () => {
-    setEditingId(null);
-    setForm(emptyForm);
-    setOpen(true);
-  };
-
-  const openEdit = (user: UserSummary) => {
-    setEditingId(user.id);
-    setForm({
-      nome: user.nome,
-      email: user.email,
-      password: "",
-      role: user.role,
-      setor: user.setor,
-    });
-    setOpen(true);
+  const refreshUsers = async () => {
+    await mutate();
   };
 
   const onDelete = async (user: UserSummary) => {
@@ -127,9 +72,15 @@ export default function SettingsUsersPage() {
                   <PopoverContent className="popover-menu-container right-0 w-56">
                     <div className="flex w-full flex-col gap-4">
                       <div className="popover-menu-item">
-                        <Button variant="ghost" className="w-full justify-start" onClick={() => openEdit(user)}>
-                          Editar
-                        </Button>
+                        <UserFormSheet
+                          user={user}
+                          onSaved={refreshUsers}
+                          trigger={(
+                            <Button variant="ghost" className="w-full justify-start">
+                              Editar
+                            </Button>
+                          )}
+                        />
                       </div>
                       <div className="popover-menu-item">
                         <Button
@@ -157,7 +108,10 @@ export default function SettingsUsersPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Gerenciar usuários</CardTitle>
-          <Button onClick={openCreate}>Criar usuário</Button>
+          <UserFormSheet
+            onSaved={refreshUsers}
+            trigger={<Button>Criar usuário</Button>}
+          />
         </CardHeader>
         <CardContent className="space-y-8">
           {isLoading ? (
@@ -171,40 +125,7 @@ export default function SettingsUsersPage() {
             </section>
           )}
         </CardContent>
-
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent className="w-full sm:max-w-xl">
-            <SheetHeader className="p-5">
-              <SheetTitle>{editingId ? "Editar usuário" : "Criar usuário"}</SheetTitle>
-            </SheetHeader>
-            <form className="mt-6 grid gap-3 p-5" onSubmit={onSubmit}>
-              <Field label="Nome"><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required /></Field>
-              <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></Field>
-              <Field label="Senha"><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required={!editingId} /></Field>
-              <Field label="Setor"><Input value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} required /></Field>
-              <div className="space-y-2">
-                <Label>Perfil</Label>
-                <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value as CreateUserPayload["role"] })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="administrador">Administrador</SelectItem>
-                    <SelectItem value="comercial">Comercial</SelectItem>
-                    <SelectItem value="credenciamento">Credenciamento</SelectItem>
-                    <SelectItem value="operacao">Operação</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Salvando..." : "Salvar"}
-              </Button>
-            </form>
-          </SheetContent>
-        </Sheet>
       </Card>
     </main>
   );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-2"><Label>{label}</Label>{children}</div>;
 }

@@ -67,8 +67,18 @@ export const settingsSidebarNavigation: SidebarNavigation = {
         },
         {
             title: "Prepostos",
-            url: "/settings/agent",
+            url: "/settings/prepostos",
             icon: User2,
+        },
+        {
+            title: "Minha organização",
+            url: "/settings/organization",
+            icon: Building2,
+        },
+        {
+            title: "Acesso as ferramentas",
+            url: "/settings/tools-access",
+            icon: Bolt,
         },
     ],
 };
