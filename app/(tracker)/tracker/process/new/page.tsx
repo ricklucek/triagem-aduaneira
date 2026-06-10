@@ -1,5 +1,10 @@
 import TrackerScopeWizard from "@/components/tracker/TrackerScopeWizard";
+import { Suspense } from "react";
 
 export default function NewTrackerProcessPage() {
-  return <TrackerScopeWizard />;
+  return (
+    <Suspense>
+      <TrackerScopeWizard />
+    </Suspense>
+  );
 }
