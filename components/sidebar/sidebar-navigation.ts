@@ -120,4 +120,8 @@ export const processSidebarNavigation: SidebarNavigation = {
             },
         ],
     },
+    action: {
+        title: "Novo Processo",
+        url: "/tracker/process/new",
+    },
 };
