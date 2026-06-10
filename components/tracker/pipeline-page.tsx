@@ -24,9 +24,9 @@ import {
 } from "@/components/ui/table";
 import { useImportProcesses } from "@/lib/api/hooks/use-import-processes";
 import type {
-  ImportProcess,
+  ImportProcessApi,
   ImportProcessStage,
-  ServiceType,
+  ImportProcessServiceType,
 } from "@/lib/api/types/import-process-api";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +42,7 @@ const stageLabels: Record<ImportProcessStage, string> = {
 
 const stages = Object.entries(stageLabels) as [ImportProcessStage, string][];
 
-const serviceLabels: Record<ServiceType, string> = {
+const serviceLabels: Record<ImportProcessServiceType, string> = {
   customs_clearance: "Desembaraço Aduaneiro",
   international_freight: "Frete Internacional",
   international_insurance: "Seguro Internacional",
@@ -62,7 +62,7 @@ const viewOptions: {
   { value: "grouped", label: "Agrupado", icon: LayoutPanelTop },
 ];
 
-function formatDate(value?: string) {
+function formatDate(value?: string | null) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
@@ -73,7 +73,7 @@ function formatDate(value?: string) {
   }).format(date);
 }
 
-function formatShortDate(value?: string) {
+function formatShortDate(value?: string | null) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
@@ -83,19 +83,24 @@ function formatShortDate(value?: string) {
   }).format(date);
 }
 
-function processEta(process: ImportProcess) {
+function clientName(process: ImportProcessApi) {
   return (
-    process.shipment?.estimatedArrivalAt ?? process.dates.estimatedArrivalAt
+    process.client?.nome_resumido ??
+    process.client?.razao_social ??
+    process.client?.cnpj ??
+    "Cliente não informado"
   );
 }
 
-function processEtd(process: ImportProcess) {
-  return (
-    process.shipment?.estimatedDepartureAt ?? process.dates.estimatedDepartureAt
-  );
+function processEta(process: ImportProcessApi) {
+  return process.shipments[0]?.estimated_arrival_at ?? undefined;
 }
 
-function stoppedSector(process: ImportProcess) {
+function processEtd(process: ImportProcessApi) {
+  return process.shipments[0]?.estimated_departure_at ?? undefined;
+}
+
+function stoppedSector(process: ImportProcessApi) {
   const activeTask = process.tasks.find(
     (task) => task.status === "active" || task.status === "blocked",
   );
@@ -103,13 +108,13 @@ function stoppedSector(process: ImportProcess) {
     process.services.find((item) => item.status === "in_progress") ??
     process.services[0];
   return activeTask
-    ? serviceLabels[activeTask.serviceType]
+    ? serviceLabels[activeTask.service_type]
     : service
-      ? serviceLabels[service.type]
+      ? serviceLabels[service.service_type]
       : "—";
 }
 
-function daysToEta(process: ImportProcess) {
+function daysToEta(process: ImportProcessApi) {
   const eta = processEta(process);
   if (!eta) return "—";
   const etaDate = new Date(eta);
@@ -121,8 +126,8 @@ function daysToEta(process: ImportProcess) {
   return `${diff}d`;
 }
 
-function statusLabel(process: ImportProcess) {
-  return processEta(process) ? stageLabels[process.currentStage] : "Sem ETA";
+function statusLabel(process: ImportProcessApi) {
+  return processEta(process) ? stageLabels[process.current_stage] : "Sem ETA";
 }
 
 function tagLabel(tag: string) {
@@ -172,7 +177,7 @@ function Header({
   );
 }
 
-function PipelineCard({ process }: { process: ImportProcess }) {
+function PipelineCard({ process }: { process: ImportProcessApi }) {
   return (
     <Link
       href={`/tracker/process/${process.id}`}
@@ -180,7 +185,7 @@ function PipelineCard({ process }: { process: ImportProcess }) {
     >
       <div className="mb-1 flex items-start justify-between gap-2">
         <strong className="text-base text-foreground">
-          {process.processNumber}
+          {process.process_number}
         </strong>
         <Badge
           variant="secondary"
@@ -190,7 +195,7 @@ function PipelineCard({ process }: { process: ImportProcess }) {
         </Badge>
       </div>
       <p className="text-sm font-medium uppercase text-muted-foreground">
-        {process.client.name}
+        {clientName(process)}
       </p>
       <div className="mt-4 flex items-center justify-between text-sm text-foreground">
         <span>ETD {formatShortDate(processEtd(process))}</span>
@@ -200,12 +205,12 @@ function PipelineCard({ process }: { process: ImportProcess }) {
   );
 }
 
-function KanbanView({ processes }: { processes: ImportProcess[] }) {
+function KanbanView({ processes }: { processes: ImportProcessApi[] }) {
   return (
     <div className="grid min-w-[1180px] grid-cols-4 gap-4 p-4">
       {stages.map(([stage, label]) => {
         const columnProcesses = processes.filter(
-          (process) => process.currentStage === stage,
+          (process) => process.current_stage === stage,
         );
         return (
           <section
@@ -233,7 +238,7 @@ function KanbanView({ processes }: { processes: ImportProcess[] }) {
   );
 }
 
-function ListView({ processes }: { processes: ImportProcess[] }) {
+function ListView({ processes }: { processes: ImportProcessApi[] }) {
   const router = useRouter();
 
   return (
@@ -273,15 +278,15 @@ function ListView({ processes }: { processes: ImportProcess[] }) {
               onClick={() => router.push(`/tracker/process/${process.id}`)}
             >
               <TableCell className="px-4 font-medium">
-                {process.processNumber}
+                {process.process_number}
               </TableCell>
-              <TableCell className="px-4">{process.client.name}</TableCell>
+              <TableCell className="px-4">{clientName(process)}</TableCell>
               <TableCell className="px-4">
-                {stageLabels[process.currentStage]}
+                {stageLabels[process.current_stage]}
               </TableCell>
               <TableCell className="px-4">{stoppedSector(process)}</TableCell>
               <TableCell className="px-4">
-                {process.freight.providerName ?? "—"}
+                {process.freight?.provider_name ?? "—"}
               </TableCell>
               <TableCell className="px-4">
                 {formatDate(processEtd(process))}
@@ -294,8 +299,8 @@ function ListView({ processes }: { processes: ImportProcess[] }) {
                 <div className="flex gap-1">
                   {process.tags.length
                     ? process.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary">
-                          {tagLabel(tag)}
+                        <Badge key={tag.id} variant="secondary">
+                          {tagLabel(tag.tag_type)}
                         </Badge>
                       ))
                     : "—"}
@@ -322,7 +327,7 @@ function ListView({ processes }: { processes: ImportProcess[] }) {
   );
 }
 
-function TimelineView({ processes }: { processes: ImportProcess[] }) {
+function TimelineView({ processes }: { processes: ImportProcessApi[] }) {
   const etaProcesses = processes.filter((process) => processEta(process));
   const firstEta = etaProcesses[0]
     ? new Date(processEta(etaProcesses[0])!)
@@ -369,7 +374,7 @@ function TimelineView({ processes }: { processes: ImportProcess[] }) {
                 href={`/tracker/process/${process.id}`}
                 className="block rounded-xl border border-border bg-background px-3 py-2 shadow-sm shadow-black/20 transition-colors hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <strong>{process.processNumber}</strong>
+                <strong>{process.process_number}</strong>
                 <p className="text-xs text-muted-foreground">
                   ETA {formatShortDate(processEta(process))}
                 </p>
@@ -382,18 +387,21 @@ function TimelineView({ processes }: { processes: ImportProcess[] }) {
   );
 }
 
-function GroupedView({ processes }: { processes: ImportProcess[] }) {
+function GroupedView({ processes }: { processes: ImportProcessApi[] }) {
   const router = useRouter();
   const [groupBy, setGroupBy] = useState<GroupBy>("client");
   const groups = useMemo(() => {
-    return processes.reduce<Record<string, ImportProcess[]>>((acc, process) => {
-      const key =
-        groupBy === "client"
-          ? process.client.name
-          : formatDate(processEta(process));
-      acc[key] = [...(acc[key] ?? []), process];
-      return acc;
-    }, {});
+    return processes.reduce<Record<string, ImportProcessApi[]>>(
+      (acc, process) => {
+        const key =
+          groupBy === "client"
+            ? clientName(process)
+            : formatDate(processEta(process));
+        acc[key] = [...(acc[key] ?? []), process];
+        return acc;
+      },
+      {},
+    );
   }, [groupBy, processes]);
 
   return (
@@ -430,8 +438,8 @@ function GroupedView({ processes }: { processes: ImportProcess[] }) {
                 className="grid cursor-pointer grid-cols-[140px_1fr_1fr_1fr_120px] items-center border-b border-border px-4 py-3 transition-colors last:border-b-0 odd:bg-background even:bg-muted/20 hover:bg-muted/40"
                 onClick={() => router.push(`/tracker/process/${process.id}`)}
               >
-                <strong>{process.processNumber}</strong>
-                <span>{stageLabels[process.currentStage]}</span>
+                <strong>{process.process_number}</strong>
+                <span>{stageLabels[process.current_stage]}</span>
                 <span className="text-muted-foreground">
                   {stoppedSector(process)}
                 </span>

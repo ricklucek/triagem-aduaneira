@@ -2,7 +2,7 @@ import { API_ROUTES } from "@/lib/api/config/routes";
 import { http } from "@/lib/api/config/http";
 import type {
   CreateImportProcessPayload,
-  ImportProcess,
+  ImportProcessApi,
   ImportProcessesResponse,
   ListImportProcessesParams,
 } from "@/lib/api/types/import-process-api";
@@ -18,7 +18,7 @@ export const importProcessesApi = {
   },
 
   async getProcess(processId: string) {
-    const { data } = await http.get<ImportProcess>(
+    const { data } = await http.get<ImportProcessApi>(
       API_ROUTES.tracker.importProcessDetail(processId),
     );
 
@@ -26,7 +26,7 @@ export const importProcessesApi = {
   },
 
   async createProcess(payload: CreateImportProcessPayload) {
-    const { data } = await http.post<ImportProcess>(
+    const { data } = await http.post<ImportProcessApi>(
       API_ROUTES.tracker.importProcesses,
       payload,
     );

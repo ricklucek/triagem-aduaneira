@@ -5,12 +5,13 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { useImportProcess } from "@/lib/api/hooks/use-import-processes";
+import type { TrackerProcessForm } from "@/domain/tracker/process-form";
 import type {
-  ImportProcess,
+  ImportProcessApi,
+  ImportProcessServiceStatus,
+  ImportProcessServiceType,
   ImportProcessTagType,
-  ServiceStatus,
-  ServiceType,
-  TaskStatus,
+  ImportProcessTaskStatus,
 } from "@/lib/api/types/import-process-api";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ type ProcessDetailPageProps = {
   processId: string;
 };
 
-const serviceLabels: Record<ServiceType, string> = {
+const serviceLabels: Record<ImportProcessServiceType, string> = {
   customs_clearance: "Despacho Aduaneiro",
   international_freight: "Frete Internacional",
   international_insurance: "Seguro Internacional",
@@ -33,14 +34,14 @@ const tagLabels: Record<ImportProcessTagType, string> = {
   li_lpco: "LI/LPCO",
 };
 
-const taskStatusLabels: Record<TaskStatus, string> = {
+const taskStatusLabels: Record<ImportProcessTaskStatus, string> = {
   pending: "Pendente",
   active: "Em andamento",
   done: "Concluída",
   blocked: "Bloqueada",
 };
 
-function formatDate(value?: string) {
+function formatDate(value?: string | null) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
@@ -52,14 +53,53 @@ function formatDate(value?: string) {
   }).format(date);
 }
 
-function serviceTone(status: ServiceStatus) {
+function serviceTone(status: ImportProcessServiceStatus) {
   if (status === "completed") return "bg-success/15 text-success";
   if (status === "in_progress") return "bg-primary/15 text-primary";
   if (status === "cancelled") return "bg-destructive/15 text-destructive";
   return "bg-muted text-muted-foreground";
 }
 
-function ReadOnlyField({ label, value }: { label: string; value?: string }) {
+function clientName(process: ImportProcessApi) {
+  return (
+    process.client?.nome_resumido ??
+    process.client?.razao_social ??
+    process.client?.cnpj ??
+    "Cliente não informado"
+  );
+}
+
+function clientTaxId(process: ImportProcessApi) {
+  return process.client?.cnpj ?? process.client?.tax_id ?? null;
+}
+
+function clientDocumentLabel(process: ImportProcessApi) {
+  const taxId = clientTaxId(process);
+  return `${clientName(process)}${taxId ? ` · ${taxId}` : ""}`;
+}
+
+function processTags(process: ImportProcessApi) {
+  return process.tags.map((tag) => tag.tag_type);
+}
+
+function trackerMetadata(process: ImportProcessApi) {
+  return process.metadata_json as
+    | Partial<TrackerProcessForm>
+    | null
+    | undefined;
+}
+
+function joinValues(values?: string[]) {
+  return values?.length ? values.join(", ") : "—";
+}
+
+function ReadOnlyField({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | null;
+}) {
   return (
     <div className="space-y-2">
       <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -112,7 +152,7 @@ function SectionCard({
   );
 }
 
-function ProcessTasks({ process }: { process: ImportProcess }) {
+function ProcessTasks({ process }: { process: ImportProcessApi }) {
   const tasks = process.tasks.length
     ? process.tasks
     : [
@@ -120,25 +160,25 @@ function ProcessTasks({ process }: { process: ImportProcess }) {
           id: "open-process",
           name: "Abertura de processo",
           status: "done" as const,
-          serviceType: "international_freight" as const,
+          service_type: "international_freight" as const,
         },
         {
           id: "document-check",
           name: "Conferência documental",
           status: "pending" as const,
-          serviceType: "customs_clearance" as const,
+          service_type: "customs_clearance" as const,
         },
         {
           id: "bl-check",
           name: "Conferência do BL",
           status: "pending" as const,
-          serviceType: "customs_clearance" as const,
+          service_type: "customs_clearance" as const,
         },
         {
           id: "cargo-insurance",
           name: "Averbar seguro da carga",
           status: "pending" as const,
-          serviceType: "international_insurance" as const,
+          service_type: "international_insurance" as const,
         },
       ];
 
@@ -172,7 +212,7 @@ function ProcessTasks({ process }: { process: ImportProcess }) {
                 {task.name}
               </span>
               <Badge variant="secondary" className="rounded-full">
-                {serviceLabels[task.serviceType] ??
+                {serviceLabels[task.service_type] ??
                   taskStatusLabels[task.status]}
               </Badge>
             </Link>
@@ -183,27 +223,24 @@ function ProcessTasks({ process }: { process: ImportProcess }) {
   );
 }
 
-function OpeningData({ process }: { process: ImportProcess }) {
-  const freightApproved = process.freight.quoteStatus === "approved";
+function OpeningData({ process }: { process: ImportProcessApi }) {
+  const freightApproved = process.freight?.quote_status === "approved";
 
   return (
     <SectionCard id="dados-abertura" title="Dados da abertura">
       <div className="grid gap-4 lg:grid-cols-2">
         <ReadOnlyField
           label="Nº do processo"
-          value={process.internalReference ?? process.processNumber}
+          value={process.internal_reference ?? process.process_number}
         />
-        <ReadOnlyField label="Ref. Siscasco" value={process.processNumber} />
-        <ReadOnlyField label="Ref. Cliente" value={process.clientReference} />
+        <ReadOnlyField label="Ref. Siscasco" value={process.process_number} />
+        <ReadOnlyField label="Ref. Cliente" value={process.client_reference} />
         <ReadOnlyField
           label="Data de abertura"
-          value={formatDate(process.dates.openedAt)}
+          value={formatDate(process.opened_at)}
         />
         <div className="lg:col-span-2">
-          <ReadOnlyField
-            label="Cliente"
-            value={`${process.client.name}${process.client.taxId ? ` · ${process.client.taxId}` : ""}`}
-          />
+          <ReadOnlyField label="Cliente" value={clientDocumentLabel(process)} />
         </div>
       </div>
 
@@ -228,7 +265,7 @@ function OpeningData({ process }: { process: ImportProcess }) {
                 serviceTone(service.status),
               )}
             >
-              {serviceLabels[service.type]}
+              {serviceLabels[service.service_type]}
             </Badge>
           ))}
         </div>
@@ -242,11 +279,11 @@ function OpeningData({ process }: { process: ImportProcess }) {
           {process.tags.length ? (
             process.tags.map((tag) => (
               <Badge
-                key={tag}
+                key={tag.id}
                 variant="outline"
                 className="rounded-xl px-3 py-1"
               >
-                {tagLabels[tag]}
+                {tagLabels[tag.tag_type]}
               </Badge>
             ))
           ) : (
@@ -260,20 +297,29 @@ function OpeningData({ process }: { process: ImportProcess }) {
   );
 }
 
-function OperationData({ process }: { process: ImportProcess }) {
+function OperationData({ process }: { process: ImportProcessApi }) {
+  const metadata = trackerMetadata(process);
+  const operation = metadata?.operation;
+  const scope = metadata?.scope;
   const rows = [
-    ["Tipo de operação", "Importação"],
+    ["Tipo de operação", joinValues(operation?.operationTypes)],
+    ["Incoterm", operation?.incoterm || "—"],
     [
-      "Incoterm",
-      process.freight.internationalFreightResponsibility === "client"
-        ? "Cliente"
-        : "—",
+      "Modal",
+      operation?.modal ||
+        (process.shipments[0]?.vessel_name ? "MARITIMO" : "—"),
     ],
-    ["Modal", process.shipment?.vesselName ? "Marítimo" : "—"],
-    ["Carga perigosa", "A confirmar"],
-    ["Regime especial", "Nenhum"],
-    ["Drawback", process.tags.includes("li_lpco") ? "A verificar" : "Não"],
-    ["Finalidade", "Revenda"],
+    ["Carga perigosa", scope?.dangerousCargo || "—"],
+    [
+      "Regime especial",
+      scope?.specialRegimeType || scope?.specialRegime || "—",
+    ],
+    [
+      "Drawback",
+      scope?.drawback ||
+        (processTags(process).includes("li_lpco") ? "A verificar" : "Não"),
+    ],
+    ["Finalidade", operation?.purposeDescription || operation?.purpose || "—"],
   ];
 
   return (
@@ -295,7 +341,7 @@ function OperationData({ process }: { process: ImportProcess }) {
   );
 }
 
-function ProcessFlags({ process }: { process: ImportProcess }) {
+function ProcessFlags({ process }: { process: ImportProcessApi }) {
   const flags: { key: ImportProcessTagType; label: string }[] = [
     { key: "dta", label: "DTA?" },
     { key: "dtc", label: "DTC?" },
@@ -311,7 +357,7 @@ function ProcessFlags({ process }: { process: ImportProcess }) {
             className="flex items-center justify-between gap-4"
           >
             <span className="text-sm text-foreground">{flag.label}</span>
-            <ReadOnlySwitch checked={process.tags.includes(flag.key)} />
+            <ReadOnlySwitch checked={processTags(process).includes(flag.key)} />
           </div>
         ))}
         <div className="flex items-center justify-between gap-4">
@@ -352,14 +398,14 @@ export function ProcessDetailPage({ processId }: ProcessDetailPageProps) {
           <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-foreground">
-                {process.processNumber}
+                {process.process_number}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {process.client.name}
+                {clientName(process)}
               </p>
             </div>
             <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-              {formatDate(process.dates.openedAt)}
+              {formatDate(process.opened_at)}
             </Badge>
           </div>
         </div>

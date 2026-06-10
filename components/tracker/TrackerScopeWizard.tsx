@@ -49,8 +49,8 @@ import type { ClientApi } from "@/lib/api/types/client-api";
 import type {
   CreateImportProcessPayload,
   FreightQuoteStatus,
+  ImportProcessServiceType,
   InternationalFreightResponsibility,
-  ServiceType,
 } from "@/lib/api/types/import-process-api";
 import { cn } from "@/lib/utils";
 import { formatCNPJ, isCNPJ } from "@/utils/format";
@@ -114,7 +114,9 @@ function asQuoteStatus(value: string): FreightQuoteStatus {
   return "not_requested";
 }
 
-function selectedServices(data: TrackerProcessForm): ServiceType[] {
+function selectedServices(
+  data: TrackerProcessForm,
+): ImportProcessServiceType[] {
   const services = data.scope.contractedServices;
   return [
     services.customsClearance.responsibleType ? "customs_clearance" : null,
@@ -127,59 +129,58 @@ function selectedServices(data: TrackerProcessForm): ServiceType[] {
     services.internationalInsurance.option === "CASO_A_CASO"
       ? "international_insurance"
       : null,
-  ].filter(Boolean) as ServiceType[];
+  ].filter(Boolean) as ImportProcessServiceType[];
+}
+
+function nullableText(value?: string | null) {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
 }
 
 function buildPayload(data: TrackerProcessForm): CreateImportProcessPayload {
   const services = selectedServices(data);
-  const estimatedDepartureAt = toIsoDate(data.operation.etd);
-  const estimatedArrivalAt = toIsoDate(data.operation.eta);
+  const estimatedDepartureAt = toIsoDate(data.operation.etd) ?? null;
+  const estimatedArrivalAt = toIsoDate(data.operation.eta) ?? null;
   const tags = [
-    data.scope.dta === "SIM" ? "dta" : null,
-    data.scope.dtc === "SIM" ? "dtc" : null,
-    data.scope.li === "SIM" ? "li_lpco" : null,
-  ].filter(Boolean) as CreateImportProcessPayload["tags"];
+    data.scope.dta === "SIM" ? { tag_type: "dta" as const } : null,
+    data.scope.dtc === "SIM" ? { tag_type: "dtc" as const } : null,
+    data.scope.li === "SIM" ? { tag_type: "li_lpco" as const } : null,
+  ].filter(Boolean) as NonNullable<CreateImportProcessPayload["tags"]>;
+  const processNumber =
+    nullableText(data.identification.internalReference) ??
+    nullableText(data.identification.clientReference) ??
+    "Novo processo";
 
   return {
-    processNumber:
-      data.identification.internalReference ||
-      data.identification.clientReference ||
-      "Novo processo",
-    internalReference: data.identification.internalReference,
-    clientReference: data.identification.clientReference,
-    client: {
-      id: data.identification.client.id,
-      name: data.identification.client.name,
-      taxId: data.identification.client.taxId,
-    },
-    dates: {
-      openedAt: new Date().toISOString(),
-      estimatedDepartureAt,
-      estimatedArrivalAt,
-    },
+    process_number: processNumber,
+    internal_reference: nullableText(data.identification.internalReference),
+    client_reference: nullableText(data.identification.clientReference),
+    client_id: data.identification.client.id,
+    opened_at: new Date().toISOString(),
+    current_stage: "pre_shipment",
+    metadata_json: data,
     shipment: {
-      estimatedDepartureAt,
-      estimatedArrivalAt,
+      estimated_departure_at: estimatedDepartureAt,
+      estimated_arrival_at: estimatedArrivalAt,
     },
     freight: {
-      internationalFreightResponsibility: asFreightResponsibility(
+      international_freight_responsibility: asFreightResponsibility(
         data.scope.contractedServices.internationalFreight.responsibleType,
       ),
-      quoteStatus: asQuoteStatus(
+      quote_status: asQuoteStatus(
         data.scope.contractedServices.roadFreight.quoteStatus,
       ),
-      providerName:
-        data.scope.contractedServices.internationalFreight.responsibleName ||
-        data.scope.contractedServices.roadFreight.responsibleName,
+      provider_name:
+        nullableText(
+          data.scope.contractedServices.internationalFreight.responsibleName,
+        ) ??
+        nullableText(data.scope.contractedServices.roadFreight.responsibleName),
     },
-    services: services.map((type, index) => ({
-      id: type,
-      type,
+    services: services.map((service_type, index) => ({
+      service_type,
       status: index === 0 ? "in_progress" : "pending",
     })),
-    currentStage: "pre_shipment",
     tags,
-    metadata: data,
   };
 }
 

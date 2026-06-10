@@ -6,7 +6,7 @@ export type ImportProcessStage =
 
 export type ImportProcessTagType = "dta" | "dtc" | "li_lpco";
 
-export type ServiceType =
+export type ImportProcessServiceType =
   | "customs_clearance"
   | "international_freight"
   | "international_insurance"
@@ -14,13 +14,13 @@ export type ServiceType =
   | "advisory"
   | "financial";
 
-export type ServiceStatus =
+export type ImportProcessServiceStatus =
   | "pending"
   | "in_progress"
   | "completed"
   | "cancelled";
 
-export type TaskStatus = "pending" | "active" | "done" | "blocked";
+export type ImportProcessTaskStatus = "pending" | "active" | "done" | "blocked";
 
 export type InternationalFreightResponsibility =
   | "internal"
@@ -35,92 +35,304 @@ export type FreightQuoteStatus =
   | "rejected"
   | "cancelled";
 
-export interface ImportProcessClient {
+export interface ImportProcessClientApi {
   id: string;
+  razao_social?: string | null;
+  nome_resumido?: string | null;
+  cnpj?: string | null;
+  tax_id?: string | null;
+}
+
+export interface ImportProcessShipmentApi {
+  id: number;
+  import_process_id: number;
+
+  estimated_departure_at?: string | null;
+  estimated_arrival_at?: string | null;
+
+  actual_departure_at?: string | null;
+  actual_arrival_at?: string | null;
+
+  origin?: string | null;
+  destination?: string | null;
+
+  vessel_name?: string | null;
+  voyage_number?: string | null;
+
+  master_bl?: string | null;
+  house_bl?: string | null;
+
+  container_number?: string | null;
+
+  notes?: string | null;
+
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ImportProcessFreightApi {
+  id: number;
+  import_process_id: number;
+
+  international_freight_responsibility: InternationalFreightResponsibility;
+  quote_status: FreightQuoteStatus;
+
+  quote_requested_at?: string | null;
+  quote_approved_at?: string | null;
+  quote_rejected_at?: string | null;
+
+  provider_name?: string | null;
+
+  quoted_amount?: string | number | null;
+  quoted_currency?: string | null;
+
+  notes?: string | null;
+
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ImportProcessServiceApi {
+  id: number;
+  import_process_id: number;
+
+  service_type: ImportProcessServiceType;
+  status: ImportProcessServiceStatus;
+
+  started_at?: string | null;
+  completed_at?: string | null;
+  cancelled_at?: string | null;
+
+  notes?: string | null;
+
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ImportProcessTaskApi {
+  id: number;
+  import_process_id: number;
+
+  service_type: ImportProcessServiceType;
+
   name: string;
-  taxId?: string;
+  description?: string | null;
+
+  status: ImportProcessTaskStatus;
+
+  position: number;
+
+  due_date?: string | null;
+
+  started_at?: string | null;
+  completed_at?: string | null;
+  blocked_at?: string | null;
+
+  blocking_reason?: string | null;
+
+  assigned_to_user_id?: string | number | null;
+
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface ImportProcessDates {
-  openedAt: string;
-  estimatedDepartureAt?: string;
-  estimatedArrivalAt?: string;
-  actualDepartureAt?: string;
-  actualArrivalAt?: string;
+export interface ImportProcessTagApi {
+  id: number;
+  import_process_id: number;
+
+  tag_type: ImportProcessTagType;
+
+  created_at?: string;
 }
 
-export interface ImportProcessShipment {
-  id?: string;
-  origin?: string;
-  destination?: string;
-  estimatedDepartureAt?: string;
-  estimatedArrivalAt?: string;
-  actualDepartureAt?: string;
-  actualArrivalAt?: string;
-  vesselName?: string;
-  masterBl?: string;
-  houseBl?: string;
+export interface ImportProcessApi {
+  id: number;
+
+  process_number: string;
+
+  internal_reference?: string | null;
+  client_reference?: string | null;
+
+  client_id: string;
+
+  opened_at: string;
+
+  current_stage: ImportProcessStage;
+
+  metadata_json?: Record<string, unknown> | null;
+
+  notes?: string | null;
+
+  created_at?: string;
+  updated_at?: string;
+
+  client?: ImportProcessClientApi | null;
+
+  shipments: ImportProcessShipmentApi[];
+
+  freight?: ImportProcessFreightApi | null;
+
+  services: ImportProcessServiceApi[];
+
+  tasks: ImportProcessTaskApi[];
+
+  tags: ImportProcessTagApi[];
 }
 
-export interface ImportProcessFreight {
-  internationalFreightResponsibility: InternationalFreightResponsibility;
-  quoteStatus: FreightQuoteStatus;
-  quoteApprovedAt?: string;
-  providerName?: string;
-  notes?: string;
+export interface CreateImportProcessShipmentPayload {
+  estimated_departure_at?: string | null;
+  estimated_arrival_at?: string | null;
+
+  actual_departure_at?: string | null;
+  actual_arrival_at?: string | null;
+
+  origin?: string | null;
+  destination?: string | null;
+
+  vessel_name?: string | null;
+  voyage_number?: string | null;
+
+  master_bl?: string | null;
+  house_bl?: string | null;
+
+  container_number?: string | null;
+
+  notes?: string | null;
 }
 
-export interface ImportProcessService {
-  id: string;
-  type: ServiceType;
-  status: ServiceStatus;
+export interface CreateImportProcessFreightPayload {
+  international_freight_responsibility: InternationalFreightResponsibility;
+  quote_status: FreightQuoteStatus;
+
+  quote_requested_at?: string | null;
+  quote_approved_at?: string | null;
+  quote_rejected_at?: string | null;
+
+  provider_name?: string | null;
+
+  quoted_amount?: string | number | null;
+  quoted_currency?: string | null;
+
+  notes?: string | null;
 }
 
-export interface ImportProcessTask {
-  id: string;
+export interface CreateImportProcessServicePayload {
+  service_type: ImportProcessServiceType;
+  status: ImportProcessServiceStatus;
+
+  started_at?: string | null;
+  completed_at?: string | null;
+  cancelled_at?: string | null;
+
+  notes?: string | null;
+}
+
+export interface CreateImportProcessTaskPayload {
+  service_type: ImportProcessServiceType;
+
   name: string;
-  status: TaskStatus;
-  serviceType: ServiceType;
+  description?: string | null;
+
+  status?: ImportProcessTaskStatus;
+
   position?: number;
-  dueDate?: string;
-  completedAt?: string;
+
+  due_date?: string | null;
+
+  started_at?: string | null;
+  completed_at?: string | null;
+  blocked_at?: string | null;
+
+  blocking_reason?: string | null;
+
+  assigned_to_user_id?: string | number | null;
 }
 
-export interface ImportProcess {
-  id: string;
-  processNumber: string;
-  internalReference?: string;
-  clientReference?: string;
-  client: ImportProcessClient;
-  dates: ImportProcessDates;
-  shipment?: ImportProcessShipment;
-  freight: ImportProcessFreight;
-  services: ImportProcessService[];
-  currentStage: ImportProcessStage;
-  tags: ImportProcessTagType[];
-  tasks: ImportProcessTask[];
-  createdAt?: string;
-  updatedAt?: string;
+export interface CreateImportProcessTagPayload {
+  tag_type: ImportProcessTagType;
 }
 
-export type CreateImportProcessPayload = Omit<
-  ImportProcess,
-  "id" | "tasks" | "createdAt" | "updatedAt"
-> & {
-  tasks?: ImportProcessTask[];
-  metadata?: Record<string, unknown>;
-};
+export interface CreateImportProcessPayload {
+  process_number: string;
+
+  internal_reference?: string | null;
+  client_reference?: string | null;
+
+  client_id: string;
+
+  opened_at: string;
+
+  current_stage?: ImportProcessStage;
+
+  metadata_json?: Record<string, unknown> | null;
+
+  notes?: string | null;
+
+  shipment?: CreateImportProcessShipmentPayload | null;
+
+  freight?: CreateImportProcessFreightPayload | null;
+
+  services?: CreateImportProcessServicePayload[];
+
+  tasks?: CreateImportProcessTaskPayload[];
+
+  tags?: CreateImportProcessTagPayload[];
+}
+
+export interface UpdateImportProcessPayload {
+  process_number?: string;
+
+  internal_reference?: string | null;
+  client_reference?: string | null;
+
+  client_id?: string;
+
+  opened_at?: string;
+
+  current_stage?: ImportProcessStage;
+
+  metadata_json?: Record<string, unknown> | null;
+
+  notes?: string | null;
+}
+
+export interface UpdateImportProcessStagePayload {
+  current_stage: ImportProcessStage;
+}
+
+export interface UpdateImportProcessTaskPayload {
+  service_type?: ImportProcessServiceType;
+
+  name?: string;
+  description?: string | null;
+
+  status?: ImportProcessTaskStatus;
+
+  position?: number;
+
+  due_date?: string | null;
+
+  started_at?: string | null;
+  completed_at?: string | null;
+  blocked_at?: string | null;
+
+  blocking_reason?: string | null;
+
+  assigned_to_user_id?: string | number | null;
+}
 
 export interface ListImportProcessesParams {
   search?: string;
   stage?: ImportProcessStage;
   clientId?: string;
   tag?: ImportProcessTagType;
+  limit?: number;
+  offset?: number;
 }
 
-export type ImportProcessesResponse = {
-  items: ImportProcess[];
+export interface ImportProcessesResponse {
+  items: ImportProcessApi[];
   total: number;
   limit: number;
   offset: number;
-};
+}
