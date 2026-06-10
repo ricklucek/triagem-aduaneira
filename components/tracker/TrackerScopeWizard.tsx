@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RotateCw, Search } from "lucide-react";
+import { Check, ChevronsUpDown, RotateCw, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import ClientsPage from "@/components/layout/scopes/listClient";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -12,13 +11,17 @@ import { Field, TextInput } from "@/components/ui/form-fields";
 import {
   Grid,
   PageHeader,
-  PageShell,
   PrimaryButton,
   SecondaryButton,
   Section,
   StepPills,
 } from "@/components/ui/form-layout";
 import { MultiSelect } from "@/components/ui/multi-select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "@/components/ui/toast";
 import {
   consentingAgencyOptions,
@@ -40,6 +43,7 @@ import {
   yesNoConfirmOptions,
   yesNoOptions,
 } from "@/domain/tracker/process-form";
+import { useClients } from "@/lib/api/hooks/use-clients-api";
 import { importProcessesApi } from "@/lib/api/services/import-processes";
 import type { ClientApi } from "@/lib/api/types/client-api";
 import type {
@@ -49,7 +53,7 @@ import type {
   ServiceType,
 } from "@/lib/api/types/import-process-api";
 import { cn } from "@/lib/utils";
-import { formatCNPJ } from "@/utils/format";
+import { formatCNPJ, isCNPJ } from "@/utils/format";
 
 const STORAGE_KEY = "tracker:process:new:draft";
 
@@ -218,6 +222,149 @@ function RadioGroup<T extends string>({
   );
 }
 
+function ClientDropdown({
+  value,
+  onSelect,
+  error,
+}: {
+  value: TrackerProcessForm["identification"]["client"];
+  onSelect: (client: ClientApi) => void;
+  error?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+
+  const params = useMemo(
+    () => ({
+      q: isCNPJ(q) ? undefined : q,
+      cnpj: isCNPJ(q) ? q.replace(/\D/g, "") : undefined,
+      limit: 50,
+      offset: 0,
+    }),
+    [q],
+  );
+
+  const { data, isLoading, error: clientsError } = useClients(params);
+  const clients = data?.items ?? [];
+  const selectedLabel = value.id
+    ? value.name
+    : "Selecione um cliente para o processo";
+
+  return (
+    <Field label="Cliente" required error={error}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            aria-invalid={!!error}
+            className={cn(
+              "h-auto min-h-12 w-full justify-between rounded-xl px-4 py-3 text-left font-normal",
+              error && "border-destructive bg-destructive/5",
+            )}
+          >
+            <span className="min-w-0">
+              <span
+                className={cn(
+                  "block truncate text-sm font-medium",
+                  !value.id && "text-muted-foreground",
+                )}
+              >
+                {selectedLabel}
+              </span>
+              {value.id ? (
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {value.taxId ? formatCNPJ(value.taxId) : "CNPJ não informado"}
+                </span>
+              ) : null}
+            </span>
+            <ChevronsUpDown className="ml-3 size-4 shrink-0 text-muted-foreground" />
+          </Button>
+        </PopoverTrigger>
+
+        <PopoverContent
+          align="start"
+          className="w-(--radix-popover-trigger-width) p-0"
+        >
+          <div className="border-b border-border p-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <TextInput
+                autoFocus
+                value={q}
+                onChange={(event) => setQ(event.target.value)}
+                placeholder="Buscar por razão social ou CNPJ"
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="max-h-72 overflow-y-auto p-1">
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-muted-foreground">
+                <RotateCw className="size-4 animate-spin" />
+                Buscando clientes...
+              </div>
+            ) : clientsError ? (
+              <div className="px-4 py-6 text-sm text-destructive">
+                Falha ao carregar clientes.
+              </div>
+            ) : clients.length === 0 ? (
+              <div className="px-4 py-6 text-sm text-muted-foreground">
+                Nenhum cliente encontrado.
+              </div>
+            ) : (
+              clients.map((client) => {
+                const selected = client.id === value.id;
+
+                return (
+                  <button
+                    key={client.id}
+                    type="button"
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left text-sm transition-colors hover:bg-muted focus:bg-muted focus:outline-none",
+                      selected && "bg-primary/10 text-primary",
+                    )}
+                    onClick={() => {
+                      onSelect(client);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mt-0.5 size-4 shrink-0",
+                        selected ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">
+                        {client.razao_social}
+                      </span>
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        {client.cnpj
+                          ? formatCNPJ(client.cnpj)
+                          : "CNPJ não informado"}
+                      </span>
+                    </span>
+                    <Badge
+                      variant={client.ativo ? "default" : "secondary"}
+                      className="shrink-0 rounded-full"
+                    >
+                      {client.ativo ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </Field>
+  );
+}
+
 function ClientSearchStep({
   form,
   setForm,
@@ -246,39 +393,11 @@ function ClientSearchStep({
       title="Identificação"
       description="Selecione o cliente e informe as referências internas do processo."
     >
-      {form.identification.client.id ? (
-        <Card className="rounded-2xl border-primary/30 bg-primary/5 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Cliente selecionado
-              </p>
-              <h3 className="mt-1 font-semibold">
-                {form.identification.client.name}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {form.identification.client.taxId
-                  ? formatCNPJ(form.identification.client.taxId)
-                  : "CNPJ não informado"}
-              </p>
-            </div>
-            <Badge className="w-fit rounded-full">Selecionado</Badge>
-          </div>
-        </Card>
-      ) : null}
-
-      {getNestedError(errors, "identification.client.id") ? (
-        <p className="text-sm font-medium text-destructive">
-          {getNestedError(errors, "identification.client.id")}
-        </p>
-      ) : null}
-
-      <div className="overflow-hidden rounded-2xl border border-border">
-        <ClientsPage
-          onSelectClient={selectClient}
-          selectedClientId={form.identification.client.id}
-        />
-      </div>
+      <ClientDropdown
+        value={form.identification.client}
+        onSelect={selectClient}
+        error={getNestedError(errors, "identification.client.id")}
+      />
 
       <Grid>
         <Field label="Referência SISCASCO">
@@ -935,7 +1054,7 @@ export default function TrackerScopeWizard() {
   }
 
   return (
-    <PageShell className="mx-auto max-w-7xl">
+    <Card className="w-full rounded-[2rem] border-border/80 p-4 shadow-sm sm:p-6 lg:p-8">
       <PageHeader
         title="Novo processo rastreado"
         subtitle="Preencha as etapas de identificação, operação e escopo para criar o processo no rastreador."
@@ -1013,6 +1132,6 @@ export default function TrackerScopeWizard() {
           )}
         </div>
       </div>
-    </PageShell>
+    </Card>
   );
 }
