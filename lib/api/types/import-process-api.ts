@@ -1,8 +1,8 @@
 export type ImportProcessStage =
-  | "PRE_SHIPMENT"
-  | "SHIPMENT_IN_TRANSIT"
-  | "CUSTOMS_CLEARANCE"
-  | "RELEASED_FOR_DELIVERY";
+  | "pre_shipment"
+  | "shipment_in_transit"
+  | "customs_clearance"
+  | "released_for_delivery";
 
 export type ImportProcessTagType = "dta" | "dtc" | "li_lpco";
 
