@@ -34,10 +34,10 @@ type PipelineView = "kanban" | "list" | "timeline" | "grouped";
 type GroupBy = "client" | "eta";
 
 const stageLabels: Record<ImportProcessStage, string> = {
-  pre_shipment: "Pré-Embarque",
-  shipment_in_transit: "Embarque e Trânsito",
-  customs_clearance: "Chegada e Alfândega",
-  released_for_delivery: "Liberação e Entrega",
+  PRE_SHIPMENT: "Pré-Embarque",
+  SHIPMENT_IN_TRANSIT: "Embarque e Trânsito",
+  CUSTOMS_CLEARANCE: "Chegada e Alfândega",
+  RELEASED_FOR_DELIVERY: "Liberação e Entrega",
 };
 
 const stages = Object.entries(stageLabels) as [ImportProcessStage, string][];
