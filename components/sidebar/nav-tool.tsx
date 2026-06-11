@@ -25,6 +25,7 @@ const tools = [
     label: "Escopos",
     description: "Despachos e cadastros",
     href: "/scope/list",
+    reference: "/scope",
     icon: FileText,
   },
   {
@@ -32,6 +33,7 @@ const tools = [
     label: "Tracker",
     description: "Pipeline dos processos",
     href: "/tracker/pipeline",
+    reference: "/tracker",
     icon: Locate,
   },
 ];
@@ -41,7 +43,7 @@ export function NavTool() {
   const pathname = usePathname();
 
   const active =
-    tools.find((tool) => pathname.startsWith(tool.href)) ?? tools[0];
+    tools.find((tool) => pathname.startsWith(tool.reference)) ?? tools[0];
   const Icon = active.icon;
 
   return (

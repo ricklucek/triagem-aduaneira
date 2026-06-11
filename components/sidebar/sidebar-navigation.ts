@@ -2,6 +2,7 @@ import {
     Bolt,
     Building2,
     FileText,
+    GitFork,
     Info,
     LayoutDashboard,
     Locate,
@@ -50,9 +51,13 @@ export const trackerSidebarNavigation: SidebarNavigation = {
         {
             title: "Pipeline",
             url: "/tracker/pipeline",
-            icon: Locate,
+            icon: GitFork,
         },
     ],
+    action: {
+        title: "Novo Processo",
+        url: "/tracker/process/new",
+    },
 };
 
 export const settingsSidebarNavigation: SidebarNavigation = {
@@ -119,9 +124,5 @@ export const processSidebarNavigation: SidebarNavigation = {
                 url: `${""}#departamento-financeiro`,
             },
         ],
-    },
-    action: {
-        title: "Novo Processo",
-        url: "/tracker/process/new",
     },
 };
