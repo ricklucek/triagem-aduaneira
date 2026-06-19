@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle2, RotateCw } from "lucide-react";
+import { CheckCircle2, Info, RotateCw, X } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
 import { useScope, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
@@ -24,9 +24,9 @@ const currency = (v?: number | null) =>
   v == null || Number.isNaN(v)
     ? null
     : new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(v);
+      style: "currency",
+      currency: "BRL",
+    }).format(v);
 
 const date = (v?: string | null) => {
   if (!v) return null;
@@ -52,8 +52,8 @@ const account = (
   !v || (!v.banco && !v.agencia && !v.conta)
     ? null
     : `Banco: ${text(v.banco)} • Agência: ${text(v.agencia)} • Conta: ${text(
-        v.conta,
-      )}`;
+      v.conta,
+    )}`;
 
 const contaPagamentoLabel = (v?: string | null) => {
   if (v === "CASCO") return "CASCO";
@@ -77,12 +77,33 @@ const ICMS_DESTINACAO_LABEL: Record<string, string> = {
   ATIVO_IMOBILIZADO: "Ativo imobilizado",
 };
 
-const hiredBadge = (
-  <Badge className="bg-emerald-600 hover:bg-emerald-600">
-    <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
-    Contrata
-  </Badge>
-);
+const HiredBadge = ({ value }: { value: "SIM" | "NAO" | "CASO_A_CASO" | undefined }) => {
+
+  if (value == "SIM") {
+    return (
+      <Badge className="bg-emerald-600 hover:bg-emerald-600">
+        <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+        Contrata
+      </Badge>
+    )
+  } else if (value == "NAO") {
+    return (
+      <Badge className="bg-red-600 hover:bg-red-600">
+        <X className="mr-1 h-3.5 w-3.5" />
+        Não Contrata
+      </Badge>
+    )
+  } else if (value == "CASO_A_CASO") {
+    return (
+      <Badge className="bg-yellow-500 hover:bg-yellow-500">
+        <Info className="mr-1 h-3.5 w-3.5" />
+        Caso a Caso
+      </Badge>
+    )
+  }
+
+  return
+};
 
 const hasEnabledService = (services?: Record<string, any> | null) =>
   Object.values(services ?? {}).some(
@@ -350,17 +371,19 @@ function AfrmmView({
 function ServiceBlock({
   title,
   enabled,
+  mode,
   children,
 }: {
   title: string;
   enabled?: boolean | null;
+  mode?: "SIM" | "NAO" | "CASO_A_CASO" | undefined
   children: React.ReactNode;
 }) {
   if (!enabled) return null;
 
   return (
     <>
-      <TitleField label={title} value={hiredBadge} />
+      <TitleField label={title} value={<HiredBadge value={mode} />} />
       {children}
     </>
   );
@@ -376,6 +399,7 @@ function ImportServicesView({
       <ServiceBlock
         title="Despacho aduaneiro importação"
         enabled={services.despachoAduaneiroImportacao?.habilitado}
+        mode="SIM"
       >
         <Field
           label="Tipo de valor"
@@ -395,7 +419,9 @@ function ImportServicesView({
         />
       </ServiceBlock>
 
-      <ServiceBlock title="Preposto" enabled={services.preposto?.habilitado}>
+      <ServiceBlock title="Preposto" enabled={services.preposto?.habilitado}
+        mode="SIM"
+      >
         <Field
           label="Valor do preposto"
           value={currency(services.preposto?.prepostoSelecionado?.valor)}
@@ -434,6 +460,7 @@ function ImportServicesView({
       <ServiceBlock
         title="Emissão LI/LPCO"
         enabled={services.emissaoLiLpco?.habilitado}
+        mode="SIM"
       >
         <Field
           label="Valor emissão LI/LPCO"
@@ -444,6 +471,7 @@ function ImportServicesView({
       <ServiceBlock
         title="Cadastro de catálogo de produtos"
         enabled={services.cadastroCatalogoProdutos?.habilitado}
+        mode="SIM"
       >
         <Field
           label="Valor cadastro de catálogo"
@@ -451,7 +479,7 @@ function ImportServicesView({
         />
       </ServiceBlock>
 
-      <ServiceBlock title="Assessoria" enabled={services.assessoria?.habilitado}>
+      <ServiceBlock title="Assessoria" enabled={services.assessoria?.habilitado} mode="SIM">
         <Field
           label="Tipo de valor assessoria"
           value={text(services.assessoria?.tipoValor)}
@@ -469,6 +497,7 @@ function ImportServicesView({
       <ServiceBlock
         title="Frete internacional"
         enabled={services.freteInternacional?.habilitado}
+        mode={services.freteInternacional.modalidade ?? undefined}
       >
         <Field
           label="Modalidade frete internacional"
@@ -483,6 +512,7 @@ function ImportServicesView({
       <ServiceBlock
         title="Seguro internacional"
         enabled={services.seguroInternacional?.habilitado}
+        mode="SIM"
       >
         <Field
           label="Percentual sobre CFR"
@@ -501,6 +531,7 @@ function ImportServicesView({
       <ServiceBlock
         title="Frete rodoviário"
         enabled={services.freteRodoviario?.habilitado}
+        mode={services.freteRodoviario.modalidade ?? undefined}
       >
         <Field
           label="Modalidade frete rodoviário"
@@ -516,7 +547,7 @@ function ImportServicesView({
         />
       </ServiceBlock>
 
-      <ServiceBlock title="Emissão NFe" enabled={services.emissaoNfe?.habilitado}>
+      <ServiceBlock title="Emissão NFe" enabled={services.emissaoNfe?.habilitado} mode="SIM">
         <Field
           label="Valor emissão NFe"
           value={currency(services.emissaoNfe?.valor)}
@@ -1038,17 +1069,17 @@ function ScopeDetails({
 
             {(scope.financeiro?.preferencia === "TRANSFERECIA" ||
               !scope.financeiro?.preferencia) && (
-              <Field
-                label="Dados bancários para devolução de saldo"
-                value={list(
-                  (
-                    scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? []
-                  )
-                    .map((conta) => account(conta))
-                    .filter(Boolean) as string[],
-                )}
-              />
-            )}
+                <Field
+                  label="Dados bancários para devolução de saldo"
+                  value={list(
+                    (
+                      scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? []
+                    )
+                      .map((conta) => account(conta))
+                      .filter(Boolean) as string[],
+                  )}
+                />
+              )}
 
             {scope.financeiro?.preferencia === "PIX" && (
               <Field
