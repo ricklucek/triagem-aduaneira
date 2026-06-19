@@ -847,7 +847,7 @@ function ScopeDetails({
                   />
                   <Field label="Telefone" value={text(c.telefone)} />
                 </Grid>
-                <Separator className="mb-2" />
+                <Separator className="my-4" />
               </div>
             ))}
           </div>
