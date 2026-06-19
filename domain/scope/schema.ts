@@ -142,36 +142,17 @@ const ServicoPrepostoSchema = z
     outraFronteira: z.string().trim().optional().nullable(),
     prepostoSelecionado: PrepostoEscolhaSchema.optional().nullable(),
     observacao: z.string().trim().optional().nullable(),
-  })
-  .superRefine((value, ctx) => {
-    if (!value.habilitado) return;
-
-    if (!value.inclusoNoDesembaracoCasco) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["inclusoNoDesembaracoCasco"],
-        message: "Campo obrigatório",
-      });
-    }
-
-    if (!value.prepostoSelecionado) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["prepostoSelecionado"],
-        message: "Selecione ou preencha um preposto",
-      });
-    }
   });
 
 const ServicoFreteInternacionalSchema = z
   .object({
     habilitado: z.boolean(),
-    modalidade: z.enum(["SIM", "CASO_A_CASO"]).optional().nullable(),
+    modalidade: z.enum(["SIM", "NAO", "CASO_A_CASO"]).optional().nullable(),
     ptaxNegociado: z.string().trim().optional().nullable(),
     observacao: z.string().trim().optional().nullable(),
   })
   .superRefine((value, ctx) => {
-    if (!value.habilitado) return;
+    if (!value.habilitado || value.modalidade == "NAO") return;
     if (!value.ptaxNegociado) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -195,26 +176,16 @@ const ServicoSeguroSchema = z
     percentualSobreCfr: z.number().optional().nullable(),
     dataInclusaoApolice: z.string().trim().optional().nullable(),
     descricaoComplementar: z.string().trim().optional().nullable(),
-  })
-  .superRefine((value, ctx) => {
-    if (!value.habilitado) return;
-    if (value.percentualSobreCfr == null) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["percentualSobreCfr"],
-        message: "% sobre frete + mercadoria (CFR/CPT) é obrigatório",
-      });
-    }
   });
 
 const ServicoFreteRodoviarioSchema = z
   .object({
     habilitado: z.boolean(),
-    modalidade: z.enum(["SIM", "CASO_A_CASO"]).optional().nullable(),
+    modalidade: z.enum(["SIM", "NAO", "CASO_A_CASO"]).optional().nullable(),
     observacaoGeral: z.string().trim().optional().nullable(),
   })
   .superRefine((value, ctx) => {
-    if (!value.habilitado) return;
+    if (!value.habilitado || value.modalidade == "NAO") return;
     if (!value.modalidade) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

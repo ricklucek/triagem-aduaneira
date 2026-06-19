@@ -42,6 +42,7 @@ function emptyExportacaoServicos(): NonNullable<
       outroPorto: "",
       outraFronteira: "",
       prepostoSelecionado: null,
+      observacao: "",
     },
     certificadoOrigem: { habilitado: false, valor: null },
     certificadoFitossanitario: { habilitado: false, valor: null },
@@ -52,7 +53,7 @@ function emptyExportacaoServicos(): NonNullable<
       valor: null,
       ultimaAtualizacao: "",
     },
-    freteInternacional: { habilitado: false, ptaxNegociado: "" },
+    freteInternacional: { habilitado: false, ptaxNegociado: "", observacao: "" },
     seguroInternacional: {
       habilitado: false,
       valorMinimo: null,
@@ -438,6 +439,7 @@ export default function StepServicosExportacao({
           >
             <option value="">Selecione</option>
             <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
             <option value="CASO_A_CASO">Caso a caso</option>
           </Select>
         </Field>
@@ -528,6 +530,7 @@ export default function StepServicosExportacao({
           >
             <option value="">Selecione</option>
             <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
             <option value="CASO_A_CASO">Caso a caso</option>
           </Select>
         </Field>

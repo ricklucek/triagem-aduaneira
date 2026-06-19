@@ -39,6 +39,7 @@ function emptyImportacaoServicos(): NonNullable<
       outroPorto: "",
       outraFronteira: "",
       prepostoSelecionado: null,
+      observacao: "",
     },
     emissaoLiLpco: { habilitado: false, valor: null },
     cadastroCatalogoProdutos: { habilitado: false, valor: null },
@@ -48,7 +49,7 @@ function emptyImportacaoServicos(): NonNullable<
       valor: null,
       ultimaAtualizacao: "",
     },
-    freteInternacional: { habilitado: false, ptaxNegociado: "" },
+    freteInternacional: { habilitado: false, ptaxNegociado: "", observacao: "" },
     seguroInternacional: {
       habilitado: false,
       valorMinimo: null,
@@ -384,6 +385,7 @@ export default function StepServicosImportacao({
           >
             <option value="">Selecione</option>
             <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
             <option value="CASO_A_CASO">Caso a caso</option>
           </Select>
         </Field>
@@ -471,6 +473,7 @@ export default function StepServicosImportacao({
           >
             <option value="">Selecione</option>
             <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
             <option value="CASO_A_CASO">Caso a caso</option>
           </Select>
         </Field>
