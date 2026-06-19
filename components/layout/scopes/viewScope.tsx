@@ -834,18 +834,21 @@ function ScopeDetails({
         <ViewCard title="Contatos">
           <div className="grid gap-3">
             {scope.contatos?.map((c, index) => (
-              <Grid key={index}>
-                <Field
-                  label={`Contato ${index + 1} • Nome`}
-                  value={text(c.nome)}
-                />
-                <Field label="E-mail" value={text(c.email)} />
-                <Field
-                  label="Cargo / departamento"
-                  value={text(c.cargoDepartamento)}
-                />
-                <Field label="Telefone" value={text(c.telefone)} />
-              </Grid>
+              <div className="w-full" key={index}>
+                <Grid>
+                  <Field
+                    label={`Contato ${index + 1} • Nome`}
+                    value={text(c.nome)}
+                  />
+                  <Field label="E-mail" value={text(c.email)} />
+                  <Field
+                    label="Cargo / departamento"
+                    value={text(c.cargoDepartamento)}
+                  />
+                  <Field label="Telefone" value={text(c.telefone)} />
+                </Grid>
+                <Separator className="mb-2" />
+              </div>
             ))}
           </div>
         </ViewCard>
