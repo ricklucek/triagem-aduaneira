@@ -67,10 +67,9 @@ const serviceLabels: Record<ImportProcessServiceType, string> = {
 
 const departmentConfigs: Record<
   DepartmentType,
-  { title: string; columns: DepartmentColumn[] }
+  { columns: DepartmentColumn[] }
 > = {
   customs_clearance: {
-    title: "Despacho Aduaneiro",
     columns: stages.map(([stage, label]) => ({
       key: stage,
       label,
@@ -78,7 +77,6 @@ const departmentConfigs: Record<
     })),
   },
   international_freight: {
-    title: "Frete Internacional",
     columns: [
       {
         key: "process_opening",
@@ -104,7 +102,6 @@ const departmentConfigs: Record<
     ],
   },
   international_insurance: {
-    title: "Seguro Internacional",
     columns: [
       {
         key: "insurance_registration",
@@ -120,7 +117,6 @@ const departmentConfigs: Record<
     ],
   },
   road_freight: {
-    title: "Frete Rodoviário",
     columns: [
       {
         key: "receipt_scheduling",
@@ -138,7 +134,6 @@ const departmentConfigs: Record<
     ],
   },
   financial: {
-    title: "Financeiro",
     columns: [
       {
         key: "billing_in_progress",
@@ -302,25 +297,15 @@ function processesForColumn(
 function Header({
   view,
   onViewChange,
-  title,
+  total,
 }: {
   view: PipelineView;
   onViewChange: (view: PipelineView) => void;
-  title: string;
+  total: number;
 }) {
   return (
-    <div className="sticky left-0 top-0 z-20 flex min-w-[1180px] items-center justify-between border-b border-border bg-background/95 px-6 py-2 backdrop-blur-sm">
-      <h1 className="truncate text-xl font-semibold text-foreground">
-        Rastreador de Processo — {title}
-      </h1>
+    <div className="sticky left-0 top-0 z-20 flex min-w-[1180px] justify-end border-b border-border bg-background/95 px-5 py-5 backdrop-blur-sm">
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted"
-        >
-          <List className="size-4 rotate-90" />
-          Filtros
-        </button>
         <div className="flex overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           {viewOptions.map((option) => {
             const Icon = option.icon;
@@ -343,6 +328,9 @@ function Header({
             );
           })}
         </div>
+        <span className="whitespace-nowrap rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold text-muted-foreground shadow-sm">
+          {total} {total === 1 ? "processo" : "processos"}
+        </span>
       </div>
     </div>
   );
@@ -352,7 +340,7 @@ function PipelineCard({ process }: { process: ImportProcessApi }) {
   return (
     <Link
       href={`/tracker/process/${process.id}`}
-      className="block rounded-lg border border-transparent border-t-[5px] border-t-primary/45 bg-background px-4 py-3 shadow-sm transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring"
+      className="block rounded-2xl border border-border border-t-[5px] border-t-primary/70 bg-background px-5 py-5 shadow-sm transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring"
     >
       <div className="mb-1 flex items-start justify-between gap-2">
         <strong className="text-base text-foreground">
@@ -368,7 +356,7 @@ function PipelineCard({ process }: { process: ImportProcessApi }) {
       <p className="text-sm font-medium uppercase text-muted-foreground">
         {clientName(process)}
       </p>
-      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+      <div className="mt-6 flex items-center justify-between text-sm text-foreground">
         <span>ETD {formatShortDate(processEtd(process))}</span>
         <span>ETA {formatShortDate(processEta(process))}</span>
       </div>
@@ -387,7 +375,7 @@ function KanbanView({
 }) {
   return (
     <div
-      className="grid min-w-[1180px] gap-4 bg-muted/40 px-5 py-6"
+      className="grid min-w-[1180px] gap-5 bg-background px-5 py-5"
       style={{
         gridTemplateColumns: `repeat(${columns.length}, minmax(240px, 1fr))`,
       }}
@@ -400,17 +388,20 @@ function KanbanView({
           columns,
         );
         return (
-          <section key={column.key} className="min-w-[240px]">
-            <h2 className="mb-5 px-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          <section
+            key={column.key}
+            className="min-w-[240px] rounded-2xl border border-border bg-card/50 p-4"
+          >
+            <h2 className="mb-5 rounded-2xl bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               {column.label}
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {columnProcesses.length ? (
                 columnProcesses.map((process) => (
                   <PipelineCard key={process.id} process={process} />
                 ))
               ) : (
-                <div className="py-12 text-center text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">
                   Nenhum processo
                 </div>
               )}
@@ -657,7 +648,11 @@ export function DepartmentPipelinePage({
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background">
       <div className="h-full min-h-0 w-full overflow-x-auto overflow-y-auto">
-        <Header view={view} onViewChange={setView} title={config.title} />
+        <Header
+          view={view}
+          onViewChange={setView}
+          total={data?.total ?? processes.length}
+        />
 
         {isLoading ? (
           <div className="sticky left-0 flex h-40 items-center justify-center p-6 text-muted-foreground">
