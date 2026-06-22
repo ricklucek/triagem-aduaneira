@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useDepartmentBoardProcesses, useImportProcesses } from "@/lib/api/hooks/use-import-processes";
+import { useDepartmentBoardProcesses } from "@/lib/api/hooks/use-import-processes";
 import type {
   ImportProcessApi,
   ImportProcessStage,
@@ -32,6 +32,20 @@ import { cn } from "@/lib/utils";
 
 type PipelineView = "kanban" | "list" | "timeline" | "grouped";
 type GroupBy = "client" | "eta";
+type DepartmentType =
+  | "customs_clearance"
+  | "international_freight"
+  | "international_insurance"
+  | "road_freight"
+  | "financial";
+
+type DepartmentColumn = {
+  key: string;
+  label: string;
+  taskKeys?: string[];
+  stages?: ImportProcessStage[];
+  fallback?: boolean;
+};
 
 const stageLabels: Record<ImportProcessStage, string> = {
   pre_shipment: "Pré-Embarque",
@@ -51,16 +65,102 @@ const serviceLabels: Record<ImportProcessServiceType, string> = {
   financial: "Financeiro",
 };
 
+const departmentConfigs: Record<
+  DepartmentType,
+  { columns: DepartmentColumn[] }
+> = {
+  customs_clearance: {
+    columns: stages.map(([stage, label]) => ({
+      key: stage,
+      label,
+      stages: [stage],
+    })),
+  },
+  international_freight: {
+    columns: [
+      {
+        key: "process_opening",
+        label: "Abertura de Processo",
+        taskKeys: ["process_opening", "abertura_de_processo"],
+        fallback: true,
+      },
+      { key: "booking", label: "Booking", taskKeys: ["booking"] },
+      {
+        key: "shipment_confirmation",
+        label: "Confirmação de Embarque",
+        taskKeys: ["shipment_confirmation", "confirmacao_de_embarque"],
+      },
+      {
+        key: "agent_carrier_follow_up",
+        label: "Follow Agente / Armador",
+        taskKeys: [
+          "agent_carrier_follow_up",
+          "follow_agent_carrier",
+          "follow_agente_armador",
+        ],
+      },
+    ],
+  },
+  international_insurance: {
+    columns: [
+      {
+        key: "insurance_registration",
+        label: "Averbar Seguro",
+        taskKeys: ["insurance_registration", "averbar_seguro"],
+        fallback: true,
+      },
+      {
+        key: "claim_check",
+        label: "Verificar Avarias",
+        taskKeys: ["claim_check", "verificar_avarias"],
+      },
+    ],
+  },
+  road_freight: {
+    columns: [
+      {
+        key: "receipt_scheduling",
+        label: "Recebimento e Agendamento",
+        taskKeys: ["receipt_scheduling", "recebimento_e_agendamento"],
+        fallback: true,
+      },
+      { key: "pickup", label: "Coleta", taskKeys: ["pickup", "coleta"] },
+      { key: "delivery", label: "Entrega", taskKeys: ["delivery", "entrega"] },
+      {
+        key: "container_return",
+        label: "Devolução do Container",
+        taskKeys: ["container_return", "devolucao_do_container"],
+      },
+    ],
+  },
+  financial: {
+    columns: [
+      {
+        key: "billing_in_progress",
+        label: "Em Processo de Faturamento",
+        taskKeys: ["billing_in_progress", "em_processo_de_faturamento"],
+        fallback: true,
+      },
+      { key: "billed", label: "Faturado", taskKeys: ["billed", "faturado"] },
+      {
+        key: "closed_process",
+        label: "Processo Encerrado",
+        taskKeys: ["closed_process", "processo_encerrado"],
+      },
+    ],
+  },
+};
+
 const viewOptions: {
   value: PipelineView;
   label: string;
   icon: typeof Grid2X2;
 }[] = [
-    { value: "kanban", label: "Kanban", icon: Grid2X2 },
-    { value: "list", label: "Lista", icon: List },
-    { value: "timeline", label: "Timeline", icon: CalendarDays },
-    { value: "grouped", label: "Agrupado", icon: LayoutPanelTop },
-  ];
+  { value: "kanban", label: "Kanban", icon: Grid2X2 },
+  { value: "list", label: "Lista", icon: List },
+  { value: "timeline", label: "Timeline", icon: CalendarDays },
+  { value: "grouped", label: "Agrupado", icon: LayoutPanelTop },
+];
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -134,6 +234,66 @@ function tagLabel(tag: string) {
   return tag.replace("_", "/").toUpperCase();
 }
 
+function activeDepartmentTask(
+  process: ImportProcessApi,
+  department: DepartmentType,
+) {
+  const departmentTasks = process.tasks.filter(
+    (task) => task.service_type === department,
+  );
+
+  return (
+    departmentTasks.find(
+      (task) => task.status === "active" || task.status === "blocked",
+    ) ??
+    departmentTasks.find((task) => task.status === "pending") ??
+    departmentTasks.find((task) => task.status === "done") ??
+    null
+  );
+}
+
+function processMatchesColumn(
+  process: ImportProcessApi,
+  department: DepartmentType,
+  column: DepartmentColumn,
+) {
+  if (column.stages?.includes(process.current_stage)) return true;
+
+  const task = activeDepartmentTask(process, department);
+  if (!task) return false;
+
+  return column.taskKeys?.includes(task.task_key) ?? false;
+}
+
+function processesForColumn(
+  processes: ImportProcessApi[],
+  department: DepartmentType,
+  column: DepartmentColumn,
+  columns: DepartmentColumn[],
+) {
+  const matches = processes.filter((process) =>
+    processMatchesColumn(process, department, column),
+  );
+
+  if (!column.fallback) return matches;
+
+  const matchedIds = new Set(
+    columns
+      .filter((item) => item.key !== column.key)
+      .flatMap((item) =>
+        processes
+          .filter((process) => processMatchesColumn(process, department, item))
+          .map((process) => process.id),
+      ),
+  );
+
+  return processes.filter(
+    (process) =>
+      matches.some((item) => item.id === process.id) ||
+      !matchedIds.has(process.id),
+  );
+}
+
 function Header({
   view,
   onViewChange,
@@ -144,7 +304,7 @@ function Header({
   total: number;
 }) {
   return (
-    <div className="sticky left-0 top-0 z-20 flex min-w-[1180px] justify-end border-b border-border bg-background/80 p-2 backdrop-blur-sm md:p-4">
+    <div className="sticky left-0 top-0 z-20 flex min-w-[1180px] justify-end border-b border-border bg-background/95 px-5 py-5 backdrop-blur-sm">
       <div className="flex items-center gap-3">
         <div className="flex overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           {viewOptions.map((option) => {
@@ -160,7 +320,7 @@ function Header({
                 className={cn(
                   "flex size-10 items-center justify-center border-r border-border text-muted-foreground transition-colors last:border-r-0 hover:bg-muted hover:text-foreground",
                   active &&
-                  "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary",
+                    "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
                 )}
               >
                 <Icon className="size-5" />
@@ -168,9 +328,8 @@ function Header({
             );
           })}
         </div>
-
-        <span className="whitespace-nowrap rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm">
-          {total} processos
+        <span className="whitespace-nowrap rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold text-muted-foreground shadow-sm">
+          {total} {total === 1 ? "processo" : "processos"}
         </span>
       </div>
     </div>
@@ -181,7 +340,7 @@ function PipelineCard({ process }: { process: ImportProcessApi }) {
   return (
     <Link
       href={`/tracker/process/${process.id}`}
-      className="block rounded-2xl border border-border border-t-[5px] border-t-primary/60 bg-background p-4 shadow-sm shadow-black/20 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring"
+      className="block rounded-2xl border border-border border-t-[5px] border-t-primary/70 bg-background px-5 py-5 shadow-sm transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring"
     >
       <div className="mb-1 flex items-start justify-between gap-2">
         <strong className="text-base text-foreground">
@@ -197,7 +356,7 @@ function PipelineCard({ process }: { process: ImportProcessApi }) {
       <p className="text-sm font-medium uppercase text-muted-foreground">
         {clientName(process)}
       </p>
-      <div className="mt-4 flex items-center justify-between text-sm text-foreground">
+      <div className="mt-6 flex items-center justify-between text-sm text-foreground">
         <span>ETD {formatShortDate(processEtd(process))}</span>
         <span>ETA {formatShortDate(processEta(process))}</span>
       </div>
@@ -205,28 +364,44 @@ function PipelineCard({ process }: { process: ImportProcessApi }) {
   );
 }
 
-function KanbanView({ processes }: { processes: ImportProcessApi[] }) {
+function KanbanView({
+  processes,
+  department,
+  columns,
+}: {
+  processes: ImportProcessApi[];
+  department: DepartmentType;
+  columns: DepartmentColumn[];
+}) {
   return (
-    <div className="grid min-w-[1180px] grid-cols-4 gap-4 p-4">
-      {stages.map(([stage, label]) => {
-        const columnProcesses = processes.filter(
-          (process) => process.current_stage === stage,
+    <div
+      className="grid min-w-[1180px] gap-5 bg-background px-5 py-5"
+      style={{
+        gridTemplateColumns: `repeat(${columns.length}, minmax(240px, 1fr))`,
+      }}
+    >
+      {columns.map((column) => {
+        const columnProcesses = processesForColumn(
+          processes,
+          department,
+          column,
+          columns,
         );
         return (
           <section
-            key={stage}
-            className="min-w-[260px] rounded-2xl border border-border bg-card/70 p-3 shadow-sm"
+            key={column.key}
+            className="min-w-[240px] rounded-2xl border border-border bg-card/50 p-4"
           >
-            <h2 className="mb-4 rounded-xl bg-muted/50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              {label}
+            <h2 className="mb-5 rounded-2xl bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {column.label}
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {columnProcesses.length ? (
                 columnProcesses.map((process) => (
                   <PipelineCard key={process.id} process={process} />
                 ))
               ) : (
-                <div className="rounded-xl border border-dashed border-border bg-background/60 py-10 text-center text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">
                   Nenhum processo
                 </div>
               )}
@@ -299,10 +474,10 @@ function ListView({ processes }: { processes: ImportProcessApi[] }) {
                 <div className="flex gap-1">
                   {process.tags.length
                     ? process.tags.map((tag) => (
-                      <Badge key={tag.id} variant="secondary">
-                        {tagLabel(tag.tag_type)}
-                      </Badge>
-                    ))
+                        <Badge key={tag.id} variant="secondary">
+                          {tagLabel(tag.tag_type)}
+                        </Badge>
+                      ))
                     : "—"}
                 </div>
               </TableCell>
@@ -459,17 +634,25 @@ function GroupedView({ processes }: { processes: ImportProcessApi[] }) {
   );
 }
 
-export function DepartmentPipelinePage({ department }: { department: "customs_clearance" | "international_freight" | "international_insurance" | "road_freight" | "financial" }) {
+export function DepartmentPipelinePage({
+  department,
+}: {
+  department: DepartmentType;
+}) {
   const [view, setView] = useState<PipelineView>("kanban");
   const { data, error, isLoading } = useDepartmentBoardProcesses(department);
+  const config = departmentConfigs[department];
 
   const processes = data?.items ?? [];
-  const total = data?.total ?? processes.length;
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background">
       <div className="h-full min-h-0 w-full overflow-x-auto overflow-y-auto">
-        <Header view={view} onViewChange={setView} total={total} />
+        <Header
+          view={view}
+          onViewChange={setView}
+          total={data?.total ?? processes.length}
+        />
 
         {isLoading ? (
           <div className="sticky left-0 flex h-40 items-center justify-center p-6 text-muted-foreground">
@@ -479,12 +662,12 @@ export function DepartmentPipelinePage({ department }: { department: "customs_cl
           <div className="sticky left-0 p-6 text-sm text-destructive">
             Não foi possível carregar os processos.
           </div>
-        ) : processes.length === 0 ? (
-          <div className="sticky left-0 p-6 text-sm text-muted-foreground">
-            Nenhum processo encontrado.
-          </div>
         ) : view === "kanban" ? (
-          <KanbanView processes={processes} />
+          <KanbanView
+            processes={processes}
+            department={department}
+            columns={config.columns}
+          />
         ) : view === "list" ? (
           <ListView processes={processes} />
         ) : view === "timeline" ? (

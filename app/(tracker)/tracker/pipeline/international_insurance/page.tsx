@@ -1,5 +1,5 @@
-import { DepartmentPipelinePage } from "@/components/tracker/pipeline/department-page";
+import { InternationalInsurancePipelinePage } from "@/components/tracker/pipeline/international-insurance-page";
 
 export default function PipelinePage() {
-  return <DepartmentPipelinePage department="international_freight" />;
+  return <InternationalInsurancePipelinePage />;
 }

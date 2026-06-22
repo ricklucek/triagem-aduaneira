@@ -1,5 +1,5 @@
-import { DepartmentPipelinePage } from "@/components/tracker/pipeline/department-page";
+import { RoadFreightPipelinePage } from "@/components/tracker/pipeline/road-freight-page";
 
 export default function PipelinePage() {
-  return <DepartmentPipelinePage department="road_freight" />;
+  return <RoadFreightPipelinePage />;
 }
