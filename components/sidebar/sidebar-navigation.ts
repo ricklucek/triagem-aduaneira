@@ -54,6 +54,32 @@ export const trackerSidebarNavigation: SidebarNavigation = {
             icon: GitFork,
         },
     ],
+    settings: {
+        title: "Departamentos",
+        icon: Building2,
+        items: [
+            {
+                title: "Despacho aduaneiro",
+                url: `/tracker/pipeline/customs_clearance`,
+            },
+            {
+                title: "Frete internacional",
+                url: `/tracker/pipeline/international_freight`,
+            },
+            {
+                title: "Seguro internacional",
+                url: `/tracker/pipeline/international_insurance`,
+            },
+            {
+                title: "Frete Rodoviário",
+                url: `/tracker/pipeline/road_freight`,
+            },
+            {
+                title: "Financeiro",
+                url: `/tracker/pipeline/financial`,
+            },
+        ],
+    },
     action: {
         title: "Novo Processo",
         url: "/tracker/process/new",

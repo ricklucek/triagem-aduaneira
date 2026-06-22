@@ -35,6 +35,12 @@ export type FreightQuoteStatus =
   | "rejected"
   | "cancelled";
 
+export type ImportProcessServiceResponsibility =
+  | "internal"
+  | "client"
+  | "third_party"
+  | "not_applicable";
+
 export interface ImportProcessClientApi {
   id: string;
   razao_social?: string | null;
@@ -97,6 +103,10 @@ export interface ImportProcessServiceApi {
   import_process_id: number;
 
   service_type: ImportProcessServiceType;
+
+  responsibility: ImportProcessServiceResponsibility;
+  responsible_name?: string | null;
+
   status: ImportProcessServiceStatus;
 
   started_at?: string | null;
@@ -109,11 +119,29 @@ export interface ImportProcessServiceApi {
   updated_at?: string;
 }
 
+export interface ImportProcessTaskChecklistItemApi {
+  id: number;
+  task_id: number;
+
+  item_key: string;
+  label: string;
+
+  status: ImportProcessTaskStatus;
+
+  required: boolean;
+  position: number;
+
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ImportProcessTaskApi {
   id: number;
   import_process_id: number;
 
+  stage: ImportProcessStage;
   service_type: ImportProcessServiceType;
+  task_key: string;
 
   name: string;
   description?: string | null;
@@ -131,6 +159,8 @@ export interface ImportProcessTaskApi {
   blocking_reason?: string | null;
 
   assigned_to_user_id?: string | number | null;
+
+  checklist_items: ImportProcessTaskChecklistItemApi[];
 
   created_at?: string;
   updated_at?: string;
@@ -218,34 +248,17 @@ export interface CreateImportProcessFreightPayload {
 
 export interface CreateImportProcessServicePayload {
   service_type: ImportProcessServiceType;
-  status: ImportProcessServiceStatus;
+
+  responsibility?: ImportProcessServiceResponsibility;
+  responsible_name?: string | null;
+
+  status?: ImportProcessServiceStatus;
 
   started_at?: string | null;
   completed_at?: string | null;
   cancelled_at?: string | null;
 
   notes?: string | null;
-}
-
-export interface CreateImportProcessTaskPayload {
-  service_type: ImportProcessServiceType;
-
-  name: string;
-  description?: string | null;
-
-  status?: ImportProcessTaskStatus;
-
-  position?: number;
-
-  due_date?: string | null;
-
-  started_at?: string | null;
-  completed_at?: string | null;
-  blocked_at?: string | null;
-
-  blocking_reason?: string | null;
-
-  assigned_to_user_id?: string | number | null;
 }
 
 export interface CreateImportProcessTagPayload {
@@ -274,8 +287,6 @@ export interface CreateImportProcessPayload {
 
   services?: CreateImportProcessServicePayload[];
 
-  tasks?: CreateImportProcessTaskPayload[];
-
   tags?: CreateImportProcessTagPayload[];
 }
 
@@ -302,6 +313,7 @@ export interface UpdateImportProcessStagePayload {
 
 export interface UpdateImportProcessTaskPayload {
   service_type?: ImportProcessServiceType;
+  stage?: ImportProcessStage;
 
   name?: string;
   description?: string | null;
@@ -330,9 +342,28 @@ export interface ListImportProcessesParams {
   offset?: number;
 }
 
+export interface DepartmentBoardProcessesParams {
+  search?: string;
+  includeCompleted?: boolean;
+  tag?: ImportProcessTagType;
+  limit?: number;
+  offset?: number;
+}
+
 export interface ImportProcessesResponse {
   items: ImportProcessApi[];
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface UpdateImportProcessTaskChecklistItemPayload {
+  status?: ImportProcessTaskStatus;
+}
+
+export interface UpdateImportProcessTaskChecklistItemPayload {
+  label?: string;
+  status?: ImportProcessTaskStatus;
+  required?: boolean;
+  position?: number;
 }

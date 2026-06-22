@@ -17,6 +17,15 @@ export const importProcessesApi = {
     return data;
   },
 
+  async listDepartmentProcesses(department: "customs_clearance" | "international_freight" | "international_insurance" | "road_freight" | "financial", params?: ListImportProcessesParams) {
+    const { data } = await http.get<ImportProcessesResponse>(
+      API_ROUTES.tracker.departmentProcesses(department),
+      { params: params ? { ...params } : undefined },
+    );
+
+    return data;
+  },
+
   async getProcess(processId: string) {
     const { data } = await http.get<ImportProcessApi>(
       API_ROUTES.tracker.importProcessDetail(processId),

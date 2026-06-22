@@ -39,6 +39,7 @@ export const API_ROUTES = {
   },
   tracker: {
     importProcesses: "/tracker/import-processes",
+    departmentProcesses: (department: string) => `/tracker/import-processes/department-board/${department}`,
     importProcessDetail: (processId: string) => `/tracker/import-processes/${processId}`,
   },
   dashboards: {
