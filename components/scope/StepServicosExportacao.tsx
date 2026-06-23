@@ -53,9 +53,14 @@ function emptyExportacaoServicos(): NonNullable<
       valor: null,
       ultimaAtualizacao: "",
     },
-    freteInternacional: { habilitado: false, ptaxNegociado: "", observacao: "" },
+    freteInternacional: {
+      habilitado: false,
+      ptaxNegociado: "",
+      observacao: "",
+    },
     seguroInternacional: {
       habilitado: false,
+      modalidade: undefined,
       valorMinimo: null,
       percentualSobreCfr: null,
       dataInclusaoApolice: null,
@@ -259,9 +264,7 @@ export default function StepServicosExportacao({
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.preposto.observacao ?? ""}
-            onChange={(e) =>
-              update("preposto.observacao", e.target.value)
-            }
+            onChange={(e) => update("preposto.observacao", e.target.value)}
           />
         </Field>
       </ServicoToggleCard>
@@ -418,9 +421,7 @@ export default function StepServicosExportacao({
           <Field label="Observação geral" hint="Campo opcional">
             <TextArea
               value={data.assessoria.observacao ?? ""}
-              onChange={(e) =>
-                update("assessoria.observacao", e.target.value)
-              }
+              onChange={(e) => update("assessoria.observacao", e.target.value)}
             />
           </Field>
         </Grid>
@@ -469,6 +470,23 @@ export default function StepServicosExportacao({
           update("seguroInternacional.habilitado", checked)
         }
       >
+        <Field
+          label="Modalidade"
+          required
+          error={errors["seguroInternacional.modalidade"]}
+        >
+          <Select
+            value={data.seguroInternacional.modalidade ?? ""}
+            onChange={(e) =>
+              update("seguroInternacional.modalidade", e.target.value)
+            }
+          >
+            <option value="">Selecione</option>
+            <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
+            <option value="CASO_A_CASO">Caso a caso</option>
+          </Select>
+        </Field>
         <Grid columns={2}>
           <Field label="Valor mínimo" hint="Campo opcional">
             <NumberInput
@@ -481,9 +499,7 @@ export default function StepServicosExportacao({
               }
             />
           </Field>
-          <Field
-            label="% sobre frete + mercadoria (CFR/CPT)"
-          >
+          <Field label="% sobre frete + mercadoria (CFR/CPT)">
             <NumberInput
               value={data.seguroInternacional.percentualSobreCfr ?? ""}
               onChange={(e) =>
