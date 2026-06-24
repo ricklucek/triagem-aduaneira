@@ -113,11 +113,24 @@ const ServicoValorOuSalarioSchema = z
     }
   });
 
+const ModalidadeServicoSchema = z.enum(["SIM", "NAO", "CASO_A_CASO"]);
+
 const ServicoValorSimplesSchema = z
   .object({
     habilitado: z.boolean(),
+    modalidade: ModalidadeServicoSchema.optional().nullable(),
     valor: z.number().optional().nullable(),
     observacao: z.string().trim().optional().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.habilitado) return;
+    if (!value.modalidade) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["modalidade"],
+        message: "Modalidade é obrigatória",
+      });
+    }
   });
 
 const PrepostoEscolhaSchema = z.object({
@@ -132,22 +145,21 @@ const PrepostoEscolhaSchema = z.object({
   origem: z.enum(["API", "MANUAL"]).default("MANUAL"),
 });
 
-const ServicoPrepostoSchema = z
-  .object({
-    habilitado: z.boolean(),
-    valor: z.number().optional().nullable(),
-    inclusoNoDesembaracoCasco: SimNaoSchema.optional().nullable(),
-    cidadesLiberacao: z.array(z.string().trim().min(1)).default([]),
-    outroPorto: z.string().trim().optional().nullable(),
-    outraFronteira: z.string().trim().optional().nullable(),
-    prepostoSelecionado: PrepostoEscolhaSchema.optional().nullable(),
-    observacao: z.string().trim().optional().nullable(),
-  });
+const ServicoPrepostoSchema = z.object({
+  habilitado: z.boolean(),
+  valor: z.number().optional().nullable(),
+  inclusoNoDesembaracoCasco: SimNaoSchema.optional().nullable(),
+  cidadesLiberacao: z.array(z.string().trim().min(1)).default([]),
+  outroPorto: z.string().trim().optional().nullable(),
+  outraFronteira: z.string().trim().optional().nullable(),
+  prepostoSelecionado: PrepostoEscolhaSchema.optional().nullable(),
+  observacao: z.string().trim().optional().nullable(),
+});
 
 const ServicoFreteInternacionalSchema = z
   .object({
     habilitado: z.boolean(),
-    modalidade: z.enum(["SIM", "NAO", "CASO_A_CASO"]).optional().nullable(),
+    modalidade: ModalidadeServicoSchema.optional().nullable(),
     ptaxNegociado: z.string().trim().optional().nullable(),
     observacao: z.string().trim().optional().nullable(),
   })
@@ -172,16 +184,27 @@ const ServicoFreteInternacionalSchema = z
 const ServicoSeguroSchema = z
   .object({
     habilitado: z.boolean(),
+    modalidade: ModalidadeServicoSchema.optional().nullable(),
     valorMinimo: z.number().optional().nullable(),
     percentualSobreCfr: z.number().optional().nullable(),
     dataInclusaoApolice: z.string().trim().optional().nullable(),
     descricaoComplementar: z.string().trim().optional().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.habilitado) return;
+    if (!value.modalidade) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["modalidade"],
+        message: "Modalidade é obrigatória",
+      });
+    }
   });
 
 const ServicoFreteRodoviarioSchema = z
   .object({
     habilitado: z.boolean(),
-    modalidade: z.enum(["SIM", "NAO", "CASO_A_CASO"]).optional().nullable(),
+    modalidade: ModalidadeServicoSchema.optional().nullable(),
     observacaoGeral: z.string().trim().optional().nullable(),
   })
   .superRefine((value, ctx) => {
@@ -223,9 +246,14 @@ const ServicoOutrosCertificadosSchema = z
 
 export const ImportacaoSchema = z
   .object({
-    analistaDA: z.array(AnalistaResponsavelSchema).min(1, "Analista DA é obrigatório"),
+    analistaDA: z
+      .array(AnalistaResponsavelSchema)
+      .min(1, "Analista DA é obrigatório"),
     analistaAE: z.array(AnalistaResponsavelSchema).default([]),
-    produtosImportados: z.string().trim().min(1, "Produtos importados é obrigatório"),
+    produtosImportados: z
+      .string()
+      .trim()
+      .min(1, "Produtos importados é obrigatório"),
     ncms: z
       .array(
         z.object({
@@ -237,8 +265,14 @@ export const ImportacaoSchema = z
       .default([]),
     observacaoNcms: z.string().trim().optional().nullable(),
     vinculoComExportador: SimNaoSchema,
+    modaisEntrada: z
+      .array(z.enum(["AEREO", "MARITIMO", "RODOVIARIO"]))
+      .default([]),
     locaisEntrada: z.array(z.string().trim().min(1)).default([]),
     outroLocalEntrada: z.string().trim().optional().nullable(),
+    modaisDesembaraco: z
+      .array(z.enum(["AEREO", "MARITIMO", "RODOVIARIO"]))
+      .default([]),
     locaisDesembaraco: z.array(z.string().trim().min(1)).default([]),
     outroLocalDesembaraco: z.string().trim().optional().nullable(),
     necessidadeDta: SimNaoSchema.optional().nullable(),
@@ -255,29 +289,51 @@ export const ImportacaoSchema = z
       cofins: BeneficioTributoSchema,
       observacao: z.string().trim().optional().nullable(),
     }),
-    afrmm: z
-      .object({
-        contaPagamento: ContaPagamentoSchema.optional(),
-        dadosContaCliente: ContaBancariaSchema.optional(),
-        regime: IntegralBeneficioSchema.optional(),
-        detalheBeneficio: z.string().trim().optional().nullable(),
-        observacao: z.string().trim().optional().nullable(),
-      }),
-    icms: z
-      .object({
-        contaPagamento: ContaPagamentoSchema.optional(),
-        dadosContaCliente: ContaBancariaSchema.optional(),
-        regime: IntegralBeneficioSchema.optional(),
-        observacao: z.string().trim().optional().nullable(),
-        porDestinacao: z
-          .object({
-            REVENDA: z.object({ regime: IntegralBeneficioSchema.optional(), recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
-            INDUSTRIALIZACAO: z.object({ regime: IntegralBeneficioSchema.optional(), recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
-            USO_E_CONSUMO: z.object({ regime: IntegralBeneficioSchema.optional(), recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
-            ATIVO_IMOBILIZADO: z.object({ regime: IntegralBeneficioSchema.optional(), recolhida: z.string().trim().optional().nullable(), efetiva: z.string().trim().optional().nullable() }).optional(),
-          })
-          .optional(),
-      }),
+    afrmm: z.object({
+      contaPagamento: ContaPagamentoSchema.optional(),
+      dadosContaCliente: ContaBancariaSchema.optional(),
+      regime: IntegralBeneficioSchema.optional(),
+      detalheBeneficio: z.string().trim().optional().nullable(),
+      observacao: z.string().trim().optional().nullable(),
+    }),
+    icms: z.object({
+      contaPagamento: ContaPagamentoSchema.optional(),
+      dadosContaCliente: ContaBancariaSchema.optional(),
+      regime: IntegralBeneficioSchema.optional(),
+      observacao: z.string().trim().optional().nullable(),
+      porDestinacao: z
+        .object({
+          REVENDA: z
+            .object({
+              regime: IntegralBeneficioSchema.optional(),
+              recolhida: z.string().trim().optional().nullable(),
+              efetiva: z.string().trim().optional().nullable(),
+            })
+            .optional(),
+          INDUSTRIALIZACAO: z
+            .object({
+              regime: IntegralBeneficioSchema.optional(),
+              recolhida: z.string().trim().optional().nullable(),
+              efetiva: z.string().trim().optional().nullable(),
+            })
+            .optional(),
+          USO_E_CONSUMO: z
+            .object({
+              regime: IntegralBeneficioSchema.optional(),
+              recolhida: z.string().trim().optional().nullable(),
+              efetiva: z.string().trim().optional().nullable(),
+            })
+            .optional(),
+          ATIVO_IMOBILIZADO: z
+            .object({
+              regime: IntegralBeneficioSchema.optional(),
+              recolhida: z.string().trim().optional().nullable(),
+              efetiva: z.string().trim().optional().nullable(),
+            })
+            .optional(),
+        })
+        .optional(),
+    }),
     destinacao: DestinacaoSchema,
     subtipoConsumo: SubtipoConsumoSchema,
   })
@@ -334,7 +390,9 @@ export const ImportacaoSchema = z
 
 export const ExportacaoSchema = z
   .object({
-    analistaDA: z.array(AnalistaResponsavelSchema).min(1, "Analista DA é obrigatório"),
+    analistaDA: z
+      .array(AnalistaResponsavelSchema)
+      .min(1, "Analista DA é obrigatório"),
     analistaAE: z.array(AnalistaResponsavelSchema).default([]),
     produtosExportados: z
       .string()
@@ -409,7 +467,12 @@ export const EscopoSchema = z
       cnaeSecundario: z.string().trim().optional().nullable(),
       regimeTributacao: RegimeTributacaoSchema,
       responsavelComercial: ResponsavelComercialSchema,
-      modalidadeRadar: z.enum(["RADAR_INATIVO", "RADAR_LIMITADO_50K", "RADAR_LIMITADO_150K", "RADAR_ILIMITADO"]),
+      modalidadeRadar: z.enum([
+        "RADAR_INATIVO",
+        "RADAR_LIMITADO_50K",
+        "RADAR_LIMITADO_150K",
+        "RADAR_ILIMITADO",
+      ]),
     }),
     contatos: z.array(ContatoSchema).min(1, "Informe ao menos um contato"),
     operacao: z.object({
@@ -424,14 +487,18 @@ export const EscopoSchema = z
       exportacao: ServicosExportacaoSchema.optional(),
     }),
     financeiro: z.object({
-      preferencia: z.enum(["TRANSFERECIA", "BOLETO", "PIX"]).default("TRANSFERECIA"),
-      dadosBancariosClienteDevolucaoSaldo: z.array(ContaBancariaSchema).default([]),
+      preferencia: z
+        .enum(["TRANSFERECIA", "BOLETO", "PIX"])
+        .default("TRANSFERECIA"),
+      dadosBancariosClienteDevolucaoSaldo: z
+        .array(ContaBancariaSchema)
+        .default([]),
       chavePIXClienteDevolucaoSaldo: z.string().trim().optional().nullable(),
       observacoesFinanceiro: z.string().trim().optional().nullable(),
     }),
     geral: z.object({
       descricao: z.string().trim().optional().nullable(),
-    })
+    }),
   })
   .superRefine((value, ctx) => {
     const temImportacao = value.operacao.tipos.includes("IMPORTACAO");

@@ -41,17 +41,26 @@ function emptyImportacaoServicos(): NonNullable<
       prepostoSelecionado: null,
       observacao: "",
     },
-    emissaoLiLpco: { habilitado: false, valor: null },
-    cadastroCatalogoProdutos: { habilitado: false, valor: null },
+    emissaoLiLpco: { habilitado: false, modalidade: undefined, valor: null },
+    cadastroCatalogoProdutos: {
+      habilitado: false,
+      modalidade: undefined,
+      valor: null,
+    },
     assessoria: {
       habilitado: false,
       tipoValor: "",
       valor: null,
       ultimaAtualizacao: "",
     },
-    freteInternacional: { habilitado: false, ptaxNegociado: "", observacao: "" },
+    freteInternacional: {
+      habilitado: false,
+      ptaxNegociado: "",
+      observacao: "",
+    },
     seguroInternacional: {
       habilitado: false,
+      modalidade: undefined,
       valorMinimo: null,
       percentualSobreCfr: null,
       dataInclusaoApolice: null,
@@ -63,7 +72,7 @@ function emptyImportacaoServicos(): NonNullable<
       observacaoGeral: "",
     },
     regimeEspecial: [],
-    emissaoNfe: { habilitado: false, valor: null },
+    emissaoNfe: { habilitado: false, modalidade: undefined, valor: null },
   };
 }
 const CIDADES = [
@@ -151,9 +160,7 @@ export default function StepServicosImportacao({
             </Select>
           </Field>
           {data.despachoAduaneiroImportacao.tipoValor === "OUTRO" ? (
-            <Field
-              label="Valor"
-            >
+            <Field label="Valor">
               <NumberInput
                 value={data.despachoAduaneiroImportacao.valor ?? ""}
                 onChange={(e) =>
@@ -266,9 +273,7 @@ export default function StepServicosImportacao({
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.preposto.observacao ?? ""}
-            onChange={(e) =>
-              update("preposto.observacao", e.target.value)
-            }
+            onChange={(e) => update("preposto.observacao", e.target.value)}
           />
         </Field>
       </ServicoToggleCard>
@@ -277,6 +282,21 @@ export default function StepServicosImportacao({
         checked={data.emissaoLiLpco.habilitado}
         onToggle={(checked) => update("emissaoLiLpco.habilitado", checked)}
       >
+        <Field
+          label="Modalidade"
+          required
+          error={errors["emissaoLiLpco.modalidade"]}
+        >
+          <Select
+            value={data.emissaoLiLpco.modalidade ?? ""}
+            onChange={(e) => update("emissaoLiLpco.modalidade", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
+            <option value="CASO_A_CASO">Caso a caso</option>
+          </Select>
+        </Field>
         <Field label="Valor" error={errors["emissaoLiLpco.valor"]}>
           <NumberInput
             value={data.emissaoLiLpco.valor ?? ""}
@@ -289,9 +309,7 @@ export default function StepServicosImportacao({
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.emissaoLiLpco.observacao ?? ""}
-            onChange={(e) =>
-              update("emissaoLiLpco.observacao", e.target.value)
-            }
+            onChange={(e) => update("emissaoLiLpco.observacao", e.target.value)}
           />
         </Field>
       </ServicoToggleCard>
@@ -303,8 +321,23 @@ export default function StepServicosImportacao({
         }
       >
         <Field
-          label="Valor"
+          label="Modalidade"
+          required
+          error={errors["cadastroCatalogoProdutos.modalidade"]}
         >
+          <Select
+            value={data.cadastroCatalogoProdutos.modalidade ?? ""}
+            onChange={(e) =>
+              update("cadastroCatalogoProdutos.modalidade", e.target.value)
+            }
+          >
+            <option value="">Selecione</option>
+            <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
+            <option value="CASO_A_CASO">Caso a caso</option>
+          </Select>
+        </Field>
+        <Field label="Valor">
           <NumberInput
             value={data.cadastroCatalogoProdutos.valor ?? ""}
             onChange={(e) =>
@@ -360,13 +393,10 @@ export default function StepServicosImportacao({
             />
           </Field>
 
-
           <Field label="Observação geral" hint="Campo opcional">
             <TextArea
               value={data.assessoria.observacao ?? ""}
-              onChange={(e) =>
-                update("assessoria.observacao", e.target.value)
-              }
+              onChange={(e) => update("assessoria.observacao", e.target.value)}
             />
           </Field>
         </Grid>
@@ -419,10 +449,25 @@ export default function StepServicosImportacao({
           update("seguroInternacional.habilitado", checked)
         }
       >
-        <Grid columns={2}>
-          <Field
-            label="% sobre frete + mercadoria (CFR/CPT)"
+        <Field
+          label="Modalidade"
+          required
+          error={errors["seguroInternacional.modalidade"]}
+        >
+          <Select
+            value={data.seguroInternacional.modalidade ?? ""}
+            onChange={(e) =>
+              update("seguroInternacional.modalidade", e.target.value)
+            }
           >
+            <option value="">Selecione</option>
+            <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
+            <option value="CASO_A_CASO">Caso a caso</option>
+          </Select>
+        </Field>
+        <Grid columns={2}>
+          <Field label="% sobre frete + mercadoria (CFR/CPT)">
             <NumberInput
               value={data.seguroInternacional.percentualSobreCfr ?? ""}
               onChange={(e) =>
@@ -495,6 +540,21 @@ export default function StepServicosImportacao({
         checked={data.emissaoNfe.habilitado}
         onToggle={(checked) => update("emissaoNfe.habilitado", checked)}
       >
+        <Field
+          label="Modalidade"
+          required
+          error={errors["emissaoNfe.modalidade"]}
+        >
+          <Select
+            value={data.emissaoNfe.modalidade ?? ""}
+            onChange={(e) => update("emissaoNfe.modalidade", e.target.value)}
+          >
+            <option value="">Selecione</option>
+            <option value="SIM">Sim</option>
+            <option value="NAO">Não</option>
+            <option value="CASO_A_CASO">Caso a caso</option>
+          </Select>
+        </Field>
         <Field label="Valor" required error={errors["emissaoNfe.valor"]}>
           <NumberInput
             value={data.emissaoNfe.valor ?? ""}
@@ -505,9 +565,7 @@ export default function StepServicosImportacao({
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.emissaoNfe.observacao ?? ""}
-            onChange={(e) =>
-              update("emissaoNfe.observacao", e.target.value)
-            }
+            onChange={(e) => update("emissaoNfe.observacao", e.target.value)}
           />
         </Field>
       </ServicoToggleCard>

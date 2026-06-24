@@ -24,9 +24,9 @@ const currency = (v?: number | null) =>
   v == null || Number.isNaN(v)
     ? null
     : new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(v);
+        style: "currency",
+        currency: "BRL",
+      }).format(v);
 
 const date = (v?: string | null) => {
   if (!v) return null;
@@ -52,8 +52,8 @@ const account = (
   !v || (!v.banco && !v.agencia && !v.conta)
     ? null
     : `Banco: ${text(v.banco)} • Agência: ${text(v.agencia)} • Conta: ${text(
-      v.conta,
-    )}`;
+        v.conta,
+      )}`;
 
 const contaPagamentoLabel = (v?: string | null) => {
   if (v === "CASCO") return "CASCO";
@@ -77,32 +77,49 @@ const ICMS_DESTINACAO_LABEL: Record<string, string> = {
   ATIVO_IMOBILIZADO: "Ativo imobilizado",
 };
 
-const HiredBadge = ({ value }: { value: "SIM" | "NAO" | "CASO_A_CASO" | undefined }) => {
+const MODAL_LOCAL_LABEL: Record<string, string> = {
+  AEREO: "Aéreo",
+  MARITIMO: "Marítimo",
+  RODOVIARIO: "Rodoviário",
+};
 
+const modalLocalList = (v?: Array<string | null> | null) =>
+  !v?.length
+    ? null
+    : v
+        .filter((modal): modal is string => Boolean(modal))
+        .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
+        .join(", ");
+
+const HiredBadge = ({
+  value,
+}: {
+  value: "SIM" | "NAO" | "CASO_A_CASO" | undefined;
+}) => {
   if (value == "SIM") {
     return (
       <Badge className="bg-emerald-600 hover:bg-emerald-600">
         <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
         Contrata
       </Badge>
-    )
+    );
   } else if (value == "NAO") {
     return (
       <Badge className="bg-red-600 hover:bg-red-600">
         <X className="mr-1 h-3.5 w-3.5" />
         Não Contrata
       </Badge>
-    )
+    );
   } else if (value == "CASO_A_CASO") {
     return (
       <Badge className="bg-yellow-500 hover:bg-yellow-500">
         <Info className="mr-1 h-3.5 w-3.5" />
         Caso a Caso
       </Badge>
-    )
+    );
   }
 
-  return
+  return;
 };
 
 const hasEnabledService = (services?: Record<string, any> | null) =>
@@ -376,7 +393,7 @@ function ServiceBlock({
 }: {
   title: string;
   enabled?: boolean | null;
-  mode?: "SIM" | "NAO" | "CASO_A_CASO" | undefined
+  mode?: "SIM" | "NAO" | "CASO_A_CASO" | undefined;
   children: React.ReactNode;
 }) {
   if (!enabled) return null;
@@ -419,7 +436,9 @@ function ImportServicesView({
         />
       </ServiceBlock>
 
-      <ServiceBlock title="Preposto" enabled={services.preposto?.habilitado}
+      <ServiceBlock
+        title="Preposto"
+        enabled={services.preposto?.habilitado}
         mode="SIM"
       >
         <Field
@@ -434,7 +453,10 @@ function ImportServicesView({
           label="Cidades/portos/fronteiras"
           value={list(services.preposto?.cidadesLiberacao)}
         />
-        <Field label="Outro porto" value={text(services.preposto?.outroPorto)} />
+        <Field
+          label="Outro porto"
+          value={text(services.preposto?.outroPorto)}
+        />
         <Field
           label="Outra fronteira"
           value={text(services.preposto?.outraFronteira)}
@@ -460,8 +482,12 @@ function ImportServicesView({
       <ServiceBlock
         title="Emissão LI/LPCO"
         enabled={services.emissaoLiLpco?.habilitado}
-        mode="SIM"
+        mode={services.emissaoLiLpco?.modalidade ?? undefined}
       >
+        <Field
+          label="Modalidade emissão LI/LPCO"
+          value={text(services.emissaoLiLpco?.modalidade)}
+        />
         <Field
           label="Valor emissão LI/LPCO"
           value={currency(services.emissaoLiLpco?.valor)}
@@ -471,15 +497,23 @@ function ImportServicesView({
       <ServiceBlock
         title="Cadastro de catálogo de produtos"
         enabled={services.cadastroCatalogoProdutos?.habilitado}
-        mode="SIM"
+        mode={services.cadastroCatalogoProdutos?.modalidade ?? undefined}
       >
+        <Field
+          label="Modalidade cadastro de catálogo"
+          value={text(services.cadastroCatalogoProdutos?.modalidade)}
+        />
         <Field
           label="Valor cadastro de catálogo"
           value={currency(services.cadastroCatalogoProdutos?.valor)}
         />
       </ServiceBlock>
 
-      <ServiceBlock title="Assessoria" enabled={services.assessoria?.habilitado} mode="SIM">
+      <ServiceBlock
+        title="Assessoria"
+        enabled={services.assessoria?.habilitado}
+        mode="SIM"
+      >
         <Field
           label="Tipo de valor assessoria"
           value={text(services.assessoria?.tipoValor)}
@@ -512,8 +546,12 @@ function ImportServicesView({
       <ServiceBlock
         title="Seguro internacional"
         enabled={services.seguroInternacional?.habilitado}
-        mode="SIM"
+        mode={services.seguroInternacional?.modalidade ?? undefined}
       >
+        <Field
+          label="Modalidade seguro internacional"
+          value={text(services.seguroInternacional?.modalidade)}
+        />
         <Field
           label="Percentual sobre CFR"
           value={text(services.seguroInternacional?.percentualSobreCfr)}
@@ -547,7 +585,15 @@ function ImportServicesView({
         />
       </ServiceBlock>
 
-      <ServiceBlock title="Emissão NFe" enabled={services.emissaoNfe?.habilitado} mode="SIM">
+      <ServiceBlock
+        title="Emissão NFe"
+        enabled={services.emissaoNfe?.habilitado}
+        mode={services.emissaoNfe?.modalidade ?? undefined}
+      >
+        <Field
+          label="Modalidade emissão NFe"
+          value={text(services.emissaoNfe?.modalidade)}
+        />
         <Field
           label="Valor emissão NFe"
           value={currency(services.emissaoNfe?.valor)}
@@ -595,7 +641,10 @@ function ExportServicesView({
           label="Cidades/portos/fronteiras"
           value={list(services.preposto?.cidadesLiberacao)}
         />
-        <Field label="Outro porto" value={text(services.preposto?.outroPorto)} />
+        <Field
+          label="Outro porto"
+          value={text(services.preposto?.outroPorto)}
+        />
         <Field
           label="Outra fronteira"
           value={text(services.preposto?.outraFronteira)}
@@ -648,7 +697,10 @@ function ExportServicesView({
         />
       </ServiceBlock>
 
-      <ServiceBlock title="Assessoria" enabled={services.assessoria?.habilitado}>
+      <ServiceBlock
+        title="Assessoria"
+        enabled={services.assessoria?.habilitado}
+      >
         <Field
           label="Tipo de valor assessoria"
           value={text(services.assessoria?.tipoValor)}
@@ -676,7 +728,12 @@ function ExportServicesView({
       <ServiceBlock
         title="Seguro internacional"
         enabled={services.seguroInternacional?.habilitado}
+        mode={services.seguroInternacional?.modalidade ?? undefined}
       >
+        <Field
+          label="Modalidade seguro internacional"
+          value={text(services.seguroInternacional?.modalidade)}
+        />
         <Field
           label="Valor mínimo"
           value={currency(services.seguroInternacional?.valorMinimo)}
@@ -855,7 +912,10 @@ function ScopeDetails({
 
         <ViewCard title="Operação">
           <Grid>
-            <Field label="Tipos de operação" value={list(scope.operacao?.tipos)} />
+            <Field
+              label="Tipos de operação"
+              value={list(scope.operacao?.tipos)}
+            />
           </Grid>
 
           {i ? (
@@ -867,8 +927,7 @@ function ScopeDetails({
                   label="Analista DA"
                   value={list(
                     (i.analistaDA ?? []).map(
-                      (id) =>
-                        responsaveis.find((r) => r.id === id)?.nome ?? id,
+                      (id) => responsaveis.find((r) => r.id === id)?.nome ?? id,
                     ),
                   )}
                 />
@@ -876,8 +935,7 @@ function ScopeDetails({
                   label="Analista AE"
                   value={list(
                     (i.analistaAE ?? []).map(
-                      (id) =>
-                        responsaveis.find((r) => r.id === id)?.nome ?? id,
+                      (id) => responsaveis.find((r) => r.id === id)?.nome ?? id,
                     ),
                   )}
                 />
@@ -889,10 +947,21 @@ function ScopeDetails({
                   label="Vínculo com exportador"
                   value={text(i.vinculoComExportador)}
                 />
-                <Field label="Locais de entrada" value={list(i.locaisEntrada)} />
+                <Field
+                  label="Modais de entrada"
+                  value={modalLocalList(i.modaisEntrada)}
+                />
+                <Field
+                  label="Locais de entrada"
+                  value={list(i.locaisEntrada)}
+                />
                 <Field
                   label="Outro local de entrada"
                   value={text(i.outroLocalEntrada)}
+                />
+                <Field
+                  label="Modais de desembaraço"
+                  value={modalLocalList(i.modaisDesembaraco)}
                 />
                 <Field
                   label="Locais de desembaraço"
@@ -914,7 +983,10 @@ function ScopeDetails({
                   value={text(i.outroOrgaoAnuente)}
                 />
                 <Field label="Destinação" value={list(i.destinacao)} />
-                <Field label="Subtipo de consumo" value={list(i.subtipoConsumo)} />
+                <Field
+                  label="Subtipo de consumo"
+                  value={list(i.subtipoConsumo)}
+                />
               </Grid>
 
               <div className="grid gap-3">
@@ -923,7 +995,9 @@ function ScopeDetails({
                   .map((ncm, index) => (
                     <Grid key={index}>
                       <Field
-                        label={index === 0 ? "NCM principal" : `NCM ${index + 1}`}
+                        label={
+                          index === 0 ? "NCM principal" : `NCM ${index + 1}`
+                        }
                         value={text(ncm.codigo)}
                       />
                       <Field
@@ -1033,11 +1107,17 @@ function ScopeDetails({
                 </div>
 
                 <Grid>
-                  <Field label="Observação NCM" value={text(e.observacaoNcms)} />
+                  <Field
+                    label="Observação NCM"
+                    value={text(e.observacaoNcms)}
+                  />
                 </Grid>
 
                 <Field label="Destinação" value={list(e.destinacao)} />
-                <Field label="Subtipo de consumo" value={list(e.subtipoConsumo)} />
+                <Field
+                  label="Subtipo de consumo"
+                  value={list(e.subtipoConsumo)}
+                />
               </Grid>
             </>
           ) : null}
@@ -1072,22 +1152,22 @@ function ScopeDetails({
 
             {(scope.financeiro?.preferencia === "TRANSFERECIA" ||
               !scope.financeiro?.preferencia) && (
-                <Field
-                  label="Dados bancários para devolução de saldo"
-                  value={list(
-                    (
-                      scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? []
-                    )
-                      .map((conta) => account(conta))
-                      .filter(Boolean) as string[],
-                  )}
-                />
-              )}
+              <Field
+                label="Dados bancários para devolução de saldo"
+                value={list(
+                  (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
+                    .map((conta) => account(conta))
+                    .filter(Boolean) as string[],
+                )}
+              />
+            )}
 
             {scope.financeiro?.preferencia === "PIX" && (
               <Field
                 label="Chaves PIX para devolução de saldo"
-                value={text(scope.financeiro?.chavePIXClienteDevolucaoSaldo ?? "")}
+                value={text(
+                  scope.financeiro?.chavePIXClienteDevolucaoSaldo ?? "",
+                )}
               />
             )}
 
