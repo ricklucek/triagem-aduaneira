@@ -16,29 +16,135 @@ import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
 
-const LOCAIS = [
-  ["0917900/0917800|Curitiba/ Paranaguá", "0917900/0917800 • Curitiba/ Paranaguá"],
-  ["0817800|Santos", "0817800 • Santos"],
-  ["0927800|Itajaí/ Navegantes", "0927800 • Itajaí/ Navegantes"],
-  ["0927700|Itapoá", "0927700 • Itapoá"],
-  ["1017500|Borja", "1017500 • Borja"],
-  ["0927502|Imbituba - SC", "0927502 • Imbituba - SC"],
-  ["0817700|Viracopos/ Campinas", "0817700 • Viracopos/ Campinas"],
-  ["0817600|Guarulhos/ São Paulo", "0817600 • Guarulhos/ São Paulo"],
-  ["0917500|Foz do Iguaçu", "0917500 • Foz do Iguaçu"],
-  ["0517800|Salvador", "0517800 • Salvador"],
-  ["0720100|Vitória - ES", "0720100 • Vitória - ES"],
-  ["0617700|Belo Horizonte", "0617700 • Belo Horizonte"],
-  ["0717700|Rio de Janeiro", "0717700 • Rio de Janeiro"],
-  ["0147600|Corumbá", "0147600 • Corumbá"],
-  ["1010253|Cersando / Bagé", "1010253 • Cersando / Bagé"],
-  ["0230155|Epitaciolândia / Acre", "0230155 • Epitaciolândia / Acre"],
-  ["1017700|Porto de Rio Grande - RS", "1017700 • Porto de Rio Grande - RS"],
-  ["0417902|Suape - PE", "0417902 • Suape - PE"],
-  ["1017801|Aeroporto Salgado Filho - Porto Alegre - RS", "1017801 • Aeroporto Salgado Filho - Porto Alegre - RS"],
-  ["0920200|Aeroporto Lauro Carneiro de Loyola - Joinville - SC", "0920200 • Aeroporto Lauro Carneiro de Loyola - Joinville - SC"],
-  ["0617700|Betim - MG/Aeroporto de Confins", "0617700 • Betim - MG/Aeroporto de Confins"],
-  ["0317800|Pecem - CE", "0317800 • Pecem - CE"],
+const MODAIS_LOCAL = [
+  { value: "AEREO", label: "Aéreo" },
+  { value: "MARITIMO", label: "Marítimo" },
+  { value: "RODOVIARIO", label: "Rodoviário" },
+] as const;
+
+type ModalLocal = (typeof MODAIS_LOCAL)[number]["value"];
+
+const LOCAIS: readonly {
+  value: string;
+  label: string;
+  modais: readonly ModalLocal[];
+}[] = [
+  {
+    value: "0917900|Curitiba",
+    label: "0917900 • Curitiba - Aéreo",
+    modais: ["AEREO"],
+  },
+  {
+    value: "0917800|Paranaguá",
+    label: "0917800 • Paranaguá - Marítimo",
+    modais: ["MARITIMO"],
+  },
+  {
+    value: "0817800|Santos",
+    label: "0817800 • Santos - Marítimo",
+    modais: ["MARITIMO"],
+  },
+  {
+    value: "0927800|Itajaí/ Navegantes",
+    label: "0927800 • Itajaí/ Navegantes - Marítimo",
+    modais: ["MARITIMO"],
+  },
+  {
+    value: "0927700|Itapoá",
+    label: "0927700 • Itapoá - Marítimo",
+    modais: ["MARITIMO"],
+  },
+  {
+    value: "1017500|Borja",
+    label: "1017500 • Borja - Rodoviário",
+    modais: ["RODOVIARIO"],
+  },
+  {
+    value: "0927502|Imbituba - SC",
+    label: "0927502 • Imbituba – SC - Marítimo",
+    modais: ["MARITIMO"],
+  },
+  {
+    value: "0817700|Viracopos/ Campinas",
+    label: "0817700 • Viracopos/ Campinas - Aéreo",
+    modais: ["AEREO"],
+  },
+  {
+    value: "0817600|Guarulhos/ São Paulo",
+    label: "0817600 • Guarulhos/ São Paulo - Aéreo",
+    modais: ["AEREO"],
+  },
+  {
+    value: "0917500|Foz do Iguaçu",
+    label: "0917500 • Foz do Iguaçu - Rodoviário",
+    modais: ["RODOVIARIO"],
+  },
+  {
+    value: "0517800|Salvador",
+    label: "0517800 • Salvador – Aéreo e Marítimo",
+    modais: ["AEREO", "MARITIMO"],
+  },
+  {
+    value: "0720100|Vitória - ES",
+    label: "0720100 • Vitória – ES - Marítimo",
+    modais: ["MARITIMO"],
+  },
+  {
+    value: "0617700|Belo Horizonte",
+    label: "0617700 • Belo Horizonte - Aéreo",
+    modais: ["AEREO"],
+  },
+  {
+    value: "0717700|Rio de Janeiro",
+    label: "0717700 • Rio de Janeiro – Aéreo e Marítimo",
+    modais: ["AEREO", "MARITIMO"],
+  },
+  {
+    value: "0230155|Epitaciolândia / Acre",
+    label: "0230155 • Epitaciolândia / Acre - Rodoviário",
+    modais: ["RODOVIARIO"],
+  },
+  {
+    value: "1010253|Cersando / Bagé",
+    label: "1010253 • Cersando / Bagé - Rodoviário",
+    modais: ["RODOVIARIO"],
+  },
+  {
+    value: "0147600|Corumbá",
+    label: "0147600 • Corumbá - Rodoviário",
+    modais: ["RODOVIARIO"],
+  },
+  {
+    value: "1017700|Porto de Rio Grande - RS",
+    label: "1017700 • Porto de Rio Grande – RS - Marítimo",
+    modais: ["MARITIMO"],
+  },
+  {
+    value: "0417902|Suape - PE",
+    label: "0417902 • Suape – PE - Marítimo",
+    modais: ["MARITIMO"],
+  },
+  {
+    value: "1017801|Aeroporto Salgado Filho - Porto Alegre - RS",
+    label: "1017801 • Aeroporto Salgado Filho - Porto Alegre – RS - Aéreo",
+    modais: ["AEREO"],
+  },
+  {
+    value: "0920200|Aeroporto Lauro Carneiro de Loyola - Joinville - SC",
+    label:
+      "0920200 • Aeroporto Lauro Carneiro de Loyola - Joinville – SC - Aéreo",
+    modais: ["AEREO"],
+  },
+  {
+    value: "0617700|Betim - MG/Aeroporto de Confins",
+    label: "0617700 • Betim - MG/Aeroporto de Confins - Aéreo",
+    modais: ["AEREO"],
+  },
+  {
+    value: "0317800|Pecém - CE",
+    label: "0317800 • Pecém – CE - Marítimo",
+    modais: ["MARITIMO"],
+  },
 ] as const;
 
 const ANUENCIAS = [
@@ -64,13 +170,19 @@ const DEFAULT_AFRMM = {
   regime: "INTEGRAL",
   detalheBeneficio: "",
 } as const;
-const ICMS_DESTINACOES = ["REVENDA", "INDUSTRIALIZACAO", "USO_E_CONSUMO", "ATIVO_IMOBILIZADO"] as const;
-const ICMS_DESTINACAO_LABEL: Record<(typeof ICMS_DESTINACOES)[number], string> = {
-  REVENDA: "Revenda",
-  INDUSTRIALIZACAO: "Industrialização",
-  USO_E_CONSUMO: "Uso e consumo",
-  ATIVO_IMOBILIZADO: "Ativo imobilizado",
-};
+const ICMS_DESTINACOES = [
+  "REVENDA",
+  "INDUSTRIALIZACAO",
+  "USO_E_CONSUMO",
+  "ATIVO_IMOBILIZADO",
+] as const;
+const ICMS_DESTINACAO_LABEL: Record<(typeof ICMS_DESTINACOES)[number], string> =
+  {
+    REVENDA: "Revenda",
+    INDUSTRIALIZACAO: "Industrialização",
+    USO_E_CONSUMO: "Uso e consumo",
+    ATIVO_IMOBILIZADO: "Ativo imobilizado",
+  };
 
 const DEFAULT_ICMS = {
   contaPagamento: "CASCO",
@@ -92,9 +204,10 @@ export default function StepImportacao({
   onChange,
   responsaveis,
 }: Props) {
-
-  const { data: ctaBancariaData } = useOrganizationSettingsByKey("dados_bancarios_casco");
-  const ctaBancariaCasco = ctaBancariaData ?? {}
+  const { data: ctaBancariaData } = useOrganizationSettingsByKey(
+    "dados_bancarios_casco",
+  );
+  const ctaBancariaCasco = ctaBancariaData ?? {};
 
   const data: NonNullable<EscopoForm["operacao"]["importacao"]> = form.operacao
     .importacao ?? {
@@ -104,8 +217,10 @@ export default function StepImportacao({
     ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
     observacaoNcms: "",
     vinculoComExportador: "NAO",
+    modaisEntrada: [],
     locaisEntrada: [],
     outroLocalEntrada: "",
+    modaisDesembaraco: [],
     locaisDesembaraco: [],
     outroLocalDesembaraco: "",
     necessidadeDta: null,
@@ -119,7 +234,7 @@ export default function StepImportacao({
       ipi: { regime: "INTEGRAL", detalheBeneficio: "" },
       pis: { regime: "INTEGRAL", detalheBeneficio: "" },
       cofins: { regime: "INTEGRAL", detalheBeneficio: "" },
-      observacao: ""
+      observacao: "",
     },
     afrmm: { observacao: "" },
     icms: { regime: "INTEGRAL", observacao: "", porDestinacao: {} },
@@ -142,7 +257,15 @@ export default function StepImportacao({
   }
   const afrmmData = data.afrmm ?? { ...DEFAULT_AFRMM };
   const icmsData = data.icms ?? { ...DEFAULT_ICMS };
-  const options = LOCAIS.map(([value, label]) => ({ value, label }));
+  const filterLocaisByModal = (modais: readonly string[] = []) =>
+    LOCAIS.filter(
+      (local) =>
+        modais.length === 0 ||
+        local.modais.some((modal) => modais.includes(modal)),
+    ).map(({ value, label }) => ({ value, label }));
+
+  const entradaOptions = filterLocaisByModal(data.modaisEntrada);
+  const desembaracoOptions = filterLocaisByModal(data.modaisDesembaraco);
 
   return (
     <main className="flex flex-col gap-10">
@@ -173,7 +296,13 @@ export default function StepImportacao({
                 />
               </div>
             ))}
-            <Button type="button" variant="outline" onClick={() => update("analistaDA", [...data.analistaDA, ""])}>+ Analista DA</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => update("analistaDA", [...data.analistaDA, ""])}
+            >
+              + Analista DA
+            </Button>
           </div>
           <div className="flex flex-col gap-2">
             {(data.analistaAE ?? []).map((analista, index) => (
@@ -196,10 +325,22 @@ export default function StepImportacao({
                 />
               </div>
             ))}
-            <Button type="button" variant="outline" onClick={() => update("analistaAE", [...(data.analistaAE ?? []), ""])}>+ Analista AE</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                update("analistaAE", [...(data.analistaAE ?? []), ""])
+              }
+            >
+              + Analista AE
+            </Button>
           </div>
         </Grid>
-        <Field label="Produtos importados" required error={errors["produtosImportados"]}>
+        <Field
+          label="Produtos importados"
+          required
+          error={errors["produtosImportados"]}
+        >
           <TextArea
             value={data.produtosImportados ?? ""}
             onChange={(e) => update("produtosImportados", e.target.value)}
@@ -251,9 +392,7 @@ export default function StepImportacao({
                         ...next[index],
                         possuiBeneficio: value,
                         descricaoBeneficio:
-                          value === "SIM"
-                            ? next[index].descricaoBeneficio
-                            : "",
+                          value === "SIM" ? next[index].descricaoBeneficio : "",
                       };
                       update("ncms", next);
                     }}
@@ -349,10 +488,19 @@ export default function StepImportacao({
       </Grid>
 
       <SearchableCheckboxMenu
+        title="Modal de entrada"
+        searchLabel="Pesquisar modal de entrada"
+        value={data.modaisEntrada ?? []}
+        options={MODAIS_LOCAL}
+        onChange={(next) => update("modaisEntrada", next)}
+        error={errors["modaisEntrada"]}
+      />
+
+      <SearchableCheckboxMenu
         title="Locais de entrada"
         searchLabel="Pesquisar local de entrada"
         value={data.locaisEntrada}
-        options={options}
+        options={entradaOptions}
         onChange={(next) => update("locaisEntrada", next)}
         customValue={data.outroLocalEntrada ?? ""}
         onCustomValueChange={(next) => update("outroLocalEntrada", next)}
@@ -361,10 +509,19 @@ export default function StepImportacao({
       />
 
       <SearchableCheckboxMenu
+        title="Modal de desembaraço"
+        searchLabel="Pesquisar modal de desembaraço"
+        value={data.modaisDesembaraco ?? []}
+        options={MODAIS_LOCAL}
+        onChange={(next) => update("modaisDesembaraco", next)}
+        error={errors["modaisDesembaraco"]}
+      />
+
+      <SearchableCheckboxMenu
         title="Locais de desembaraço"
         searchLabel="Pesquisar local de desembaraço"
         value={data.locaisDesembaraco}
-        options={options}
+        options={desembaracoOptions}
         onChange={(next) => update("locaisDesembaraco", next)}
         customValue={data.outroLocalDesembaraco ?? ""}
         onCustomValueChange={(next) => update("outroLocalDesembaraco", next)}
@@ -424,7 +581,9 @@ export default function StepImportacao({
           <Card className="gap-3 rounded-2xl border-border/80 p-4 shadow-none">
             <h3 className="text-sm font-semibold">Dados bancários da Casco</h3>
             <p className="text-sm text-muted-foreground">
-              Banco: {ctaBancariaCasco.banco ?? "-"} {ctaBancariaCasco.nome_banco ?? "-"} • Agência:{ctaBancariaCasco.agencia ?? "-"}
+              Banco: {ctaBancariaCasco.banco ?? "-"}{" "}
+              {ctaBancariaCasco.nome_banco ?? "-"} • Agência:
+              {ctaBancariaCasco.agencia ?? "-"}
               Conta: {ctaBancariaCasco.conta ?? "-"}
             </p>
           </Card>
@@ -478,7 +637,9 @@ export default function StepImportacao({
         <Field label="Observações" hint="Campo opcional">
           <TextArea
             value={data.impostosFederais.observacao ?? ""}
-            onChange={(e) => update("impostosFederais.observacao", e.target.value)}
+            onChange={(e) =>
+              update("impostosFederais.observacao", e.target.value)
+            }
           />
         </Field>
       </div>
@@ -607,16 +768,28 @@ export default function StepImportacao({
             error={errors["destinacao"]}
           />
         </Field>
-        {data.destinacao.filter((d): d is (typeof ICMS_DESTINACOES)[number] => ICMS_DESTINACOES.includes(d as (typeof ICMS_DESTINACOES)[number])).length > 0 ? (
+        {data.destinacao.filter((d): d is (typeof ICMS_DESTINACOES)[number] =>
+          ICMS_DESTINACOES.includes(d as (typeof ICMS_DESTINACOES)[number]),
+        ).length > 0 ? (
           <div className="grid gap-3">
             {data.destinacao
-              .filter((d): d is (typeof ICMS_DESTINACOES)[number] => ICMS_DESTINACOES.includes(d as (typeof ICMS_DESTINACOES)[number]))
+              .filter((d): d is (typeof ICMS_DESTINACOES)[number] =>
+                ICMS_DESTINACOES.includes(
+                  d as (typeof ICMS_DESTINACOES)[number],
+                ),
+              )
               .map((destino) => {
-                const detalhe = icmsData.porDestinacao?.[destino] ?? { regime: icmsData.regime ?? "INTEGRAL", recolhida: "", efetiva: "" };
+                const detalhe = icmsData.porDestinacao?.[destino] ?? {
+                  regime: icmsData.regime ?? "INTEGRAL",
+                  recolhida: "",
+                  efetiva: "",
+                };
 
                 return (
                   <Card key={destino} className="gap-4 p-4">
-                    <h3 className="text-sm font-semibold">{ICMS_DESTINACAO_LABEL[destino]}</h3>
+                    <h3 className="text-sm font-semibold">
+                      {ICMS_DESTINACAO_LABEL[destino]}
+                    </h3>
                     <Grid columns={3}>
                       <Field label="Regime" required>
                         <Select
@@ -626,7 +799,12 @@ export default function StepImportacao({
                               ...icmsData,
                               porDestinacao: {
                                 ...icmsData.porDestinacao,
-                                [destino]: { ...detalhe, regime: e.target.value as "INTEGRAL" | "BENEFICIO" },
+                                [destino]: {
+                                  ...detalhe,
+                                  regime: e.target.value as
+                                    | "INTEGRAL"
+                                    | "BENEFICIO",
+                                },
                               },
                             })
                           }
@@ -643,7 +821,10 @@ export default function StepImportacao({
                               ...icmsData,
                               porDestinacao: {
                                 ...icmsData.porDestinacao,
-                                [destino]: { ...detalhe, recolhida: e.target.value },
+                                [destino]: {
+                                  ...detalhe,
+                                  recolhida: e.target.value,
+                                },
                               },
                             })
                           }
@@ -657,7 +838,10 @@ export default function StepImportacao({
                               ...icmsData,
                               porDestinacao: {
                                 ...icmsData.porDestinacao,
-                                [destino]: { ...detalhe, efetiva: e.target.value },
+                                [destino]: {
+                                  ...detalhe,
+                                  efetiva: e.target.value,
+                                },
                               },
                             })
                           }
@@ -696,6 +880,6 @@ export default function StepImportacao({
           </Field>
         ) : null}
       </Grid>
-    </main >
+    </main>
   );
 }

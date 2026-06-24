@@ -77,6 +77,20 @@ const ICMS_DESTINACAO_LABEL: Record<string, string> = {
   ATIVO_IMOBILIZADO: "Ativo imobilizado",
 };
 
+const MODAL_LOCAL_LABEL: Record<string, string> = {
+  AEREO: "Aéreo",
+  MARITIMO: "Marítimo",
+  RODOVIARIO: "Rodoviário",
+};
+
+const modalLocalList = (v?: Array<string | null> | null) =>
+  !v?.length
+    ? null
+    : v
+        .filter((modal): modal is string => Boolean(modal))
+        .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
+        .join(", ");
+
 const HiredBadge = ({
   value,
 }: {
@@ -934,12 +948,20 @@ function ScopeDetails({
                   value={text(i.vinculoComExportador)}
                 />
                 <Field
+                  label="Modais de entrada"
+                  value={modalLocalList(i.modaisEntrada)}
+                />
+                <Field
                   label="Locais de entrada"
                   value={list(i.locaisEntrada)}
                 />
                 <Field
                   label="Outro local de entrada"
                   value={text(i.outroLocalEntrada)}
+                />
+                <Field
+                  label="Modais de desembaraço"
+                  value={modalLocalList(i.modaisDesembaraco)}
                 />
                 <Field
                   label="Locais de desembaraço"

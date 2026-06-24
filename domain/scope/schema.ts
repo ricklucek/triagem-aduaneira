@@ -265,8 +265,14 @@ export const ImportacaoSchema = z
       .default([]),
     observacaoNcms: z.string().trim().optional().nullable(),
     vinculoComExportador: SimNaoSchema,
+    modaisEntrada: z
+      .array(z.enum(["AEREO", "MARITIMO", "RODOVIARIO"]))
+      .default([]),
     locaisEntrada: z.array(z.string().trim().min(1)).default([]),
     outroLocalEntrada: z.string().trim().optional().nullable(),
+    modaisDesembaraco: z
+      .array(z.enum(["AEREO", "MARITIMO", "RODOVIARIO"]))
+      .default([]),
     locaisDesembaraco: z.array(z.string().trim().min(1)).default([]),
     outroLocalDesembaraco: z.string().trim().optional().nullable(),
     necessidadeDta: SimNaoSchema.optional().nullable(),
