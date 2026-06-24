@@ -1090,12 +1090,6 @@ function ScopeDetails({
                     value={text(e.observacaoNcms)}
                   />
                 </Grid>
-
-                <Field label="Destinação" value={list(e.destinacao)} />
-                <Field
-                  label="Subtipo de consumo"
-                  value={list(e.subtipoConsumo)}
-                />
               </Grid>
             </>
           ) : null}
