@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { EscopoForm } from "@/domain/scope/types";
 import RegimeEspecialList from "./blocks/RegimeEspecialList";
 import ServicoToggleCard from "./blocks/ServicoToggleCard";
-import PrepostoLookupPanel from "./blocks/PrepostoLookupPanel";
 import {
   Field,
   NumberInput,
@@ -215,13 +214,21 @@ export default function StepServicosImportacao({
               <option value="">Selecione</option>
               <option value="SIM">Sim</option>
               <option value="NAO">Não</option>
+              <option value="CASO_A_CASO">Caso a Caso</option>
             </Select>
           </Field>
+
+          <Field label="Valor do preposto" required error={errors?.valor}>
+            <NumberInput
+              value={data.preposto.prepostoSelecionado?.valor ?? ""}
+              onChange={(e) => update("preposto.prepostoSelecionado.valor", Number(e.target.value),)}
+            />
+          </Field>
         </Grid>
-        <Grid columns={2}>
+        <Grid>
           <Field
             label="Portos e fronteiras de liberação"
-            error={errors["preposto.cidadesLiberacao"]}
+            hint="Opcional"
           >
             <Select
               value={data.preposto.cidadesLiberacao[0] ?? ""}
@@ -240,36 +247,7 @@ export default function StepServicosImportacao({
               ))}
             </Select>
           </Field>
-          <Field label="Outro porto">
-            <TextInput
-              value={data.preposto.outroPorto ?? ""}
-              onChange={(e) => update("preposto.outroPorto", e.target.value)}
-            />
-          </Field>
-          <Field label="Outra fronteira">
-            <TextInput
-              value={data.preposto.outraFronteira ?? ""}
-              onChange={(e) =>
-                update("preposto.outraFronteira", e.target.value)
-              }
-            />
-          </Field>
         </Grid>
-        <PrepostoLookupPanel
-          title="Consulta de prepostos"
-          cidade={cidadeConsulta}
-          loading={loadingPrepostos}
-          results={prepostoResults}
-          selected={data.preposto.prepostoSelecionado ?? undefined}
-          onSearch={handleLookupPrepostos}
-          onChange={(next) => update("preposto.prepostoSelecionado", next)}
-          errors={{
-            nome: errors["preposto.prepostoSelecionado.nome"],
-            telefone: errors["preposto.prepostoSelecionado.telefone"],
-            valor: errors["preposto.prepostoSelecionado.valor"],
-          }}
-        />
-
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.preposto.observacao ?? ""}

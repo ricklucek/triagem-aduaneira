@@ -265,7 +265,7 @@ export default function StepImportacao({
     ).map(({ value, label }) => ({ value, label }));
 
   const entradaOptions = filterLocaisByModal(data.modaisEntrada);
-  const desembaracoOptions = filterLocaisByModal(data.modaisDesembaraco);
+  const desembaracoOptions = filterLocaisByModal(data.modaisEntrada);
 
   return (
     <main className="flex flex-col gap-10">
@@ -488,8 +488,8 @@ export default function StepImportacao({
       </Grid>
 
       <SearchableCheckboxMenu
-        title="Modal de entrada"
-        searchLabel="Pesquisar modal de entrada"
+        title="Modais"
+        searchLabel="Pesquisar modal"
         value={data.modaisEntrada ?? []}
         options={MODAIS_LOCAL}
         onChange={(next) => update("modaisEntrada", next)}
@@ -506,15 +506,6 @@ export default function StepImportacao({
         onCustomValueChange={(next) => update("outroLocalEntrada", next)}
         customLabel="Outro local de entrada"
         error={errors["locaisEntrada"] || errors["outroLocalEntrada"]}
-      />
-
-      <SearchableCheckboxMenu
-        title="Modal de desembaraço"
-        searchLabel="Pesquisar modal de desembaraço"
-        value={data.modaisDesembaraco ?? []}
-        options={MODAIS_LOCAL}
-        onChange={(next) => update("modaisDesembaraco", next)}
-        error={errors["modaisDesembaraco"]}
       />
 
       <SearchableCheckboxMenu

@@ -24,9 +24,9 @@ const currency = (v?: number | null) =>
   v == null || Number.isNaN(v)
     ? null
     : new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(v);
+      style: "currency",
+      currency: "BRL",
+    }).format(v);
 
 const date = (v?: string | null) => {
   if (!v) return null;
@@ -52,8 +52,8 @@ const account = (
   !v || (!v.banco && !v.agencia && !v.conta)
     ? null
     : `Banco: ${text(v.banco)} • Agência: ${text(v.agencia)} • Conta: ${text(
-        v.conta,
-      )}`;
+      v.conta,
+    )}`;
 
 const contaPagamentoLabel = (v?: string | null) => {
   if (v === "CASCO") return "CASCO";
@@ -87,9 +87,9 @@ const modalLocalList = (v?: Array<string | null> | null) =>
   !v?.length
     ? null
     : v
-        .filter((modal): modal is string => Boolean(modal))
-        .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
-        .join(", ");
+      .filter((modal): modal is string => Boolean(modal))
+      .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
+      .join(", ");
 
 const HiredBadge = ({
   value,
@@ -408,8 +408,10 @@ function ServiceBlock({
 
 function ImportServicesView({
   services,
+  scope
 }: {
   services: NonNullable<EscopoForm["servicos"]["importacao"]>;
+  scope: EscopoForm;
 }) {
   return (
     <Grid>
@@ -439,7 +441,7 @@ function ImportServicesView({
       <ServiceBlock
         title="Preposto"
         enabled={services.preposto?.habilitado}
-        mode="SIM"
+        mode={services.preposto?.inclusoNoDesembaracoCasco ?? undefined}
       >
         <Field
           label="Valor do preposto"
@@ -449,34 +451,18 @@ function ImportServicesView({
           label="Incluso no desembaraço CASCO"
           value={text(services.preposto?.inclusoNoDesembaracoCasco)}
         />
+
         <Field
-          label="Cidades/portos/fronteiras"
-          value={list(services.preposto?.cidadesLiberacao)}
+          label="Prepostos"
+          value={
+            <Link href={`/scope/prepostos?cidade=${services.preposto.cidadesLiberacao.toString()}&operacao=${scope.operacao?.tipos.toString()}`}>
+              <span className="underline">
+                Consultar Prepostos
+              </span>
+            </Link>
+          }
         />
-        <Field
-          label="Outro porto"
-          value={text(services.preposto?.outroPorto)}
-        />
-        <Field
-          label="Outra fronteira"
-          value={text(services.preposto?.outraFronteira)}
-        />
-        <Field
-          label="Preposto selecionado"
-          value={text(services.preposto?.prepostoSelecionado?.nome)}
-        />
-        <Field
-          label="Contato do preposto"
-          value={text(services.preposto?.prepostoSelecionado?.contatoNome)}
-        />
-        <Field
-          label="Telefone do preposto"
-          value={text(services.preposto?.prepostoSelecionado?.telefone)}
-        />
-        <Field
-          label="Valor do preposto selecionado"
-          value={currency(services.preposto?.prepostoSelecionado?.valor)}
-        />
+
       </ServiceBlock>
 
       <ServiceBlock
@@ -948,7 +934,7 @@ function ScopeDetails({
                   value={text(i.vinculoComExportador)}
                 />
                 <Field
-                  label="Modais de entrada"
+                  label="Modais"
                   value={modalLocalList(i.modaisEntrada)}
                 />
                 <Field
@@ -958,10 +944,6 @@ function ScopeDetails({
                 <Field
                   label="Outro local de entrada"
                   value={text(i.outroLocalEntrada)}
-                />
-                <Field
-                  label="Modais de desembaraço"
-                  value={modalLocalList(i.modaisDesembaraco)}
                 />
                 <Field
                   label="Locais de desembaraço"
@@ -1119,7 +1101,7 @@ function ScopeDetails({
 
         <ViewCard title="Serviços de importação">
           {si && hasImportServices ? (
-            <ImportServicesView services={si} />
+            <ImportServicesView services={si} scope={scope} />
           ) : (
             <p className="text-sm text-muted-foreground">
               Sem serviços de importação contratados.
@@ -1146,15 +1128,15 @@ function ScopeDetails({
 
             {(scope.financeiro?.preferencia === "TRANSFERECIA" ||
               !scope.financeiro?.preferencia) && (
-              <Field
-                label="Dados bancários para devolução de saldo"
-                value={list(
-                  (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
-                    .map((conta) => account(conta))
-                    .filter(Boolean) as string[],
-                )}
-              />
-            )}
+                <Field
+                  label="Dados bancários para devolução de saldo"
+                  value={list(
+                    (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
+                      .map((conta) => account(conta))
+                      .filter(Boolean) as string[],
+                  )}
+                />
+              )}
 
             {scope.financeiro?.preferencia === "PIX" && (
               <Field

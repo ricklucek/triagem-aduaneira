@@ -3,7 +3,7 @@
 import { AppSidebar } from "@/components/sidebar/AppSidebar";
 import { scopeSidebarNavigation } from "@/components/sidebar/sidebar-navigation";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 
 export default function Layout({
   children,
@@ -20,7 +20,9 @@ export default function Layout({
         <AppSidebar navigation={scopeSidebarNavigation} />
 
         <SidebarInset className="min-h-0 bg-bg">
-          <main className="flex flex-1 bg-card">{children}</main>
+          <Suspense>
+            <main className="flex flex-1 bg-card">{children}</main>
+          </Suspense>
         </SidebarInset>
       </div>
     </SidebarProvider>

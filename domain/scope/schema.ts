@@ -148,7 +148,7 @@ const PrepostoEscolhaSchema = z.object({
 const ServicoPrepostoSchema = z.object({
   habilitado: z.boolean(),
   valor: z.number().optional().nullable(),
-  inclusoNoDesembaracoCasco: SimNaoSchema.optional().nullable(),
+  inclusoNoDesembaracoCasco: ModalidadeServicoSchema.optional().nullable(),
   cidadesLiberacao: z.array(z.string().trim().min(1)).default([]),
   outroPorto: z.string().trim().optional().nullable(),
   outraFronteira: z.string().trim().optional().nullable(),

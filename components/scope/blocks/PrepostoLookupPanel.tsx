@@ -166,24 +166,7 @@ export default function PrepostoLookupPanel({
             }
           />
         </Field>
-        <Field label="Valor do preposto" required error={errors?.valor}>
-          <NumberInput
-            value={selected?.valor ?? ""}
-            onChange={(e) =>
-              onChange({
-                id: selected?.id,
-                nome: selected?.nome ?? "",
-                contatoNome: selected?.contatoNome,
-                telefone: selected?.telefone,
-                email: selected?.email,
-                valor: Number(e.target.value),
-                valorDescricao: selected?.valorDescricao,
-                descricaoLocal: selected?.descricaoLocal,
-                origem: "MANUAL",
-              })
-            }
-          />
-        </Field>
+        
       </Grid>
     </Card>
   );
