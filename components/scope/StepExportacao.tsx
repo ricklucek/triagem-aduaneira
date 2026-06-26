@@ -1,7 +1,6 @@
 "use client";
 
 import { EscopoForm } from "@/domain/scope/types";
-import SearchableCheckboxMenu from "./blocks/SearchableCheckboxMenu";
 import {
   Field,
   Select,
@@ -13,7 +12,6 @@ import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 import { ResponsiblePicker } from "./ResponsiblePicker";
 import { ScopeResponsible } from "@/lib/api/types/scope-metadata";
-import { Trash2 } from "lucide-react";
 
 type Props = {
   form: EscopoForm;

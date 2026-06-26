@@ -441,7 +441,7 @@ function ImportServicesView({
       <ServiceBlock
         title="Preposto"
         enabled={services.preposto?.habilitado}
-        mode={services.preposto?.inclusoNoDesembaracoCasco ?? undefined}
+        mode={services.preposto?.modalidade ?? undefined}
       >
         <Field
           label="Valor do preposto"

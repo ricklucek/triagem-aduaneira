@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { EscopoForm } from "@/domain/scope/types";
 import RegimeEspecialList from "./blocks/RegimeEspecialList";
 import ServicoToggleCard from "./blocks/ServicoToggleCard";
@@ -12,8 +11,6 @@ import {
   TextInput,
 } from "@/components/ui/form-fields";
 import { Grid, Stack } from "@/components/ui/form-layout";
-import { publicApi } from "@/lib/api/services/public";
-import type { PrepostoLookupItem } from "@/lib/api/types/public-api";
 
 type Props = {
   form: EscopoForm;
@@ -74,18 +71,6 @@ function emptyImportacaoServicos(): NonNullable<
     emissaoNfe: { habilitado: false, modalidade: undefined, valor: null },
   };
 }
-const CIDADES = [
-  "Foz do Iguaçu",
-  "Uruguaiana",
-  "Jaguarão",
-  "Chuí",
-  "Corumbá",
-  "Santos",
-  "Itajaí",
-  "Paranaguá",
-  "Campinas",
-  "Guarulhos",
-];
 
 export default function StepServicosImportacao({
   form,
@@ -93,10 +78,6 @@ export default function StepServicosImportacao({
   onChange,
 }: Props) {
   const data = form.servicos.importacao ?? emptyImportacaoServicos();
-  const [loadingPrepostos, setLoadingPrepostos] = useState(false);
-  const [prepostoResults, setPrepostoResults] = useState<PrepostoLookupItem[]>(
-    [],
-  );
   function setData(next: NonNullable<EscopoForm["servicos"]["importacao"]>) {
     onChange({ ...form, servicos: { ...form.servicos, importacao: next } });
   }
@@ -109,29 +90,6 @@ export default function StepServicosImportacao({
     }
     ref[keys[keys.length - 1]] = value;
     setData(next as NonNullable<EscopoForm["servicos"]["importacao"]>);
-  }
-  const cidadeConsulta = useMemo(
-    () =>
-      data.preposto.cidadesLiberacao[0] ??
-      data.preposto.outroPorto ??
-      data.preposto.outraFronteira ??
-      "",
-    [data.preposto],
-  );
-  async function handleLookupPrepostos() {
-    if (!cidadeConsulta.trim()) return;
-    setLoadingPrepostos(true);
-    try {
-      const res = await publicApi.lookupPrepostos({
-        cidade: cidadeConsulta,
-        operacao: "IMPORTACAO",
-      });
-      setPrepostoResults(res.items);
-    } catch {
-      setPrepostoResults([]);
-    } finally {
-      setLoadingPrepostos(false);
-    }
   }
 
   return (
@@ -201,6 +159,21 @@ export default function StepServicosImportacao({
       >
         <Grid columns={2}>
           <Field
+            label="Modalidade"
+            required
+            error={errors["preposto.modalidade"]}
+          >
+            <Select
+              value={data.preposto.modalidade ?? ""}
+              onChange={(e) => update("preposto.modalidade", e.target.value)}
+            >
+              <option value="">Selecione</option>
+              <option value="SIM">Sim</option>
+              <option value="NAO">Não</option>
+              <option value="CASO_A_CASO">Caso a caso</option>
+            </Select>
+          </Field>
+          <Field
             label="Incluso no serviço de desembaraço da Casco"
             required
             error={errors["preposto.inclusoNoDesembaracoCasco"]}
@@ -214,40 +187,15 @@ export default function StepServicosImportacao({
               <option value="">Selecione</option>
               <option value="SIM">Sim</option>
               <option value="NAO">Não</option>
-              <option value="CASO_A_CASO">Caso a Caso</option>
-            </Select>
-          </Field>
-
-          <Field label="Valor do preposto" required error={errors?.valor}>
-            <NumberInput
-              value={data.preposto.prepostoSelecionado?.valor ?? ""}
-              onChange={(e) => update("preposto.prepostoSelecionado.valor", Number(e.target.value),)}
-            />
-          </Field>
-        </Grid>
-        <Grid>
-          <Field
-            label="Portos e fronteiras de liberação"
-            hint="Opcional"
-          >
-            <Select
-              value={data.preposto.cidadesLiberacao[0] ?? ""}
-              onChange={(e) =>
-                update(
-                  "preposto.cidadesLiberacao",
-                  e.target.value ? [e.target.value] : [],
-                )
-              }
-            >
-              <option value="">Selecione</option>
-              {CIDADES.map((cidade) => (
-                <option key={cidade} value={cidade}>
-                  {cidade}
-                </option>
-              ))}
             </Select>
           </Field>
         </Grid>
+        <Field label="Valor do preposto" required error={errors?.valor}>
+          <NumberInput
+            value={data.preposto.prepostoSelecionado?.valor ?? ""}
+            onChange={(e) => update("preposto.prepostoSelecionado.valor", Number(e.target.value),)}
+          />
+        </Field>
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.preposto.observacao ?? ""}
