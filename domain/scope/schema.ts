@@ -270,11 +270,13 @@ export const ImportacaoSchema = z
       .array(z.enum(["AEREO", "MARITIMO", "RODOVIARIO"]))
       .default([]),
     locaisEntrada: z.array(z.string().trim().min(1)).default([]),
+    cidadesLocaisEntrada: z.array(z.string().trim().min(1)).default([]),
     outroLocalEntrada: z.string().trim().optional().nullable(),
     modaisDesembaraco: z
       .array(z.enum(["AEREO", "MARITIMO", "RODOVIARIO"]))
       .default([]),
     locaisDesembaraco: z.array(z.string().trim().min(1)).default([]),
+    cidadesLocaisDesembaraco: z.array(z.string().trim().min(1)).default([]),
     outroLocalDesembaraco: z.string().trim().optional().nullable(),
     necessidadeDta: SimNaoSchema.optional().nullable(),
     necessidadeDtc: SimNaoSchema.optional().nullable(),

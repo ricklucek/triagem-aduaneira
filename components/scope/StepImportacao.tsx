@@ -24,7 +24,7 @@ const MODAIS_LOCAL = [
 
 type ModalLocal = (typeof MODAIS_LOCAL)[number]["value"];
 
-const LOCAIS: readonly {
+export const LOCAIS: readonly {
   value: string;
   label: string;
   cities: string[];
@@ -152,7 +152,8 @@ const LOCAIS: readonly {
   },
   {
     value: "0920200|Aeroporto Lauro Carneiro de Loyola - Joinville - SC",
-    label: "0920200 • Aeroporto Lauro Carneiro de Loyola - Joinville – SC - Aéreo",
+    label:
+      "0920200 • Aeroporto Lauro Carneiro de Loyola - Joinville – SC - Aéreo",
     cities: ["Joinville"],
     modais: ["AEREO"],
   },
@@ -242,9 +243,11 @@ export default function StepImportacao({
     vinculoComExportador: "NAO",
     modaisEntrada: [],
     locaisEntrada: [],
+    cidadesLocaisEntrada: [],
     outroLocalEntrada: "",
     modaisDesembaraco: [],
     locaisDesembaraco: [],
+    cidadesLocaisDesembaraco: [],
     outroLocalDesembaraco: "",
     necessidadeDta: null,
     necessidadeDtc: null,
@@ -288,6 +291,33 @@ export default function StepImportacao({
     ).map(({ value, label, cities }) => ({ value, label, cities }));
 
   const entradaOptions = filterLocaisByModal(data.modaisEntrada);
+
+  function citiesFromSelectedLocais(selected: readonly string[]) {
+    const selectedValues = new Set(selected);
+    return Array.from(
+      new Set(
+        LOCAIS.filter((local) => selectedValues.has(local.value)).flatMap(
+          (local) => local.cities,
+        ),
+      ),
+    );
+  }
+
+  function updateLocaisEntrada(next: string[]) {
+    setData({
+      ...data,
+      locaisEntrada: next,
+      cidadesLocaisEntrada: citiesFromSelectedLocais(next),
+    });
+  }
+
+  function updateLocaisDesembaraco(next: string[]) {
+    setData({
+      ...data,
+      locaisDesembaraco: next,
+      cidadesLocaisDesembaraco: citiesFromSelectedLocais(next),
+    });
+  }
 
   return (
     <main className="flex flex-col gap-10">
@@ -523,7 +553,7 @@ export default function StepImportacao({
         searchLabel="Pesquisar local de entrada"
         value={data.locaisEntrada}
         options={entradaOptions}
-        onChange={(next) => update("locaisEntrada", next)}
+        onChange={updateLocaisEntrada}
         customValue={data.outroLocalEntrada ?? ""}
         onCustomValueChange={(next) => update("outroLocalEntrada", next)}
         customLabel="Outro local de entrada"
@@ -535,7 +565,7 @@ export default function StepImportacao({
         searchLabel="Pesquisar local de desembaraço"
         value={data.locaisDesembaraco}
         options={entradaOptions}
-        onChange={(next) => update("locaisDesembaraco", next)}
+        onChange={updateLocaisDesembaraco}
         customValue={data.outroLocalDesembaraco ?? ""}
         onCustomValueChange={(next) => update("outroLocalDesembaraco", next)}
         customLabel="Outro local de desembaraço"

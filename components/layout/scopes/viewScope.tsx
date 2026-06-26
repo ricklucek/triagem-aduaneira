@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { CheckCircle2, Info, RotateCw, X } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
+import { LOCAIS } from "@/components/scope/StepImportacao";
 import { useScope, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,9 +25,9 @@ const currency = (v?: number | null) =>
   v == null || Number.isNaN(v)
     ? null
     : new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(v);
+        style: "currency",
+        currency: "BRL",
+      }).format(v);
 
 const date = (v?: string | null) => {
   if (!v) return null;
@@ -42,6 +43,41 @@ const date = (v?: string | null) => {
 const list = (v?: Array<string | number | null> | null) =>
   !v?.length ? null : v.filter(Boolean).join(", ");
 
+const queryList = (v?: Array<string | number | null> | null) =>
+  !v?.length ? "" : v.filter(Boolean).map(String).join(",");
+
+function citiesFromSelectedImportLocais(selected?: string[] | null) {
+  if (!selected?.length) return [];
+
+  const selectedValues = new Set(selected);
+
+  return Array.from(
+    new Set(
+      LOCAIS.filter((local) => selectedValues.has(local.value)).flatMap(
+        (local) => local.cities,
+      ),
+    ),
+  );
+}
+
+function importPrepostoCities(
+  importacao?: EscopoForm["operacao"]["importacao"],
+) {
+  const cidadesDesembaraco = importacao?.cidadesLocaisDesembaraco ?? [];
+  if (cidadesDesembaraco.length > 0) return cidadesDesembaraco;
+
+  const cidadesEntrada = importacao?.cidadesLocaisEntrada ?? [];
+  if (cidadesEntrada.length > 0) return cidadesEntrada;
+
+  const cidadesDerivadasDesembaraco = citiesFromSelectedImportLocais(
+    importacao?.locaisDesembaraco,
+  );
+  if (cidadesDerivadasDesembaraco.length > 0)
+    return cidadesDerivadasDesembaraco;
+
+  return citiesFromSelectedImportLocais(importacao?.locaisEntrada);
+}
+
 const account = (
   v?: {
     banco?: string | null;
@@ -52,8 +88,8 @@ const account = (
   !v || (!v.banco && !v.agencia && !v.conta)
     ? null
     : `Banco: ${text(v.banco)} • Agência: ${text(v.agencia)} • Conta: ${text(
-      v.conta,
-    )}`;
+        v.conta,
+      )}`;
 
 const contaPagamentoLabel = (v?: string | null) => {
   if (v === "CASCO") return "CASCO";
@@ -87,9 +123,9 @@ const modalLocalList = (v?: Array<string | null> | null) =>
   !v?.length
     ? null
     : v
-      .filter((modal): modal is string => Boolean(modal))
-      .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
-      .join(", ");
+        .filter((modal): modal is string => Boolean(modal))
+        .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
+        .join(", ");
 
 const HiredBadge = ({
   value,
@@ -408,7 +444,7 @@ function ServiceBlock({
 
 function ImportServicesView({
   services,
-  scope
+  scope,
 }: {
   services: NonNullable<EscopoForm["servicos"]["importacao"]>;
   scope: EscopoForm;
@@ -455,14 +491,15 @@ function ImportServicesView({
         <Field
           label="Prepostos"
           value={
-            <Link href={`/scope/prepostos?cidade=${services.preposto.cidadesLiberacao.toString()}&operacao=${scope.operacao?.tipos.toString()}`}>
-              <span className="underline">
-                Consultar Prepostos
-              </span>
+            <Link
+              href={`/scope/prepostos?cidade=${queryList(
+                importPrepostoCities(scope.operacao?.importacao),
+              )}&operacao=${queryList(scope.operacao?.tipos)}`}
+            >
+              <span className="underline">Consultar Prepostos</span>
             </Link>
           }
         />
-
       </ServiceBlock>
 
       <ServiceBlock
@@ -933,10 +970,7 @@ function ScopeDetails({
                   label="Vínculo com exportador"
                   value={text(i.vinculoComExportador)}
                 />
-                <Field
-                  label="Modais"
-                  value={modalLocalList(i.modaisEntrada)}
-                />
+                <Field label="Modais" value={modalLocalList(i.modaisEntrada)} />
                 <Field
                   label="Locais de entrada"
                   value={list(i.locaisEntrada)}
@@ -1128,15 +1162,15 @@ function ScopeDetails({
 
             {(scope.financeiro?.preferencia === "TRANSFERECIA" ||
               !scope.financeiro?.preferencia) && (
-                <Field
-                  label="Dados bancários para devolução de saldo"
-                  value={list(
-                    (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
-                      .map((conta) => account(conta))
-                      .filter(Boolean) as string[],
-                  )}
-                />
-              )}
+              <Field
+                label="Dados bancários para devolução de saldo"
+                value={list(
+                  (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
+                    .map((conta) => account(conta))
+                    .filter(Boolean) as string[],
+                )}
+              />
+            )}
 
             {scope.financeiro?.preferencia === "PIX" && (
               <Field
