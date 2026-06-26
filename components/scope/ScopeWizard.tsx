@@ -10,6 +10,9 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { EtapaFormulario, EscopoForm } from "@/domain/scope/types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   validarEtapa,
   validarFormularioCompleto,
@@ -33,8 +36,12 @@ import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "@/components/ui/toast";
 
-function buildEtapas(data: EscopoForm): EtapaFormulario[] {
-  const etapas: EtapaFormulario[] = ["SOBRE_EMPRESA", "CONTATOS", "OPERACAO"];
+type TemplateConfig = { name: string; description: string };
+type FormStep = EtapaFormulario | "CONFIGURACAO_TEMPLATE";
+
+function buildEtapas(data: EscopoForm, includeTemplateConfig = false): FormStep[] {
+  const etapas: FormStep[] = includeTemplateConfig ? ["CONFIGURACAO_TEMPLATE"] : [];
+  etapas.push("SOBRE_EMPRESA", "CONTATOS", "OPERACAO");
 
   if (data.operacao.tipos.includes("IMPORTACAO")) {
     etapas.push("IMPORTACAO", "SERVICOS_IMPORTACAO");
@@ -48,7 +55,8 @@ function buildEtapas(data: EscopoForm): EtapaFormulario[] {
   return etapas;
 }
 
-const STEP_LABELS: Record<EtapaFormulario, string> = {
+const STEP_LABELS: Record<FormStep, string> = {
+  CONFIGURACAO_TEMPLATE: "Configuração",
   SOBRE_EMPRESA: "Sobre a Empresa",
   CONTATOS: "Contatos",
   OPERACAO: "Operação",
@@ -68,6 +76,10 @@ type Props = {
   title?: string;
   subtitle?: string;
   status?: string;
+  submitLabel?: string;
+  onFinishRedirect?: string;
+  templateConfig?: TemplateConfig;
+  onTemplateConfigChange?: Dispatch<SetStateAction<TemplateConfig>>;
 };
 
 export default function ScopeWizard({
@@ -77,6 +89,10 @@ export default function ScopeWizard({
   onSave,
   onPublish,
   title = "Escopos",
+  submitLabel = "Publicar",
+  onFinishRedirect = "/scope/list",
+  templateConfig,
+  onTemplateConfigChange,
 }: Props) {
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -88,11 +104,12 @@ export default function ScopeWizard({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const etapas = useMemo(() => buildEtapas(form), [form]);
+  const isTemplateMode = Boolean(templateConfig && onTemplateConfigChange);
+  const etapas = useMemo(() => buildEtapas(form, isTemplateMode), [form, isTemplateMode]);
 
   const stepFromUrl = searchParams.get("step");
-  const etapaAtual = etapas.includes(stepFromUrl as EtapaFormulario)
-    ? (stepFromUrl as EtapaFormulario)
+  const etapaAtual = etapas.includes(stepFromUrl as FormStep)
+    ? (stepFromUrl as FormStep)
     : etapas[0];
 
   const etapaAtualIndex = etapas.indexOf(etapaAtual);
@@ -119,7 +136,7 @@ export default function ScopeWizard({
   );
 
   const navigateToStep = useCallback(
-    (nextStep: EtapaFormulario, method: "push" | "replace" = "push") => {
+    (nextStep: FormStep, method: "push" | "replace" = "push") => {
       const q = new URLSearchParams(searchParams.toString());
       q.set("step", nextStep);
 
@@ -136,6 +153,19 @@ export default function ScopeWizard({
   );
 
   async function proximaEtapa() {
+    if (etapaAtual === "CONFIGURACAO_TEMPLATE") {
+      const configErrors: Record<string, string> = {};
+      if (!templateConfig?.name.trim()) configErrors.name = "Informe o nome do template.";
+      setErrors(configErrors);
+      if (Object.keys(configErrors).length > 0) {
+        setErrorSheetOpen(true);
+        return;
+      }
+      const nextStep = etapas[etapaAtualIndex + 1];
+      if (nextStep) navigateToStep(nextStep, "push");
+      return;
+    }
+
     const result = validarEtapa(etapaAtual, form);
     setErrors(result.errors);
 
@@ -191,7 +221,7 @@ export default function ScopeWizard({
       setSavedMessage("Publicado");
       toast.success("Escopo publicado com sucesso.");
     }
-    router.replace('/scope/list');
+    router.replace(onFinishRedirect);
   }
 
   function focusErrorAt(path: string) {
@@ -214,6 +244,7 @@ export default function ScopeWizard({
 
   const errorEntries = Object.entries(errors);
   const scopedErrors = useMemo(() => {
+    if (etapaAtual === "CONFIGURACAO_TEMPLATE") return errors;
     const prefixMap: Record<EtapaFormulario, string[]> = {
       SOBRE_EMPRESA: ["sobreEmpresa."],
       CONTATOS: ["contatos."],
@@ -249,10 +280,53 @@ export default function ScopeWizard({
       }
     }
     return map;
-  }, [errorEntries, etapaAtual]);
+  }, [errorEntries, errors, etapaAtual]);
 
   function renderEtapa() {
     switch (etapaAtual) {
+      case "CONFIGURACAO_TEMPLATE":
+        return (
+          <div className="rounded-2xl border bg-card p-5 shadow-sm">
+            <div className="mb-5 space-y-1">
+              <h2 className="text-lg font-semibold">Configuração do template</h2>
+              <p className="text-sm text-muted-foreground">Defina as informações de identificação do template de escopo.</p>
+            </div>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="template-name">Nome do template</Label>
+                <Input
+                  id="template-name"
+                  name="name"
+                  value={templateConfig?.name ?? ""}
+                  aria-invalid={Boolean(scopedErrors.name)}
+                  onChange={(event) =>
+                    onTemplateConfigChange?.((current) => ({
+                      ...current,
+                      name: event.target.value,
+                    }))
+                  }
+                  placeholder="Ex.: Escopo padrão importação"
+                />
+                {scopedErrors.name ? <p className="text-sm text-destructive">{scopedErrors.name}</p> : null}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="template-description">Descrição</Label>
+                <Textarea
+                  id="template-description"
+                  name="description"
+                  value={templateConfig?.description ?? ""}
+                  onChange={(event) =>
+                    onTemplateConfigChange?.((current) => ({
+                      ...current,
+                      description: event.target.value,
+                    }))
+                  }
+                  placeholder="Descreva quando este template deve ser utilizado."
+                />
+              </div>
+            </div>
+          </div>
+        );
       case "SOBRE_EMPRESA":
         return (
           <StepSobreEmpresa
@@ -392,7 +466,7 @@ export default function ScopeWizard({
           <div style={{ display: "flex", gap: 8 }}>
             {isLastStep ? (
               <PrimaryButton type="button" onClick={publicar} disabled={saving}>
-                Publicar
+                {submitLabel}
               </PrimaryButton>
             ) : (
               <>

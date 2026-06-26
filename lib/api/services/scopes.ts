@@ -21,6 +21,10 @@ import type {
   ScopeDetailResponse,
   ScopeSummaryApi,
   ScopeVersionsResponse,
+  CreateScopeTemplatePayload,
+  ScopeTemplateDetailResponse,
+  ScopeTemplateSummary,
+  UpdateScopeTemplatePayload,
 } from "@/lib/api/types/scope-api";
 import type { ScopeMetadataResponse } from "@/lib/api/types/scope-metadata";
 
@@ -85,6 +89,51 @@ export const scopeApi: ScopeApiClient = {
       initial ?? {},
     );
     return data;
+  },
+
+  async createScopeFromTemplate(templateId: string): Promise<CreateScopeResponse> {
+    const { data } = await http.post<CreateScopeResponse>(
+      API_ROUTES.scopes.createFromTemplate(templateId),
+    );
+    return data;
+  },
+
+  async listScopeTemplates(): Promise<ScopeTemplateSummary[]> {
+    const { data } = await http.get<ScopeTemplateSummary[]>(
+      API_ROUTES.scopes.templates,
+    );
+    return data;
+  },
+
+  async getScopeTemplate(templateId: string): Promise<ScopeTemplateDetailResponse> {
+    const { data } = await http.get<ScopeTemplateDetailResponse>(
+      API_ROUTES.scopes.templateDetail(templateId),
+    );
+    return data;
+  },
+
+  async createScopeTemplate(
+    payload: CreateScopeTemplatePayload,
+  ): Promise<ScopeTemplateDetailResponse> {
+    const { data } = await http.post<ScopeTemplateDetailResponse>(
+      API_ROUTES.scopes.templates,
+      payload,
+    );
+    return data;
+  },
+
+  async updateScopeTemplate(
+    payload: UpdateScopeTemplatePayload,
+  ): Promise<ScopeTemplateDetailResponse> {
+    const { data } = await http.put<ScopeTemplateDetailResponse>(
+      API_ROUTES.scopes.templateDetail(payload.id),
+      { name: payload.name, description: payload.description, draft: payload.draft },
+    );
+    return data;
+  },
+
+  async deleteScopeTemplate(templateId: string): Promise<void> {
+    await http.delete<void>(API_ROUTES.scopes.templateDetail(templateId));
   },
 
   async listScopes(params: ListScopesParams): Promise<ListScopesResult> {

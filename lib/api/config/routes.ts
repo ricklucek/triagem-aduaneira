@@ -25,6 +25,9 @@ export const API_ROUTES = {
     bulkAssignmentSummary: "/scopes/bulk/assignment-summary",
     bulkAssignmentScopes: "/scopes/bulk/assignment-scopes",
     bulkAssignmentUpdate: "/scopes/bulk/assignment-update",
+    templates: "/scopes/templates",
+    templateDetail: (templateId: string) => `/scopes/templates/${templateId}`,
+    createFromTemplate: (templateId: string) => `/scopes/templates/${templateId}/scopes`,
   },
   organizations: {
     me: "/organizations/me",

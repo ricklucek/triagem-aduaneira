@@ -62,3 +62,15 @@ export function useBulkAssignmentScopes(
     return scopeApi.getBulkAssignmentScopes(groupBy, userId);
   });
 }
+
+export function useScopeTemplates() {
+  return useSWR("scope:templates", scopeApi.listScopeTemplates);
+}
+
+export function useScopeTemplate(templateId: string | null) {
+  const key = templateId ? `scope:template:${templateId}` : null;
+  return useSWR(key, async () => {
+    if (!templateId) throw new Error("Template inválido.");
+    return scopeApi.getScopeTemplate(templateId);
+  });
+}

@@ -24,6 +24,27 @@ export interface CreateScopeResponse {
   id: string;
 }
 
+export interface ScopeTemplateSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+  created_at: string;
+}
+
+export interface ScopeTemplateDetailResponse extends ScopeTemplateSummary {
+  draft: EscopoForm;
+}
+
+export interface CreateScopeTemplatePayload {
+  name: string;
+  description?: string;
+  draft: EscopoForm;
+}
+
+export interface UpdateScopeTemplatePayload extends CreateScopeTemplatePayload {
+  id: string;
+}
+
 export interface SaveScopeDraftPayload {
   id: string;
   draft: EscopoForm;
@@ -116,6 +137,12 @@ export interface BulkAssignmentUpdateResponse {
 
 export interface ScopeApiClient {
   createScope(initial?: Partial<EscopoForm>): Promise<CreateScopeResponse>;
+  createScopeFromTemplate(templateId: string): Promise<CreateScopeResponse>;
+  listScopeTemplates(): Promise<ScopeTemplateSummary[]>;
+  getScopeTemplate(templateId: string): Promise<ScopeTemplateDetailResponse>;
+  createScopeTemplate(payload: CreateScopeTemplatePayload): Promise<ScopeTemplateDetailResponse>;
+  updateScopeTemplate(payload: UpdateScopeTemplatePayload): Promise<ScopeTemplateDetailResponse>;
+  deleteScopeTemplate(templateId: string): Promise<void>;
   listScopes(params: ListScopesParams): Promise<ListScopesResult>;
   countUserAssignments(): Promise<{ type: string; count: number }[]>;
   getScope(id: string): Promise<ScopeDetailResponse>;
