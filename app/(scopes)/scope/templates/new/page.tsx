@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import ScopeWizard from "@/components/scope/ScopeWizard";
+import TemplateScopeWizard from "@/components/scope/TemplateScopeWizard";
 import General from "@/components/scope/General";
 import { escopoFormDefault } from "@/domain/scope/defaults";
 import { EscopoForm } from "@/domain/scope/types";
@@ -41,15 +41,13 @@ export default function NewScopeTemplatePage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] xl:items-start">
         <div className="min-w-0">
-          <ScopeWizard
+          <TemplateScopeWizard
             form={form}
             setForm={setForm}
             responsaveis={metadataResponse?.responsaveis ?? []}
             onSave={handleSave}
-            onPublish={() => handleSave(form)}
             title="Novo template de escopo"
-            submitLabel="Salvar template"
-            onFinishRedirect="/scope/new"
+            finishRedirect="/scope/new"
             templateConfig={templateConfig}
             onTemplateConfigChange={setTemplateConfig}
           />

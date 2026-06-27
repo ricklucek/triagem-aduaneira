@@ -4,11 +4,10 @@ import type {
   PublishResult,
   ScopeVersion,
 } from "@/data/scope/ScopeRepo";
-import type { EscopoForm } from "@/domain/scope/types";
+import type { DeepPartial, EscopoForm } from "@/domain/scope/types";
 import type { ScopeMetadataResponse } from "@/lib/api/types/scope-metadata";
 
 export type ScopeStatus = "draft" | "published" | "archived";
-
 export interface ScopeDetailResponse {
   id: string;
   draft: EscopoForm;
@@ -32,13 +31,13 @@ export interface ScopeTemplateSummary {
 }
 
 export interface ScopeTemplateDetailResponse extends ScopeTemplateSummary {
-  draft: EscopoForm;
+  draft: DeepPartial<EscopoForm>;
 }
 
 export interface CreateScopeTemplatePayload {
   name: string;
   description?: string;
-  draft: EscopoForm;
+  draft: DeepPartial<EscopoForm>;
 }
 
 export interface UpdateScopeTemplatePayload extends CreateScopeTemplatePayload {
@@ -136,7 +135,7 @@ export interface BulkAssignmentUpdateResponse {
 }
 
 export interface ScopeApiClient {
-  createScope(initial?: Partial<EscopoForm>): Promise<CreateScopeResponse>;
+  createScope(initial?: DeepPartial<EscopoForm>): Promise<CreateScopeResponse>;
   createScopeFromTemplate(templateId: string): Promise<CreateScopeResponse>;
   listScopeTemplates(): Promise<ScopeTemplateSummary[]>;
   getScopeTemplate(templateId: string): Promise<ScopeTemplateDetailResponse>;

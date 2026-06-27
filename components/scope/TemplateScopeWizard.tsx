@@ -9,11 +9,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { EtapaFormulario, EscopoForm } from "@/domain/scope/types";
-import {
-  validarEtapa,
-  validarFormularioCompleto,
-} from "@/domain/scope/validate";
 import StepSobreEmpresa from "./StepSobreEmpresa";
 import StepContatos from "./StepContatos";
 import StepOperacao from "./StepOperacao";
@@ -32,9 +31,19 @@ import {
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "@/components/ui/toast";
+import { TemplateScopeSchema } from "@/domain/scope/template-schema";
+import { ZodError } from "zod";
 
-function buildEtapas(data: EscopoForm): EtapaFormulario[] {
-  const etapas: EtapaFormulario[] = ["SOBRE_EMPRESA", "CONTATOS", "OPERACAO"];
+type TemplateConfig = { name: string; description: string };
+type TemplateStep = EtapaFormulario | "CONFIGURACAO_TEMPLATE";
+
+function buildTemplateSteps(data: EscopoForm): TemplateStep[] {
+  const etapas: TemplateStep[] = [
+    "CONFIGURACAO_TEMPLATE",
+    "SOBRE_EMPRESA",
+    "CONTATOS",
+    "OPERACAO",
+  ];
 
   if (data.operacao.tipos.includes("IMPORTACAO")) {
     etapas.push("IMPORTACAO", "SERVICOS_IMPORTACAO");
@@ -48,7 +57,8 @@ function buildEtapas(data: EscopoForm): EtapaFormulario[] {
   return etapas;
 }
 
-const STEP_LABELS: Record<EtapaFormulario, string> = {
+const STEP_LABELS: Record<TemplateStep, string> = {
+  CONFIGURACAO_TEMPLATE: "Configuração",
   SOBRE_EMPRESA: "Sobre a Empresa",
   CONTATOS: "Contatos",
   OPERACAO: "Operação",
@@ -61,24 +71,34 @@ const STEP_LABELS: Record<EtapaFormulario, string> = {
 
 type Props = {
   form: EscopoForm;
-  setForm: Dispatch<SetStateAction<EscopoForm>>
+  setForm: Dispatch<SetStateAction<EscopoForm>>;
+  templateConfig: TemplateConfig;
+  onTemplateConfigChange: Dispatch<SetStateAction<TemplateConfig>>;
   responsaveis?: ScopeResponsible[];
-  onSave?: (data: EscopoForm) => Promise<void> | void;
-  onPublish?: () => Promise<void> | void;
+  onSave: (data: EscopoForm) => Promise<void> | void;
   title?: string;
-  subtitle?: string;
-  status?: string;
+  finishRedirect?: string;
 };
 
-export default function ScopeWizard({
+function zodErrorToMap(error: ZodError): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const key = issue.path.join(".");
+    if (!result[key]) result[key] = issue.message;
+  }
+  return result;
+}
+
+export default function TemplateScopeWizard({
   form,
   setForm,
+  templateConfig,
+  onTemplateConfigChange,
   responsaveis = [],
   onSave,
-  onPublish,
-  title = "Escopos",
+  title = "Template de escopo",
+  finishRedirect = "/scope/new",
 }: Props) {
-  
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState("Não salvo");
@@ -88,68 +108,67 @@ export default function ScopeWizard({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const etapas = useMemo(() => buildEtapas(form), [form]);
-
+  const etapas = useMemo(() => buildTemplateSteps(form), [form]);
   const stepFromUrl = searchParams.get("step");
-  const etapaAtual = etapas.includes(stepFromUrl as EtapaFormulario)
-    ? (stepFromUrl as EtapaFormulario)
+  const etapaAtual = etapas.includes(stepFromUrl as TemplateStep)
+    ? (stepFromUrl as TemplateStep)
     : etapas[0];
-
   const etapaAtualIndex = etapas.indexOf(etapaAtual);
   const isLastStep = etapaAtualIndex === etapas.length - 1;
   const isFirstStep = etapaAtualIndex === 0;
 
   const persist = useCallback(
-    async (data: EscopoForm, silent = false): Promise<boolean> => {
-      if (!onSave) return true;
-
+    async (data: EscopoForm): Promise<boolean> => {
       setSaving(true);
       try {
+        TemplateScopeSchema.parse({ ...templateConfig, draft: data });
         await onSave(data);
-        setSavedMessage(silent ? "Salvo automaticamente" : "Salvo");
+        setSavedMessage("Salvo automaticamente");
         return true;
-      } catch {
+      } catch (error) {
         setSavedMessage("Erro ao salvar");
-        return false;
+        if (error instanceof ZodError) {
+          setErrors(zodErrorToMap(error));
+          setErrorSheetOpen(true);
+          return false;
+        }
+        throw error;
       } finally {
         setSaving(false);
       }
     },
-    [onSave],
+    [onSave, templateConfig],
   );
 
   const navigateToStep = useCallback(
-    (nextStep: EtapaFormulario, method: "push" | "replace" = "push") => {
+    (nextStep: TemplateStep) => {
       const q = new URLSearchParams(searchParams.toString());
       q.set("step", nextStep);
-
-      const url = `${pathname}?${q.toString()}`;
-
-      if (method === "replace") {
-        router.replace(url);
-        return;
-      }
-
-      router.push(url);
+      router.push(`${pathname}?${q.toString()}`);
     },
     [pathname, router, searchParams],
   );
 
   async function proximaEtapa() {
-    const result = validarEtapa(etapaAtual, form);
-    setErrors(result.errors);
+    setErrors({});
 
-    if (!result.ok) {
-      setErrorSheetOpen(true);
-      return;
+    if (etapaAtual === "CONFIGURACAO_TEMPLATE") {
+      const result = TemplateScopeSchema.pick({ name: true }).safeParse({
+        name: templateConfig.name,
+      });
+
+      if (!result.success) {
+        setErrors(zodErrorToMap(result.error));
+        setErrorSheetOpen(true);
+        return;
+      }
     }
 
     const nextStep = etapas[etapaAtualIndex + 1];
     if (!nextStep) return;
 
-    setErrors({});
-    await persist(form, true);
-    navigateToStep(nextStep, "push");
+    await persist(form);
+    navigateToStep(nextStep);
   }
 
   function etapaAnterior() {
@@ -157,41 +176,16 @@ export default function ScopeWizard({
     if (!previousStep) return;
 
     setErrors({});
-    navigateToStep(previousStep, "push");
+    navigateToStep(previousStep);
   }
 
-  async function finalizar() {
-    const result = validarFormularioCompleto(form);
-    setErrors(result.errors);
+  async function salvarTemplate() {
+    const ok = await persist(form);
+    if (!ok) return;
 
-    if (!result.ok) {
-      setErrorSheetOpen(true);
-      return;
-    }
-
-    const ok = await persist(form, true);
-    if (ok) {
-      toast.success("Formulário válido. Rascunho salvo com sucesso.");
-    }
-  }
-
-  async function publicar() {
-    const result = validarFormularioCompleto(form);
-    setErrors(result.errors);
-
-    if (!result.ok) {
-      setErrorSheetOpen(true);
-      return;
-    }
-
-    await persist(form, true);
-
-    if (onPublish) {
-      await onPublish();
-      setSavedMessage("Publicado");
-      toast.success("Escopo publicado com sucesso.");
-    }
-    router.replace('/scope/list');
+    setSavedMessage("Template salvo");
+    toast.success("Template salvo com sucesso.");
+    router.replace(finishRedirect);
   }
 
   function focusErrorAt(path: string) {
@@ -213,71 +207,78 @@ export default function ScopeWizard({
   }
 
   const errorEntries = Object.entries(errors);
-  const scopedErrors = useMemo(() => {
-    const prefixMap: Record<EtapaFormulario, string[]> = {
-      SOBRE_EMPRESA: ["sobreEmpresa."],
-      CONTATOS: ["contatos."],
-      OPERACAO: ["operacao.tipos"],
-      IMPORTACAO: ["operacao.importacao."],
-      SERVICOS_IMPORTACAO: ["servicos.importacao."],
-      EXPORTACAO: ["operacao.exportacao."],
-      SERVICOS_EXPORTACAO: ["servicos.exportacao."],
-      FINANCEIRO: ["financeiro."],
-    };
-    const prefixes = prefixMap[etapaAtual];
-    const map: Record<string, string> = {};
-    const hasGlobalPrefix = (path: string) =>
-      [
-        "sobreEmpresa.",
-        "contatos.",
-        "operacao.",
-        "servicos.",
-        "financeiro.",
-      ].some((prefix) => path.startsWith(prefix));
-    for (const [path, message] of errorEntries) {
-      let matched = false;
-      for (const prefix of prefixes) {
-        if (path === prefix || path.startsWith(prefix)) {
-          map[path.replace(prefix, "")] = message;
-          matched = true;
-          break;
-        }
-      }
-
-      if (!matched && !hasGlobalPrefix(path)) {
-        map[path] = message;
-      }
-    }
-    return map;
-  }, [errorEntries, etapaAtual]);
 
   function renderEtapa() {
     switch (etapaAtual) {
+      case "CONFIGURACAO_TEMPLATE":
+        return (
+          <div className="rounded-2xl border bg-card p-5 shadow-sm">
+            <div className="mb-5 space-y-1">
+              <h2 className="text-lg font-semibold">Configuração do template</h2>
+              <p className="text-sm text-muted-foreground">
+                Defina as informações de identificação do template de escopo.
+              </p>
+            </div>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="template-name">Nome do template</Label>
+                <Input
+                  id="template-name"
+                  name="name"
+                  value={templateConfig.name}
+                  aria-invalid={Boolean(errors.name)}
+                  onChange={(event) =>
+                    onTemplateConfigChange((current) => ({
+                      ...current,
+                      name: event.target.value,
+                    }))
+                  }
+                  placeholder="Ex.: Escopo padrão importação"
+                />
+                {errors.name ? (
+                  <p className="text-sm text-destructive">{errors.name}</p>
+                ) : null}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="template-description">Descrição</Label>
+                <Textarea
+                  id="template-description"
+                  name="description"
+                  value={templateConfig.description}
+                  onChange={(event) =>
+                    onTemplateConfigChange((current) => ({
+                      ...current,
+                      description: event.target.value,
+                    }))
+                  }
+                  placeholder="Descreva quando este template deve ser utilizado."
+                />
+              </div>
+            </div>
+          </div>
+        );
+
       case "SOBRE_EMPRESA":
         return (
           <StepSobreEmpresa
             form={form}
-            errors={scopedErrors}
+            errors={{}}
             onChange={setForm}
             responsaveis={responsaveis}
           />
         );
 
       case "CONTATOS":
-        return (
-          <StepContatos form={form} errors={scopedErrors} onChange={setForm} />
-        );
+        return <StepContatos form={form} errors={{}} onChange={setForm} />;
 
       case "OPERACAO":
-        return (
-          <StepOperacao form={form} errors={scopedErrors} onChange={setForm} />
-        );
+        return <StepOperacao form={form} errors={{}} onChange={setForm} />;
 
       case "IMPORTACAO":
         return (
           <StepImportacao
             form={form}
-            errors={scopedErrors}
+            errors={{}}
             onChange={setForm}
             responsaveis={responsaveis}
           />
@@ -287,7 +288,7 @@ export default function ScopeWizard({
         return (
           <StepServicosImportacao
             form={form}
-            errors={scopedErrors}
+            errors={{}}
             onChange={setForm}
           />
         );
@@ -296,7 +297,7 @@ export default function ScopeWizard({
         return (
           <StepExportacao
             form={form}
-            errors={scopedErrors}
+            errors={{}}
             onChange={setForm}
             responsaveis={responsaveis}
           />
@@ -306,16 +307,14 @@ export default function ScopeWizard({
         return (
           <StepServicosExportacao
             form={form}
-            errors={scopedErrors}
+            errors={{}}
             onChange={setForm}
             responsaveis={responsaveis}
           />
         );
 
       case "FINANCEIRO":
-        return (
-          <StepFinanceiro form={form} errors={scopedErrors} onChange={setForm} />
-        );
+        return <StepFinanceiro form={form} errors={{}} onChange={setForm} />;
 
       default:
         return null;
@@ -324,10 +323,7 @@ export default function ScopeWizard({
 
   return (
     <div className="pb-10">
-      <PageHeader
-        title={title}
-        subtitle={`${saving ? "Salvando..." : savedMessage}`}
-      />
+      <PageHeader title={title} subtitle={saving ? "Salvando..." : savedMessage} />
 
       <StepPills
         steps={etapas.map((e) => STEP_LABELS[e])}
@@ -389,31 +385,15 @@ export default function ScopeWizard({
           )
         }
         right={
-          <div style={{ display: "flex", gap: 8 }}>
-            {isLastStep ? (
-              <PrimaryButton type="button" onClick={publicar} disabled={saving}>
-                Publicar
-              </PrimaryButton>
-            ) : (
-              <>
-                <SecondaryButton
-                  type="button"
-                  onClick={finalizar}
-                  disabled={saving}
-                >
-                  Salvar rascunho
-                </SecondaryButton>
-
-                <PrimaryButton
-                  type="button"
-                  onClick={proximaEtapa}
-                  disabled={saving}
-                >
-                  Próximo
-                </PrimaryButton>
-              </>
-            )}
-          </div>
+          isLastStep ? (
+            <PrimaryButton type="button" onClick={salvarTemplate} disabled={saving}>
+              Salvar template
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton type="button" onClick={proximaEtapa} disabled={saving}>
+              Próximo
+            </PrimaryButton>
+          )
         }
       />
     </div>
