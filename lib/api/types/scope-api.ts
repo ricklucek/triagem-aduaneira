@@ -138,7 +138,7 @@ export interface ScopeApiClient {
   createScope(initial?: DeepPartial<EscopoForm>, templateId?: string | number): Promise<CreateScopeResponse>;
   listScopeTemplates(): Promise<ScopeTemplateSummary[]>;
   getScopeTemplate(templateId: string): Promise<ScopeTemplateDetailResponse>;
-  createScopeTemplate(payload: CreateScopeTemplatePayload): Promise<ScopeTemplateDetailResponse>;
+  createScopeTemplate(payload?: CreateScopeTemplatePayload): Promise<ScopeTemplateDetailResponse>;
   updateScopeTemplate(payload: UpdateScopeTemplatePayload): Promise<ScopeTemplateDetailResponse>;
   deleteScopeTemplate(templateId: string): Promise<void>;
   listScopes(params: ListScopesParams): Promise<ListScopesResult>;

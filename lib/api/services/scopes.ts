@@ -111,7 +111,7 @@ export const scopeApi: ScopeApiClient = {
   ): Promise<ScopeTemplateDetailResponse> {
     const { data } = await http.post<ScopeTemplateDetailResponse>(
       API_ROUTES.scopes.templates,
-      payload,
+      payload ?? {},
     );
     return data;
   },

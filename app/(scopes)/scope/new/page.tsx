@@ -43,13 +43,19 @@ export default function NewScopePage() {
     await mutate();
   }
 
+  async function createBlankScopeTemplate() {
+    setCreating("blank");
+    const {id} = await scopeApi.createScopeTemplate();
+    router.push(`/scope/templates/${id}?step=CONFIGURACAO_TEMPLATE`)
+  }
+
   return (
-    <main className="p-4 sm:p-6 lg:p-8">
+    <main className="p-4 sm:p-6 lg:p-8 w-full">
       <PageHeader
         title="Novo escopo"
         subtitle="Crie um escopo em branco ou use um template cadastrado para agilizar o preenchimento."
         right={
-          <Button type="button" variant="outline" onClick={() => router.push("/scope/templates/new?step=CONFIGURACAO_TEMPLATE")}>
+          <Button type="button" variant="outline" onClick={createBlankScopeTemplate}>
             <Plus className="size-4" />
             Novo template
           </Button>
@@ -86,6 +92,9 @@ export default function NewScopePage() {
                     <Sparkles className="size-4 text-primary" />
                     <h3 className="truncate font-semibold">{template.name}</h3>
                   </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {template.description ?? "Sem descrição"}
+                  </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Criado em {formatDate(template.created_at)}
                   </p>
