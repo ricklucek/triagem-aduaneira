@@ -6,7 +6,7 @@ export const API_ROUTES = {
     me: "/auth/me",
   },
   scopes: {
-    create: "/scopes",
+    create: (templateId?: string | number) => `/scopes?templateId=${templateId}`,
     list: "/scopes",
     metadata: "/scopes/metadata",
     detail: (scopeId: string) => `/scopes/${scopeId}`,
@@ -27,7 +27,6 @@ export const API_ROUTES = {
     bulkAssignmentUpdate: "/scopes/bulk/assignment-update",
     templates: "/scopes/templates",
     templateDetail: (templateId: string) => `/scopes/templates/${templateId}`,
-    createFromTemplate: (templateId: string) => `/scopes/templates/${templateId}/scopes`,
   },
   organizations: {
     me: "/organizations/me",

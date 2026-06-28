@@ -135,8 +135,7 @@ export interface BulkAssignmentUpdateResponse {
 }
 
 export interface ScopeApiClient {
-  createScope(initial?: DeepPartial<EscopoForm>): Promise<CreateScopeResponse>;
-  createScopeFromTemplate(templateId: string): Promise<CreateScopeResponse>;
+  createScope(initial?: DeepPartial<EscopoForm>, templateId?: string | number): Promise<CreateScopeResponse>;
   listScopeTemplates(): Promise<ScopeTemplateSummary[]>;
   getScopeTemplate(templateId: string): Promise<ScopeTemplateDetailResponse>;
   createScopeTemplate(payload: CreateScopeTemplatePayload): Promise<ScopeTemplateDetailResponse>;

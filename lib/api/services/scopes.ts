@@ -83,17 +83,11 @@ function normalizeScopeListResponse(
 export const scopeApi: ScopeApiClient = {
   async createScope(
     initial?: Partial<EscopoForm>,
+    templateId?: number | string,
   ): Promise<CreateScopeResponse> {
     const { data } = await http.post<CreateScopeResponse>(
-      API_ROUTES.scopes.create,
+      API_ROUTES.scopes.create(templateId),
       initial ?? {},
-    );
-    return data;
-  },
-
-  async createScopeFromTemplate(templateId: string): Promise<CreateScopeResponse> {
-    const { data } = await http.post<CreateScopeResponse>(
-      API_ROUTES.scopes.createFromTemplate(templateId),
     );
     return data;
   },

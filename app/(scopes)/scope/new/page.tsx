@@ -33,7 +33,7 @@ export default function NewScopePage() {
 
   async function createFromTemplate(templateId: string) {
     setCreating(templateId);
-    const { id } = await scopeApi.createScopeFromTemplate(templateId);
+    const { id } = await scopeApi.createScope({}, templateId);
     router.push(`/scope/${id}?step=SOBRE_EMPRESA`);
   }
 
