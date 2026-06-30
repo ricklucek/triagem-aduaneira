@@ -39,11 +39,6 @@ export const API_ROUTES = {
     update: (clientId: string) => `/clients/${clientId}`,
     scopes: (clientId: string) => `/clients/${clientId}/scopes`,
   },
-  tracker: {
-    importProcesses: "/tracker/import-processes",
-    departmentProcesses: (department: string) => `/tracker/import-processes/department-board/${department}`,
-    importProcessDetail: (processId: string) => `/tracker/import-processes/${processId}`,
-  },
   dashboards: {
     admin: "/dashboards/admin",
     adminMetrics: "/dashboards/admin/metrics",

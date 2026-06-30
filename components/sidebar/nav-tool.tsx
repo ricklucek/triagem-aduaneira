@@ -28,14 +28,6 @@ const tools = [
     reference: "/scope",
     icon: FileText,
   },
-  {
-    key: "tracker",
-    label: "Tracker",
-    description: "Pipeline dos processos",
-    href: "/tracker/pipeline",
-    reference: "/tracker",
-    icon: Locate,
-  },
 ];
 
 export function NavTool() {
