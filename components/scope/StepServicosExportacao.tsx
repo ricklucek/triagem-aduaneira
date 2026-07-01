@@ -200,6 +200,21 @@ export default function StepServicosExportacao({
       >
         <Grid columns={2}>
           <Field
+            label="Modalidade"
+            required
+            error={errors["preposto.modalidade"]}
+          >
+            <Select
+              value={data.preposto.modalidade ?? ""}
+              onChange={(e) => update("preposto.modalidade", e.target.value)}
+            >
+              <option value="">Selecione</option>
+              <option value="SIM">Sim</option>
+              <option value="NAO">Não</option>
+              <option value="CASO_A_CASO">Caso a caso</option>
+            </Select>
+          </Field>
+          <Field
             label="Incluso no serviço de desembaraço da Casco"
             required
             error={errors["preposto.inclusoNoDesembaracoCasco"]}
@@ -213,40 +228,15 @@ export default function StepServicosExportacao({
               <option value="">Selecione</option>
               <option value="SIM">Sim</option>
               <option value="NAO">Não</option>
-              <option value="CASO_A_CASO">Caso a Caso</option>
-            </Select>
-          </Field>
-
-          <Field label="Valor do preposto" required error={errors?.valor}>
-            <NumberInput
-              value={data.preposto.prepostoSelecionado?.valor ?? ""}
-              onChange={(e) => update("preposto.prepostoSelecionado.valor", Number(e.target.value),)}
-            />
-          </Field>
-        </Grid>
-        <Grid>
-          <Field
-            label="Portos e fronteiras de liberação"
-            hint="Opcional"
-          >
-            <Select
-              value={data.preposto.cidadesLiberacao[0] ?? ""}
-              onChange={(e) =>
-                update(
-                  "preposto.cidadesLiberacao",
-                  e.target.value ? [e.target.value] : [],
-                )
-              }
-            >
-              <option value="">Selecione</option>
-              {CIDADES.map((cidade) => (
-                <option key={cidade} value={cidade}>
-                  {cidade}
-                </option>
-              ))}
             </Select>
           </Field>
         </Grid>
+        <Field label="Valor do preposto" required error={errors?.valor}>
+          <NumberInput
+            value={data.preposto.prepostoSelecionado?.valor ?? ""}
+            onChange={(e) => update("preposto.prepostoSelecionado.valor", Number(e.target.value),)}
+          />
+        </Field>
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.preposto.observacao ?? ""}
@@ -259,14 +249,31 @@ export default function StepServicosExportacao({
         checked={data.certificadoOrigem.habilitado}
         onToggle={(checked) => update("certificadoOrigem.habilitado", checked)}
       >
-        <Field label="Valor">
-          <NumberInput
-            value={data.certificadoOrigem.valor ?? ""}
-            onChange={(e) =>
-              update("certificadoOrigem.valor", Number(e.target.value))
-            }
-          />
-        </Field>
+        <Grid columns={2}>
+          <Field
+            label="Modalidade"
+            required
+            error={errors["certificadoOrigem.modalidade"]}
+          >
+            <Select
+              value={data.certificadoOrigem.modalidade ?? ""}
+              onChange={(e) => update("certificadoOrigem.modalidade", e.target.value)}
+            >
+              <option value="">Selecione</option>
+              <option value="SIM">Sim</option>
+              <option value="NAO">Não</option>
+              <option value="CASO_A_CASO">Caso a caso</option>
+            </Select>
+          </Field>
+          <Field label="Valor">
+            <NumberInput
+              value={data.certificadoOrigem.valor ?? ""}
+              onChange={(e) =>
+                update("certificadoOrigem.valor", Number(e.target.value))
+              }
+            />
+          </Field>
+        </Grid>
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.certificadoOrigem.observacao ?? ""}
@@ -283,14 +290,31 @@ export default function StepServicosExportacao({
           update("certificadoFitossanitario.habilitado", checked)
         }
       >
-        <Field label="Valor" required>
-          <NumberInput
-            value={data.certificadoFitossanitario.valor ?? ""}
-            onChange={(e) =>
-              update("certificadoFitossanitario.valor", Number(e.target.value))
-            }
-          />
-        </Field>
+        <Grid columns={2}>
+          <Field
+            label="Modalidade"
+            required
+            error={errors["certificadoOrigem.modalidade"]}
+          >
+            <Select
+              value={data.certificadoOrigem.modalidade ?? ""}
+              onChange={(e) => update("certificadoOrigem.modalidade", e.target.value)}
+            >
+              <option value="">Selecione</option>
+              <option value="SIM">Sim</option>
+              <option value="NAO">Não</option>
+              <option value="CASO_A_CASO">Caso a caso</option>
+            </Select>
+          </Field>
+          <Field label="Valor" required>
+            <NumberInput
+              value={data.certificadoFitossanitario.valor ?? ""}
+              onChange={(e) =>
+                update("certificadoFitossanitario.valor", Number(e.target.value))
+              }
+            />
+          </Field>
+        </Grid>
         <Field label="Observação geral" hint="Campo opcional">
           <TextArea
             value={data.certificadoFitossanitario.observacao ?? ""}
@@ -431,7 +455,11 @@ export default function StepServicosExportacao({
           </Select>
         </Field>
 
-        <Field label="% PTAX negociada" required>
+        <Field
+          label="% PTAX negociada"
+          required
+          error={errors["freteInternacional.ptaxNegociado"]}
+        >
           <TextInput
             value={data.freteInternacional.ptaxNegociado ?? ""}
             onChange={(e) =>
