@@ -6,7 +6,7 @@ export const API_ROUTES = {
     me: "/auth/me",
   },
   scopes: {
-    create: (templateId?: string | number) => `/scopes?templateId=${templateId}`,
+    create: (templateId?: string | number) => (templateId ? `/scopes?templateId=${templateId}` : `/scopes`),
     list: "/scopes",
     metadata: "/scopes/metadata",
     detail: (scopeId: string) => `/scopes/${scopeId}`,
