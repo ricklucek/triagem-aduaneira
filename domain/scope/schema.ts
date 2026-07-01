@@ -135,7 +135,7 @@ const ServicoValorSimplesSchema = z
 
 const PrepostoEscolhaSchema = z.object({
   id: z.string().trim().optional().nullable(),
-  nome: z.string().trim().min(1, "Nome é obrigatório"),
+  nome: z.string().trim().optional().nullable(),
   contatoNome: z.string().trim().optional().nullable(),
   telefone: z.string().trim().optional().nullable(),
   email: z.string().trim().optional().nullable(),
