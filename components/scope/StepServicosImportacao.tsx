@@ -81,14 +81,30 @@ export default function StepServicosImportacao({
   function setData(next: NonNullable<EscopoForm["servicos"]["importacao"]>) {
     onChange({ ...form, servicos: { ...form.servicos, importacao: next } });
   }
+
+  function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
   function update(path: string, value: unknown) {
     const next = structuredClone(data) as Record<string, unknown>;
+
     const keys = path.split(".");
-    let ref = next;
+    let ref: Record<string, unknown> = next;
+
     for (let i = 0; i < keys.length - 1; i++) {
-      ref = ref[keys[i]] as Record<string, unknown>;
+      const key = keys[i];
+      const current = ref[key];
+
+      if (!isObject(current)) {
+        ref[key] = {};
+      }
+
+      ref = ref[key] as Record<string, unknown>;
     }
+
     ref[keys[keys.length - 1]] = value;
+
     setData(next as NonNullable<EscopoForm["servicos"]["importacao"]>);
   }
 

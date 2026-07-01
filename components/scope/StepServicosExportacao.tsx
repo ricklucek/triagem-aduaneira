@@ -93,46 +93,37 @@ export default function StepServicosExportacao({
   responsaveis,
 }: Props) {
   const data = form.servicos.exportacao ?? emptyExportacaoServicos();
-  const [loadingPrepostos, setLoadingPrepostos] = useState(false);
-  const [prepostoResults, setPrepostoResults] = useState<PrepostoLookupItem[]>(
-    [],
-  );
+  
   function setData(next: NonNullable<EscopoForm["servicos"]["exportacao"]>) {
     onChange({ ...form, servicos: { ...form.servicos, exportacao: next } });
   }
+
+  function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
   function update(path: string, value: unknown) {
     const next = structuredClone(data) as Record<string, unknown>;
+
     const keys = path.split(".");
-    let ref = next;
+    let ref: Record<string, unknown> = next;
+
     for (let i = 0; i < keys.length - 1; i++) {
-      ref = ref[keys[i]] as Record<string, unknown>;
+      const key = keys[i];
+      const current = ref[key];
+
+      if (!isObject(current)) {
+        ref[key] = {};
+      }
+
+      ref = ref[key] as Record<string, unknown>;
     }
+
     ref[keys[keys.length - 1]] = value;
+
     setData(next as NonNullable<EscopoForm["servicos"]["exportacao"]>);
   }
-  const cidadeConsulta = useMemo(
-    () =>
-      data.preposto.cidadesLiberacao[0] ??
-      data.preposto.outroPorto ??
-      data.preposto.outraFronteira ??
-      "",
-    [data.preposto],
-  );
-  async function handleLookupPrepostos() {
-    if (!cidadeConsulta.trim()) return;
-    setLoadingPrepostos(true);
-    try {
-      const res = await publicApi.lookupPrepostos({
-        cidade: cidadeConsulta,
-        operacao: "EXPORTACAO",
-      });
-      setPrepostoResults(res.items);
-    } catch {
-      setPrepostoResults([]);
-    } finally {
-      setLoadingPrepostos(false);
-    }
-  }
+
   return (
     <Stack>
       <ServicoToggleCard
