@@ -285,11 +285,11 @@ export default function StepServicosExportacao({
           <Field
             label="Modalidade"
             required
-            error={errors["certificadoOrigem.modalidade"]}
+            error={errors["certificadoFitossanitario.modalidade"]}
           >
             <Select
-              value={data.certificadoOrigem.modalidade ?? ""}
-              onChange={(e) => update("certificadoOrigem.modalidade", e.target.value)}
+              value={data.certificadoFitossanitario.modalidade ?? ""}
+              onChange={(e) => update("certificadoFitossanitario.modalidade", e.target.value)}
             >
               <option value="">Selecione</option>
               <option value="SIM">Sim</option>
