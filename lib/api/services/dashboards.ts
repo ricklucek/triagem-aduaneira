@@ -1,9 +1,12 @@
 import { API_ROUTES } from "@/lib/api/config/routes";
 import { http } from "@/lib/api/config/http";
+import type { ListClientsResponse } from "@/lib/api/types/client-api";
 import type {
   AdminDashboardMetricsFilters,
   AdminDashboardMetricsResponse,
   AdminDashboardResponse,
+  ClientsByUserFilters,
+  ClientsByUserResponse,
   ComercialDashboardResponse,
   CredenciamentoDashboardResponse,
   OperacaoDashboardResponse,
@@ -13,6 +16,7 @@ import type {
   ServicesByScopeResponse,
   ServicesMetricsFilters,
   ServicesMetricsResponse,
+  UserScopesResponse,
 } from "@/lib/api/types/dashboard-api";
 
 export const dashboardApi = {
@@ -46,21 +50,30 @@ export const dashboardApi = {
   async getAdminUserScopes(
     userId: string,
     params?: ScopesByUserFilters,
-  ): Promise<{
-    items: {
-      id: string;
-      status: string;
-      clientId: string;
-      clientName: string;
-      clientCnpj: string;
-      responsibleUserId: string | null;
-      createdAt: string;
-      updatedAt: string;
-      lastPublishedAt: string | null;
-    }[]
-  }> {
-    const { data } = await http.get<any>(
+  ): Promise<UserScopesResponse> {
+    const { data } = await http.get<UserScopesResponse>(
       API_ROUTES.dashboards.adminUserScopes(userId),
+      { params: { ...params } },
+    );
+    return data;
+  },
+
+  async getAdminClientsByUser(
+    params?: ClientsByUserFilters,
+  ): Promise<ClientsByUserResponse> {
+    const { data } = await http.get<ClientsByUserResponse>(
+      API_ROUTES.dashboards.adminClientsByUser,
+      { params: { ...params } },
+    );
+    return data;
+  },
+
+  async getAdminUserClients(
+    userId: string,
+    params?: ClientsByUserFilters,
+  ): Promise<ListClientsResponse> {
+    const { data } = await http.get<ListClientsResponse>(
+      API_ROUTES.dashboards.adminUserClients(userId),
       { params: { ...params } },
     );
     return data;

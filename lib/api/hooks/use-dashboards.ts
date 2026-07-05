@@ -7,6 +7,7 @@ import { organizationSettingsApi } from "@/lib/api/services/organization-setting
 import { publicApi } from "../services/public";
 import type {
   AdminDashboardMetricsFilters,
+  ClientsByUserFilters,
   ScopesByUserFilters,
   ServicesByScopeFilters,
   ServicesMetricsFilters,
@@ -52,6 +53,33 @@ export function useAdminUserScopes(userId: string, filters: ScopesByUserFilters)
   ].toLocaleString();
 
   return useSWR(userId ? key : null, () => dashboardApi.getAdminUserScopes(userId, filters));
+}
+
+export function useAdminClientsByUser(filters: ClientsByUserFilters) {
+  const key = [
+    "dashboard:admin:clients-by-user",
+    filters.status ?? "",
+    filters.groupBy ?? "",
+    filters.dateFrom ?? "",
+    filters.dateTo ?? "",
+    filters.includeClients ? "includeClients:true" : "includeClients:false",
+  ].toLocaleString();
+
+  return useSWR(key, () => dashboardApi.getAdminClientsByUser(filters));
+}
+
+export function useAdminUserClients(userId: string, filters: ClientsByUserFilters) {
+  const key = [
+    "dashboard:admin:user-clients",
+    userId,
+    filters.status ?? "",
+    filters.groupBy ?? "",
+    filters.dateFrom ?? "",
+    filters.dateTo ?? "",
+    filters.includeClients ? "includeClients:true" : "includeClients:false",
+  ].toLocaleString();
+
+  return useSWR(userId ? key : null, () => dashboardApi.getAdminUserClients(userId, filters));
 }
 
 export function useAdminServicesMetrics(filters: ServicesMetricsFilters) {

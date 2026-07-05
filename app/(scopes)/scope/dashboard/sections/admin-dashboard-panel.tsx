@@ -5,6 +5,7 @@ import { useAdminDashboardMetrics } from "@/lib/api/hooks/use-dashboards";
 
 
 import ScopesBySectorSection from "@/components/dashboard/admin/ScopesBySector";
+import ClientsBySectorSection from "@/components/dashboard/admin/ClientsBySector";
 import ServicesSection from "@/components/dashboard/admin/ServicesSection";
 
 export default function AdminDashboardPanel() {
@@ -21,6 +22,10 @@ export default function AdminDashboardPanel() {
 
       <div className="w-full h-105">
         <ScopesBySectorSection />
+      </div>
+
+      <div className="w-full h-105">
+        <ClientsBySectorSection />
       </div>
 
       <ServicesSection />

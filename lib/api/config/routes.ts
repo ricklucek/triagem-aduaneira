@@ -47,6 +47,9 @@ export const API_ROUTES = {
       `/dashboards/admin/users/${userId}/scopes`,
     adminServices: "/dashboards/admin/services",
     adminServicesByScope: "/dashboards/admin/services/by-scope",
+    adminClientsByUser: "/dashboards/admin/clients-by-user",
+    adminUserClients: (userId: string) =>
+      `/dashboards/admin/users/${userId}/clients`,
     comercial: "/dashboards/comercial",
     credenciamento: "/dashboards/credenciamento",
     operacao: "/dashboards/operacao",

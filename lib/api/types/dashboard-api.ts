@@ -1,3 +1,5 @@
+import type { ClientApi } from "@/lib/api/types/client-api";
+
 export interface MetricCard {
   label: string;
   value: number;
@@ -69,6 +71,46 @@ export interface ScopesByUserResponse {
   items: ScopeByUserItem[];
   totalUsers: number;
   totalScopes: number;
+}
+
+export interface UserScopeItem {
+  id: string;
+  status: string;
+  clientId: string;
+  clientName: string;
+  clientCnpj: string;
+  responsibleUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastPublishedAt: string | null;
+}
+
+export interface UserScopesResponse {
+  items: UserScopeItem[];
+}
+
+export interface ClientsByUserFilters extends AdminDashboardMetricsFilters {
+  groupBy: string | undefined;
+  includeClients?: boolean;
+  clientsLimitPerUser?: number;
+}
+
+export interface ClientsByUserItem {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userRole: string;
+  userSetor: string;
+  totalClients: number;
+  clients?: ClientApi[];
+  clientsLimit?: number;
+  clientsTruncated?: boolean;
+}
+
+export interface ClientsByUserResponse {
+  items: ClientsByUserItem[];
+  totalUsers: number;
+  totalClients: number;
 }
 
 export interface ServiceMetricItem {
