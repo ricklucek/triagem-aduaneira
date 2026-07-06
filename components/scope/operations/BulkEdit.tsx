@@ -51,14 +51,11 @@ const BulkEdit = () => {
 
     return (
         <Sheet>
-            {
-                hasRole("admin") &&
-                <SheetTrigger asChild>
-                    <Button type="button" variant="outline" className="rounded-full size-10">
-                        <Pencil className="size-4" />
-                    </Button>
-                </SheetTrigger>
-            }
+            <SheetTrigger asChild>
+                <Button type="button" variant="outline" className="rounded-full size-10">
+                    <Pencil className="size-4" />
+                </Button>
+            </SheetTrigger>
             <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
                 <SheetHeader className="mb-4 border-b">
                     <SheetTitle>Alteração em massa</SheetTitle>
