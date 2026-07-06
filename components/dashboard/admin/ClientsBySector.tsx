@@ -24,7 +24,7 @@ import type { ClientsByUserItem } from "@/lib/api/types/dashboard-api";
 
 export default function ClientsBySectorSection() {
     const [selectedUser, setSelectedUser] = useState<ClientsByUserItem | null>(null);
-    const [sectorFilter, setSectorFilter] = useState<string>("responsible");
+    const [sectorFilter, setSectorFilter] = useState<string>("analista_da");
 
     const isMobile = useIsMobile();
 
@@ -134,7 +134,7 @@ function UserClientsTable({ userId, sectorFilter }: { userId: string; sectorFilt
             <TableBody>
                 {clients.map((client) => (
                     <TableRow key={client.id}>
-                        <TableCell><Link href="/scope/clients" className="underline">{client.nome_resumido || client.razao_social}</Link></TableCell>
+                        <TableCell><Link href={`/scope/clients/${client.id}`} className="underline">{client.nome_resumido || client.razao_social}</Link></TableCell>
                         <TableCell>{client.cnpj}</TableCell>
                         <TableCell>{client.created_at ? format(client.created_at, "dd/MM/yyyy") : "-"}</TableCell>
                     </TableRow>
@@ -154,9 +154,8 @@ function SectorFilterDropdown({ sectorFilter, onSectorChange }: { sectorFilter: 
                 <DropdownMenuLabel>Setor</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuRadioGroup value={sectorFilter} onValueChange={onSectorChange}>
-                    <DropdownMenuRadioItem value="responsible">Responsável Comercial</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="analista_da">Analista DA</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="created_by">Criado por</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="analista_ae">Analista AE</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>

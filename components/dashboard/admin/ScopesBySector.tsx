@@ -137,7 +137,7 @@ function UserScopesTable({ userId, sectorFilter }: { userId: string; sectorFilte
             <TableBody>
                 {scopes.map((scope) => (
                     <TableRow key={scope.id}>
-                        <TableCell><Link href={`/clients/${scope.clientCnpj}/scopes/view/${scope.id}`} className="underline">{scope.clientName}</Link></TableCell>
+                        <TableCell><Link href={`/scope/view/${scope.id}`} className="underline">{scope.clientName}</Link></TableCell>
                         <TableCell>{format(scope.createdAt, "dd/MM/yyyy")}</TableCell>
                     </TableRow>
                 ))}
@@ -158,6 +158,7 @@ function SectorFilterDropdown({ sectorFilter, onSectorChange }: { sectorFilter: 
                 <DropdownMenuRadioGroup value={sectorFilter} onValueChange={onSectorChange}>
                     <DropdownMenuRadioItem value="responsible">Responsável Comercial</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="analista_da">Analista DA</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="analista_ae">Analista AE</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="created_by">Criado por</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
