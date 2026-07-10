@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -46,6 +46,51 @@ function buildEtapas(data: EscopoForm): EtapaFormulario[] {
 
   etapas.push("FINANCEIRO");
   return etapas;
+}
+
+const STEP_ERROR_PREFIXES: Record<EtapaFormulario, string[]> = {
+  SOBRE_EMPRESA: ["sobreEmpresa."],
+  CONTATOS: ["contatos."],
+  OPERACAO: ["operacao.tipos"],
+  IMPORTACAO: ["operacao.importacao."],
+  SERVICOS_IMPORTACAO: ["servicos.importacao."],
+  EXPORTACAO: ["operacao.exportacao."],
+  SERVICOS_EXPORTACAO: ["servicos.exportacao."],
+  FINANCEIRO: ["financeiro."],
+};
+
+const GLOBAL_ERROR_PREFIXES = [
+  "sobreEmpresa.",
+  "contatos.",
+  "operacao.",
+  "servicos.",
+  "financeiro.",
+];
+
+function getStepForErrorPath(path: string, etapas: EtapaFormulario[]) {
+  return (
+    etapas.find((etapa) =>
+      STEP_ERROR_PREFIXES[etapa].some(
+        (prefix) => path === prefix || path.startsWith(prefix),
+      ),
+    ) ?? etapas[0]
+  );
+}
+
+function getScopedErrorPath(path: string, etapa: EtapaFormulario) {
+  for (const prefix of STEP_ERROR_PREFIXES[etapa]) {
+    if (path === prefix || path.startsWith(prefix)) {
+      return path.replace(prefix, "");
+    }
+  }
+
+  return path;
+}
+
+function escapeSelectorValue(value: string) {
+  return typeof CSS !== "undefined" && typeof CSS.escape === "function"
+    ? CSS.escape(value)
+    : value.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
 }
 
 const STEP_LABELS: Record<EtapaFormulario, string> = {
@@ -98,6 +143,41 @@ export default function ScopeWizard({
   const etapaAtualIndex = etapas.indexOf(etapaAtual);
   const isLastStep = etapaAtualIndex === etapas.length - 1;
   const isFirstStep = etapaAtualIndex === 0;
+  const fieldFromUrl = searchParams.get("field");
+
+  useEffect(() => {
+    if (!fieldFromUrl) return;
+
+    const scopedPath = getScopedErrorPath(fieldFromUrl, etapaAtual);
+    const guess = scopedPath.split(".").at(-1) ?? scopedPath;
+    const candidates = [fieldFromUrl, scopedPath, guess].filter(Boolean);
+
+    const timeout = window.setTimeout(() => {
+      const target =
+        candidates
+          .flatMap((candidate) => {
+            const escaped = escapeSelectorValue(candidate);
+            return [
+              document.querySelector<HTMLElement>(`[name='${escaped}']`),
+              document.querySelector<HTMLElement>(`#${escaped}`),
+              document.querySelector<HTMLElement>(
+                `[data-error-path='${escaped}']`,
+              ),
+            ];
+          })
+          .find(Boolean) ??
+        Array.from(
+          document.querySelectorAll<HTMLElement>("[aria-invalid='true']"),
+        )[0];
+
+      if (!target) return;
+
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.focus({ preventScroll: true });
+    }, 150);
+
+    return () => window.clearTimeout(timeout);
+  }, [etapaAtual, fieldFromUrl]);
 
   const persist = useCallback(
     async (data: EscopoForm, silent = false): Promise<boolean> => {
@@ -195,45 +275,22 @@ export default function ScopeWizard({
   }
 
   function focusErrorAt(path: string) {
-    const guess = path.split(".").at(-1) ?? path;
-    const target =
-      document.querySelector<HTMLElement>(`[name='${path}']`) ??
-      document.querySelector<HTMLElement>(`[name='${guess}']`) ??
-      document.querySelector<HTMLElement>(`#${path}`) ??
-      document.querySelector<HTMLElement>(`#${guess}`) ??
-      Array.from(
-        document.querySelectorAll<HTMLElement>("[aria-invalid='true']"),
-      )[0];
+    const targetStep = getStepForErrorPath(path, etapas);
+    const q = new URLSearchParams(searchParams.toString());
+    q.set("step", targetStep);
+    q.set("field", path);
 
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      target.focus();
-      setErrorSheetOpen(false);
-    }
+    setErrorSheetOpen(false);
+    router.push(`${pathname}?${q.toString()}`);
   }
 
   const errorEntries = Object.entries(errors);
   const scopedErrors = useMemo(() => {
-    const prefixMap: Record<EtapaFormulario, string[]> = {
-      SOBRE_EMPRESA: ["sobreEmpresa."],
-      CONTATOS: ["contatos."],
-      OPERACAO: ["operacao.tipos"],
-      IMPORTACAO: ["operacao.importacao."],
-      SERVICOS_IMPORTACAO: ["servicos.importacao."],
-      EXPORTACAO: ["operacao.exportacao."],
-      SERVICOS_EXPORTACAO: ["servicos.exportacao."],
-      FINANCEIRO: ["financeiro."],
-    };
-    const prefixes = prefixMap[etapaAtual];
+    const prefixes = STEP_ERROR_PREFIXES[etapaAtual];
     const map: Record<string, string> = {};
     const hasGlobalPrefix = (path: string) =>
-      [
-        "sobreEmpresa.",
-        "contatos.",
-        "operacao.",
-        "servicos.",
-        "financeiro.",
-      ].some((prefix) => path.startsWith(prefix));
+      GLOBAL_ERROR_PREFIXES.some((prefix) => path.startsWith(prefix));
+
     for (const [path, message] of errorEntries) {
       let matched = false;
       for (const prefix of prefixes) {
@@ -340,7 +397,7 @@ export default function ScopeWizard({
       <Sheet open={errorSheetOpen} onOpenChange={setErrorSheetOpen}>
         <SheetContent side="right" className="w-full max-w-xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Erros desta etapa</SheetTitle>
+            <SheetTitle>Erros do formulário</SheetTitle>
             <SheetDescription>
               Revise os campos abaixo e use o botão para navegar até o ponto com
               erro.
