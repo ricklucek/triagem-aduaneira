@@ -139,7 +139,7 @@ const PrepostoEscolhaSchema = z.object({
   contatoNome: z.string().trim().optional().nullable(),
   telefone: z.string().trim().optional().nullable(),
   email: z.string().trim().optional().nullable(),
-  valor: z.number().positive("Valor do preposto é obrigatório"),
+  valor: z.number().optional().nullable(),
   valorDescricao: z.string().trim().optional().nullable(),
   descricaoLocal: z.string().trim().optional().nullable(),
   origem: z.enum(["API", "MANUAL"]).default("MANUAL"),
