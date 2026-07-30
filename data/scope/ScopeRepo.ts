@@ -5,6 +5,7 @@ export type ScopeSummary = {
   client_id?: string | null;
   client_cnpj?: string | null;
   razao_social?: string | null;
+  nome_resumido?: string | null;
   status: "draft" | "published" | "archived";
   updated_at?: string | null;
   last_published_at?: string | null;

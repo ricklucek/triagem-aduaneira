@@ -1075,7 +1075,7 @@ function ScopeDetails({
                           value={regimeTributoLabel(detalhe?.regime)}
                         />
                         <Field
-                          label="Alíquota recolhida"
+                          label="Alíquota base"
                           value={text(detalhe?.recolhida)}
                         />
                         <Field

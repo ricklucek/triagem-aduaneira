@@ -140,8 +140,11 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                                     </Badge>
                                 </div>
 
-                                <div className="py-4 font-medium whitespace-normal flex items-start">
+                                <div className="pt-2 font-medium whitespace-normal flex items-start">
                                     {x.razao_social}
+                                </div>
+                                <div className="pb-2 text-sm whitespace-normal flex items-start">
+                                    {x.nome_resumido}
                                 </div>
                             </button>
 

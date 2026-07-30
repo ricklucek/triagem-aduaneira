@@ -48,6 +48,10 @@ function normalizeScopeSummary(item: ScopeSummaryApi | ScopeSummary): ScopeSumma
       "client_razao_social" in item
         ? item.client_razao_social ?? null
         : (item as ScopeSummary).razao_social ?? null,
+    nome_resumido:
+      "client_nome_resumido" in item
+        ? item.client_nome_resumido ?? null
+        : (item as ScopeSummary).nome_resumido ?? null,
     updated_at: item.updated_at ?? null,
     last_published_at: item.last_published_at ?? null,
     version: item.version ?? null,

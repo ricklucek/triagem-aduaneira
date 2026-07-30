@@ -856,7 +856,7 @@ export default function StepImportacao({
                           <option value="BENEFICIO">Benefício</option>
                         </Select>
                       </Field>
-                      <Field label="Alíquota recolhida">
+                      <Field label="Alíquota base">
                         <TextInput
                           value={detalhe.recolhida ?? ""}
                           onChange={(e) =>
