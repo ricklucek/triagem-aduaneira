@@ -25,9 +25,9 @@ const currency = (v?: number | null) =>
   v == null || Number.isNaN(v)
     ? null
     : new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(v);
+      style: "currency",
+      currency: "BRL",
+    }).format(v);
 
 const date = (v?: string | null) => {
   if (!v) return null;
@@ -88,8 +88,8 @@ const account = (
   !v || (!v.banco && !v.agencia && !v.conta)
     ? null
     : `Banco: ${text(v.banco)} • Agência: ${text(v.agencia)} • Conta: ${text(
-        v.conta,
-      )}`;
+      v.conta,
+    )}`;
 
 const contaPagamentoLabel = (v?: string | null) => {
   if (v === "CASCO") return "CASCO";
@@ -123,9 +123,9 @@ const modalLocalList = (v?: Array<string | null> | null) =>
   !v?.length
     ? null
     : v
-        .filter((modal): modal is string => Boolean(modal))
-        .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
-        .join(", ");
+      .filter((modal): modal is string => Boolean(modal))
+      .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
+      .join(", ");
 
 const HiredBadge = ({
   value,
@@ -184,8 +184,10 @@ function Field({
       ? `${rawText?.slice(0, previewChars).trimEnd()}...`
       : rawText;
 
+  const border = rawText === "SIM" ? "border-emerald-300" : rawText === "NAO" ? "border-red-300" : "border-border";
+
   return (
-    <div className="inline-block w-full break-inside-avoid rounded-xl border bg-background p-3 align-top shadow-sm">
+    <div className={`inline-block w-full break-inside-avoid rounded-xl border bg-background ${border} p-3 align-top shadow-sm`}>
       {label ? (
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {label}
@@ -853,6 +855,28 @@ function ScopeDetails({
               label="Dados bancários CASCO"
               value={account(ctaBancariaCasco)}
             />
+
+            {
+              i &&
+              <>
+                <Field
+                  label="Analista DA"
+                  value={list(
+                    (i.analistaDA ?? []).map(
+                      (id) => responsaveis.find((r) => r.id === id)?.nome ?? id,
+                    ),
+                  )}
+                />
+                <Field
+                  label="Analista AE"
+                  value={list(
+                    (i.analistaAE ?? []).map(
+                      (id) => responsaveis.find((r) => r.id === id)?.nome ?? id,
+                    ),
+                  )}
+                />
+              </>
+            }
           </Grid>
         </ViewCard>
 
@@ -946,22 +970,6 @@ function ScopeDetails({
               <Separator className="my-2" />
 
               <Grid>
-                <Field
-                  label="Analista DA"
-                  value={list(
-                    (i.analistaDA ?? []).map(
-                      (id) => responsaveis.find((r) => r.id === id)?.nome ?? id,
-                    ),
-                  )}
-                />
-                <Field
-                  label="Analista AE"
-                  value={list(
-                    (i.analistaAE ?? []).map(
-                      (id) => responsaveis.find((r) => r.id === id)?.nome ?? id,
-                    ),
-                  )}
-                />
                 <Field
                   label="Produtos importados"
                   value={text(i.produtosImportados)}
@@ -1162,15 +1170,15 @@ function ScopeDetails({
 
             {(scope.financeiro?.preferencia === "TRANSFERECIA" ||
               !scope.financeiro?.preferencia) && (
-              <Field
-                label="Dados bancários para devolução de saldo"
-                value={list(
-                  (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
-                    .map((conta) => account(conta))
-                    .filter(Boolean) as string[],
-                )}
-              />
-            )}
+                <Field
+                  label="Dados bancários para devolução de saldo"
+                  value={list(
+                    (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
+                      .map((conta) => account(conta))
+                      .filter(Boolean) as string[],
+                  )}
+                />
+              )}
 
             {scope.financeiro?.preferencia === "PIX" && (
               <Field
