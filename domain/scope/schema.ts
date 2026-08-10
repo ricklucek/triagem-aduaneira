@@ -161,12 +161,66 @@ const ServicoFreteInternacionalSchema = z
   .object({
     habilitado: z.boolean(),
     modalidade: ModalidadeServicoSchema.optional().nullable(),
+    responsavelFrete: z
+      .enum(["CASCO", "TERCEIRO", "CASO_A_CASO"])
+      .default("CASCO"),
+    prestadoresTerceiros: z
+      .array(
+        z.object({
+          empresa: z.string().trim().optional().default(""),
+          nomeSistema: z.string().trim().optional().default(""),
+          url: z
+            .union([z.literal(""), z.string().trim().url("URL inválida")])
+            .optional()
+            .default(""),
+          login: z.string().trim().optional().default(""),
+          senha: z.string().optional().default(""),
+          contato: z.string().trim().optional().default(""),
+          observacoes: z.string().trim().optional().default(""),
+        }),
+      )
+      .default([]),
     ptaxNegociado: z.string().trim().optional().nullable(),
     observacao: z.string().trim().optional().nullable(),
   })
   .superRefine((value, ctx) => {
-    if (!value.habilitado || value.modalidade == "NAO") return;
-    if (!value.ptaxNegociado) {
+    if (!value.habilitado) return;
+
+    if (value.responsavelFrete === "TERCEIRO") {
+      if (value.prestadoresTerceiros.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["prestadoresTerceiros"],
+          message: "Adicione ao menos um prestador terceiro",
+        });
+      }
+
+      value.prestadoresTerceiros.forEach((prestador, index) => {
+        if (!prestador.empresa) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["prestadoresTerceiros", index, "empresa"],
+            message: "Empresa é obrigatória",
+          });
+        }
+        if (!prestador.login) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["prestadoresTerceiros", index, "login"],
+            message: "Login é obrigatório",
+          });
+        }
+        if (!prestador.senha) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["prestadoresTerceiros", index, "senha"],
+            message: "Senha é obrigatória",
+          });
+        }
+      });
+    }
+
+    if (value.modalidade !== "NAO" && !value.ptaxNegociado) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["ptaxNegociado"],
