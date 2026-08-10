@@ -11,6 +11,7 @@ import {
   TextInput,
 } from "@/components/ui/form-fields";
 import { Grid, Stack } from "@/components/ui/form-layout";
+import { PrestadoresFreteInternacional } from "./PrestadoresFreteInternacional";
 
 type Props = {
   form: EscopoForm;
@@ -51,6 +52,8 @@ function emptyImportacaoServicos(): NonNullable<
     },
     freteInternacional: {
       habilitado: false,
+      responsavelFrete: "CASCO",
+      prestadoresTerceiros: [],
       ptaxNegociado: "",
       observacao: "",
     },
@@ -209,7 +212,12 @@ export default function StepServicosImportacao({
         <Field label="Valor do preposto" required error={errors?.valor}>
           <NumberInput
             value={data.preposto.prepostoSelecionado?.valor ?? ""}
-            onChange={(e) => update("preposto.prepostoSelecionado.valor", Number(e.target.value),)}
+            onChange={(e) =>
+              update(
+                "preposto.prepostoSelecionado.valor",
+                Number(e.target.value),
+              )
+            }
           />
         </Field>
         <Field label="Observação geral" hint="Campo opcional">
@@ -348,19 +356,38 @@ export default function StepServicosImportacao({
         checked={data.freteInternacional.habilitado}
         onToggle={(checked) => update("freteInternacional.habilitado", checked)}
       >
-        <Field label="Modalidade" required>
-          <Select
-            value={data.freteInternacional.modalidade ?? ""}
-            onChange={(e) =>
-              update("freteInternacional.modalidade", e.target.value)
-            }
+        <Grid columns={2}>
+          <Field label="Modalidade" required>
+            <Select
+              value={data.freteInternacional.modalidade ?? ""}
+              onChange={(e) =>
+                update("freteInternacional.modalidade", e.target.value)
+              }
+            >
+              <option value="">Selecione</option>
+              <option value="SIM">Sim</option>
+              <option value="NAO">Não</option>
+              <option value="CASO_A_CASO">Caso a caso</option>
+            </Select>
+          </Field>
+
+          <Field
+            label="Responsável pela contratação"
+            required
+            error={errors["freteInternacional.responsavelFrete"]}
           >
-            <option value="">Selecione</option>
-            <option value="SIM">Sim</option>
-            <option value="NAO">Não</option>
-            <option value="CASO_A_CASO">Caso a caso</option>
-          </Select>
-        </Field>
+            <Select
+              value={data.freteInternacional.responsavelFrete ?? "CASCO"}
+              onChange={(e) =>
+                update("freteInternacional.responsavelFrete", e.target.value)
+              }
+            >
+              <option value="CASCO">CASCO</option>
+              <option value="TERCEIRO">Empresa terceira</option>
+              <option value="CASO_A_CASO">Caso a caso</option>
+            </Select>
+          </Field>
+        </Grid>
 
         <Field
           label="% PTAX negociada"
@@ -383,6 +410,16 @@ export default function StepServicosImportacao({
             }
           />
         </Field>
+
+        {data.freteInternacional.responsavelFrete === "TERCEIRO" ? (
+          <PrestadoresFreteInternacional
+            prestadores={data.freteInternacional.prestadoresTerceiros ?? []}
+            errors={errors}
+            onChange={(prestadores) =>
+              update("freteInternacional.prestadoresTerceiros", prestadores)
+            }
+          />
+        ) : null}
       </ServicoToggleCard>
       <ServicoToggleCard
         title="Seguro Internacional"
