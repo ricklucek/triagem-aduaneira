@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { CheckCircle2, Info, RotateCw, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Eye, EyeOff, Info, RotateCw, X } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
 import { LOCAIS } from "@/components/scope/StepImportacao";
@@ -25,9 +25,9 @@ const currency = (v?: number | null) =>
   v == null || Number.isNaN(v)
     ? null
     : new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(v);
+        style: "currency",
+        currency: "BRL",
+      }).format(v);
 
 const date = (v?: string | null) => {
   if (!v) return null;
@@ -88,8 +88,8 @@ const account = (
   !v || (!v.banco && !v.agencia && !v.conta)
     ? null
     : `Banco: ${text(v.banco)} • Agência: ${text(v.agencia)} • Conta: ${text(
-      v.conta,
-    )}`;
+        v.conta,
+      )}`;
 
 const contaPagamentoLabel = (v?: string | null) => {
   if (v === "CASCO") return "CASCO";
@@ -105,6 +105,13 @@ const regimeTributoLabel = (v?: string | null) => {
 
 const shouldShowClientAccount = (contaPagamento?: string | null) =>
   contaPagamento === "CLIENTE";
+
+const freightResponsibleLabel = (value?: string | null) => {
+  if (!value || value === "CASCO") return "CASCO";
+  if (value === "TERCEIRO") return "Empresa terceira";
+  if (value === "CASO_A_CASO") return "Caso a caso";
+  return value;
+};
 
 const ICMS_DESTINACAO_LABEL: Record<string, string> = {
   REVENDA: "Revenda",
@@ -123,9 +130,9 @@ const modalLocalList = (v?: Array<string | null> | null) =>
   !v?.length
     ? null
     : v
-      .filter((modal): modal is string => Boolean(modal))
-      .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
-      .join(", ");
+        .filter((modal): modal is string => Boolean(modal))
+        .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
+        .join(", ");
 
 const HiredBadge = ({
   value,
@@ -158,9 +165,13 @@ const HiredBadge = ({
   return;
 };
 
-const hasEnabledService = (services?: Record<string, any> | null) =>
+const hasEnabledService = (services?: Record<string, unknown> | null) =>
   Object.values(services ?? {}).some(
-    (service) => service && typeof service === "object" && service.habilitado,
+    (service) =>
+      service !== null &&
+      typeof service === "object" &&
+      "habilitado" in service &&
+      service.habilitado === true,
   );
 
 function Field({
@@ -184,10 +195,17 @@ function Field({
       ? `${rawText?.slice(0, previewChars).trimEnd()}...`
       : rawText;
 
-  const border = rawText === "SIM" ? "border-emerald-300" : rawText === "NAO" ? "border-red-300" : "border-border";
+  const border =
+    rawText === "SIM"
+      ? "border-emerald-300"
+      : rawText === "NAO"
+        ? "border-red-300"
+        : "border-border";
 
   return (
-    <div className={`inline-block w-full break-inside-avoid rounded-xl border bg-background ${border} p-3 align-top shadow-sm`}>
+    <div
+      className={`inline-block w-full break-inside-avoid rounded-xl border bg-background ${border} p-3 align-top shadow-sm`}
+    >
       {label ? (
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {label}
@@ -209,6 +227,111 @@ function Field({
           {expanded ? "Ver menos" : "Ver mais"}
         </Button>
       ) : null}
+    </div>
+  );
+}
+
+function PasswordField({ password }: { password?: string | null }) {
+  const [visible, setVisible] = useState(false);
+
+  if (!password) return null;
+
+  return (
+    <Field
+      label="Senha"
+      value={
+        <div className="flex items-center justify-between gap-3">
+          <span className="min-w-0 break-all font-mono">
+            {visible ? password : "••••••••"}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0 print:hidden"
+            aria-label={visible ? "Ocultar senha" : "Revelar senha"}
+            title={visible ? "Ocultar senha" : "Revelar senha"}
+            onClick={() => setVisible((current) => !current)}
+          >
+            {visible ? (
+              <EyeOff className="size-4" />
+            ) : (
+              <Eye className="size-4" />
+            )}
+          </Button>
+        </div>
+      }
+    />
+  );
+}
+
+type ThirdPartyFreightProvider = {
+  empresa?: string | null;
+  nomeSistema?: string | null;
+  url?: string | null;
+  login?: string | null;
+  senha?: string | null;
+  contato?: string | null;
+  observacoes?: string | null;
+};
+
+function ThirdPartyFreightProvidersView({
+  providers,
+}: {
+  providers?: ThirdPartyFreightProvider[] | null;
+}) {
+  if (!providers?.length) {
+    return (
+      <div className="md:col-span-2">
+        <Field
+          label="Prestadores terceiros"
+          value="Nenhum prestador cadastrado"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 md:col-span-2">
+      {providers.map((provider, index) => (
+        <Card key={index} className="gap-3 border-border bg-muted/20 p-4">
+          <div>
+            <p className="text-sm font-semibold">
+              Prestador {index + 1}
+              {provider.empresa ? ` · ${provider.empresa}` : ""}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Credenciais do sistema de frete internacional
+            </p>
+          </div>
+
+          <Grid>
+            <Field label="Empresa" value={text(provider.empresa)} />
+            <Field label="Sistema" value={text(provider.nomeSistema)} />
+            <Field
+              label="URL"
+              value={
+                provider.url ? (
+                  <a
+                    href={provider.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="break-all underline underline-offset-2"
+                  >
+                    {provider.url}
+                  </a>
+                ) : null
+              }
+            />
+            <Field label="Contato" value={text(provider.contato)} />
+            <Field label="Login" value={text(provider.login)} />
+            <PasswordField password={provider.senha} />
+            <div className="md:col-span-2">
+              <Field label="Observações" value={text(provider.observacoes)} />
+            </div>
+          </Grid>
+        </Card>
+      ))}
     </div>
   );
 }
@@ -556,16 +679,31 @@ function ImportServicesView({
       <ServiceBlock
         title="Frete internacional"
         enabled={services.freteInternacional?.habilitado}
-        mode={services.freteInternacional.modalidade ?? undefined}
+        mode={services.freteInternacional?.modalidade ?? undefined}
       >
         <Field
           label="Modalidade frete internacional"
           value={text(services.freteInternacional?.modalidade)}
         />
         <Field
+          label="Responsável pela contratação"
+          value={freightResponsibleLabel(
+            services.freteInternacional?.responsavelFrete,
+          )}
+        />
+        <Field
           label="% PTAX negociada"
           value={text(services.freteInternacional?.ptaxNegociado)}
         />
+        <Field
+          label="Observação geral"
+          value={text(services.freteInternacional?.observacao)}
+        />
+        {services.freteInternacional?.responsavelFrete === "TERCEIRO" ? (
+          <ThirdPartyFreightProvidersView
+            providers={services.freteInternacional.prestadoresTerceiros}
+          />
+        ) : null}
       </ServiceBlock>
 
       <ServiceBlock
@@ -743,11 +881,31 @@ function ExportServicesView({
       <ServiceBlock
         title="Frete internacional"
         enabled={services.freteInternacional?.habilitado}
+        mode={services.freteInternacional?.modalidade ?? undefined}
       >
+        <Field
+          label="Modalidade frete internacional"
+          value={text(services.freteInternacional?.modalidade)}
+        />
+        <Field
+          label="Responsável pela contratação"
+          value={freightResponsibleLabel(
+            services.freteInternacional?.responsavelFrete,
+          )}
+        />
         <Field
           label="% PTAX negociada"
           value={text(services.freteInternacional?.ptaxNegociado)}
         />
+        <Field
+          label="Observação geral"
+          value={text(services.freteInternacional?.observacao)}
+        />
+        {services.freteInternacional?.responsavelFrete === "TERCEIRO" ? (
+          <ThirdPartyFreightProvidersView
+            providers={services.freteInternacional.prestadoresTerceiros}
+          />
+        ) : null}
       </ServiceBlock>
 
       <ServiceBlock
@@ -856,8 +1014,7 @@ function ScopeDetails({
               value={account(ctaBancariaCasco)}
             />
 
-            {
-              i &&
+            {i && (
               <>
                 <Field
                   label="Analista DA"
@@ -876,7 +1033,7 @@ function ScopeDetails({
                   )}
                 />
               </>
-            }
+            )}
           </Grid>
         </ViewCard>
 
@@ -1170,15 +1327,15 @@ function ScopeDetails({
 
             {(scope.financeiro?.preferencia === "TRANSFERECIA" ||
               !scope.financeiro?.preferencia) && (
-                <Field
-                  label="Dados bancários para devolução de saldo"
-                  value={list(
-                    (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
-                      .map((conta) => account(conta))
-                      .filter(Boolean) as string[],
-                  )}
-                />
-              )}
+              <Field
+                label="Dados bancários para devolução de saldo"
+                value={list(
+                  (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
+                    .map((conta) => account(conta))
+                    .filter(Boolean) as string[],
+                )}
+              />
+            )}
 
             {scope.financeiro?.preferencia === "PIX" && (
               <Field
