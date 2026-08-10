@@ -63,10 +63,10 @@ export default function SettingsUsersPage() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="inline-flex size-8 items-center justify-center rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/20"
+                      className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       aria-label="Abrir menu de opções"
                     >
-                      <Ellipsis className="h-5 w-5 text-white-light" />
+                      <Ellipsis className="h-5 w-5" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="popover-menu-container right-0 w-56">

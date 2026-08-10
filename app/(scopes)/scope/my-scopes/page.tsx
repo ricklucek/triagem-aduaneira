@@ -101,7 +101,7 @@ export default function MyScopesPage() {
             setQ(e.target.value);
             setPage(1);
           }}
-          className="pl-10 bg-zinc-800 rounded-md"
+          className="rounded-md bg-background pl-10"
         />
 
         <div className="flex gap-3 flex-row items-center flex-wrap">
@@ -157,7 +157,7 @@ export default function MyScopesPage() {
               className="border-b transition-colors"
             >
               <div
-                className="w-full p-5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="w-full cursor-pointer p-5 text-left focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <div className="flex flex-row items-center justify-between">
                   <div>{x.client_cnpj ? formatCNPJ(x.client_cnpj) : "-"}</div>
@@ -188,11 +188,11 @@ export default function MyScopesPage() {
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="inline-flex size-8 items-center justify-center rounded-md hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/20"
+                      className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       aria-label="Abrir menu de opções"
                       onClick={(event) => event.stopPropagation()}
                     >
-                      <Ellipsis className="h-5 w-5 text-white-light" />
+                      <Ellipsis className="h-5 w-5" />
                     </button>
                   </PopoverTrigger>
 

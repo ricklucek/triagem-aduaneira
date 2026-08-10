@@ -333,14 +333,7 @@ export default function StepServicosExportacao({
         </button>
         <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
           {(data.outrosCertificados.itens ?? []).map((item, index) => (
-            <div
-              key={index}
-              style={{
-                border: "1px solid #eaecf0",
-                borderRadius: 12,
-                padding: 12,
-              }}
-            >
+            <div key={index} className="rounded-xl border border-border bg-background p-3">
               <Grid columns={2}>
                 <Field label="Certificado" required>
                   <TextInput

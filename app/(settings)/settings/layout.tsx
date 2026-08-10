@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { AppSidebar } from "@/components/sidebar/AppSidebar";
 import { settingsSidebarNavigation } from "@/components/sidebar/sidebar-navigation";
@@ -13,14 +13,17 @@ export default function Layout({
   header: ReactNode;
 }) {
   return (
-    <SidebarProvider className="relative h-screen w-full flex-col bg-bg">
+    <SidebarProvider className="relative h-screen w-full flex-col bg-background text-foreground">
       {header}
 
       <div className="flex min-h-0 flex-1">
-        <AppSidebar navigation={settingsSidebarNavigation} headerSlot="back-button" />
+        <AppSidebar
+          navigation={settingsSidebarNavigation}
+          headerSlot="back-button"
+        />
 
-        <SidebarInset className="min-h-0 bg-bg">
-          <main className="flex flex-1 bg-card">{children}</main>
+        <SidebarInset className="min-h-0 bg-background">
+          <main className="flex flex-1 bg-background">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>

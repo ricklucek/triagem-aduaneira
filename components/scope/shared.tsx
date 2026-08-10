@@ -4,11 +4,7 @@ import React from "react";
 
 export function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return (
-    <div style={{ color: "#b42318", fontSize: 12, marginTop: 4 }}>
-      {message}
-    </div>
-  );
+  return <div className="mt-1 text-xs text-destructive">{message}</div>;
 }
 
 export function SectionCard({
@@ -19,16 +15,8 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section
-      style={{
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 16,
-        background: "#fff",
-      }}
-    >
-      <h3 style={{ marginTop: 0, marginBottom: 12 }}>{title}</h3>
+    <section className="mb-4 rounded-xl border border-border bg-card p-4 text-card-foreground">
+      <h3 className="mb-3 font-semibold">{title}</h3>
       {children}
     </section>
   );
@@ -75,13 +63,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      style={{
-        width: "100%",
-        padding: "10px 12px",
-        border: "1px solid #d0d5dd",
-        borderRadius: 8,
-        ...(props.style || {}),
-      }}
+      className={`w-full rounded-lg border border-input bg-background px-3 py-2.5 text-foreground ${props.className ?? ""}`}
     />
   );
 }
@@ -92,14 +74,7 @@ export function TextArea(
   return (
     <textarea
       {...props}
-      style={{
-        width: "100%",
-        minHeight: 96,
-        padding: "10px 12px",
-        border: "1px solid #d0d5dd",
-        borderRadius: 8,
-        ...(props.style || {}),
-      }}
+      className={`min-h-24 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-foreground ${props.className ?? ""}`}
     />
   );
 }
@@ -108,14 +83,7 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      style={{
-        width: "100%",
-        padding: "10px 12px",
-        border: "1px solid #d0d5dd",
-        borderRadius: 8,
-        background: "#fff",
-        ...(props.style || {}),
-      }}
+      className={`w-full rounded-lg border border-input bg-background px-3 py-2.5 text-foreground ${props.className ?? ""}`}
     />
   );
 }

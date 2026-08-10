@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { type LucideIcon } from 'lucide-react';
+import Link from "next/link";
+import { type LucideIcon } from "lucide-react";
 
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 
 export function NavOthers({
   items,
@@ -25,7 +25,7 @@ export function NavOthers({
           <SidebarMenuButton
             asChild
             tooltip={item.title}
-            className="rounded-2xl px-4 font-semibold text-white-light hover:bg-[#FFF]/10 hover:text-white-light data-[active=true]:bg-[#FFF]/10 data-[active=true]:text-white-light group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:px-0"
+            className="rounded-2xl px-4 font-semibold text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:px-0"
           >
             <Link href={item.url}>
               {item.icon && <item.icon className="size-6 shrink-0" />}

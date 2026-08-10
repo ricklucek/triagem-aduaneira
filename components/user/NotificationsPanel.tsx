@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Bell } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import { Bell } from "lucide-react";
 
 export default function NotificationsPanel() {
   return (
@@ -19,12 +19,12 @@ export default function NotificationsPanel() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel className="text-white-light">
+        <DropdownMenuLabel className="text-popover-foreground">
           Notificações
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="p-2">
-          <span className="text-white-light text-xs">
+          <span className="text-xs text-muted-foreground">
             Sem notificações por enquanto...
           </span>
         </div>

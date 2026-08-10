@@ -1,7 +1,8 @@
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import UserMenu from '../user/userMenu';
-import NotificationsPanel from '../user/NotificationsPanel';
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import UserMenu from "../user/userMenu";
+import NotificationsPanel from "../user/NotificationsPanel";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function DashboardHeader({
   headerText,
@@ -14,8 +15,8 @@ export default function DashboardHeader({
         className="
                 fixed w-full z-10
                 h-16 flex items-center justify-between px-4
-                backdrop-blur supports-backdrop-filter:bg-black/30 bg-black/60
-                border-b border-[#FFF]/10
+                border-b border-border bg-background/90 text-foreground shadow-sm
+                backdrop-blur supports-backdrop-filter:bg-background/75
                 "
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -25,13 +26,14 @@ export default function DashboardHeader({
             className="mr-2 data-[orientation=vertical]:h-4"
           />
           <div className="min-w-0">
-            <span className="text-white-light font-semibold text-2xl">
+            <span className="text-lg font-semibold text-foreground sm:text-2xl">
               {headerText}
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           <NotificationsPanel />
           <UserMenu />
         </div>

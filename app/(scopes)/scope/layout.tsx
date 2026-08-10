@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { AppSidebar } from "@/components/sidebar/AppSidebar";
 import { scopeSidebarNavigation } from "@/components/sidebar/sidebar-navigation";
@@ -13,15 +13,15 @@ export default function Layout({
   header: ReactNode;
 }) {
   return (
-    <SidebarProvider className="relative h-screen w-full flex-col bg-bg">
+    <SidebarProvider className="relative h-screen w-full flex-col bg-background text-foreground">
       {header}
 
       <div className="flex min-h-0 flex-1">
         <AppSidebar navigation={scopeSidebarNavigation} />
 
-        <SidebarInset className="min-h-0 bg-bg">
+        <SidebarInset className="min-h-0 bg-background">
           <Suspense>
-            <main className="flex flex-1 bg-card">{children}</main>
+            <main className="flex flex-1 bg-background">{children}</main>
           </Suspense>
         </SidebarInset>
       </div>

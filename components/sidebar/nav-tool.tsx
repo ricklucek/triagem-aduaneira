@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, FileText, Locate } from "lucide-react";
+import { ChevronsUpDown, FileText } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -52,15 +52,15 @@ export function NavTool() {
                   <Icon className="size-5" />
                 </div>
                 <div className="flex flex-col text-left leading-tight">
-                  <span className="text-white font-semibold">
+                  <span className="font-semibold text-sidebar-foreground">
                     {active.label}
                   </span>
-                  <span className="text-xs text-white/70">
+                  <span className="text-xs text-sidebar-foreground/65">
                     {active.description}
                   </span>
                 </div>
               </div>
-              <ChevronsUpDown className="text-white" />
+              <ChevronsUpDown className="text-sidebar-foreground" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

@@ -12,7 +12,7 @@ export default function VersionHistory({
     return (
       <Card>
         <h3 className="font-semibold">Versões</h3>
-        <p style={{ color: "#667085" }}>Nenhuma versão publicada ainda.</p>
+        <p className="text-muted-foreground">Nenhuma versão publicada ainda.</p>
       </Card>
     );
   }
@@ -24,17 +24,12 @@ export default function VersionHistory({
         {versions.map((version) => (
           <div
             key={version.version_number}
-            style={{
-              border: "1px solid #eaecf0",
-              borderRadius: 12,
-              padding: 12,
-              background: "#fcfcfd",
-            }}
+            className="rounded-xl border border-border bg-muted/40 p-3"
           >
             <div style={{ fontWeight: 700 }}>
               Versão {version.version_number}
             </div>
-            <div style={{ color: "#667085", fontSize: 14 }}>
+            <div className="text-sm text-muted-foreground">
               Publicada em{" "}
               {new Date(version.published_at).toLocaleString("pt-BR")}
             </div>

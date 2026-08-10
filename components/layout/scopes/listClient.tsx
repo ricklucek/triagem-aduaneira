@@ -65,7 +65,7 @@ export default function ClientsPage({ onSelectClient, selectedClientId }: ListTa
                         setQ(e.target.value);
                         setPage(1);
                     }}
-                    className="pl-10 bg-zinc-800 rounded-md"
+                    className="rounded-md bg-background pl-10"
                 />
             </div>
 
@@ -88,12 +88,12 @@ export default function ClientsPage({ onSelectClient, selectedClientId }: ListTa
                             key={client.id}
                             className={cn(
                                 "border-b transition-colors",
-                                selected ? "bg-white/10" : "hover:bg-white/5",
+                                selected ? "bg-accent text-accent-foreground" : "hover:bg-muted/60",
                             )}
                         >
                             <button
                                 type="button"
-                                className="w-full p-5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                                className="w-full cursor-pointer p-5 text-left focus:outline-none focus:ring-2 focus:ring-ring"
                                 onClick={() => onSelectClient(client)}
                             >
                                 <div className="flex flex-row items-center justify-between">
