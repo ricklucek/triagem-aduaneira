@@ -15,6 +15,8 @@ import { Separator } from "@/components/ui/separator";
 import { formatCNPJ } from "@/utils/format";
 import { ResponsibleShow } from "@/components/ResponsibleShow";
 import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
+import { ScopeViewTabs } from "./view/ScopeViewTabs";
+import { HighlightField } from "./view/HighlightField";
 
 const text = (v: unknown) =>
   v == null || v === "" || (Array.isArray(v) && v.length === 0)
@@ -164,15 +166,6 @@ const HiredBadge = ({
 
   return;
 };
-
-const hasEnabledService = (services?: Record<string, unknown> | null) =>
-  Object.values(services ?? {}).some(
-    (service) =>
-      service !== null &&
-      typeof service === "object" &&
-      "habilitado" in service &&
-      service.habilitado === true,
-  );
 
 function Field({
   label,
@@ -327,7 +320,10 @@ function ThirdPartyFreightProvidersView({
             <Field label="Login" value={text(provider.login)} />
             <PasswordField password={provider.senha} />
             <div className="md:col-span-2">
-              <Field label="Observações" value={text(provider.observacoes)} />
+              <HighlightField
+                label="Observações"
+                value={text(provider.observacoes)}
+              />
             </div>
           </Grid>
         </Card>
@@ -433,7 +429,7 @@ function FederalTaxItem({
         <Field label="Regime" value={regimeTributoLabel(tax.regime)} />
 
         {tax.regime === "BENEFICIO" ? (
-          <Field
+          <HighlightField
             label="Detalhe do benefício"
             value={text(tax.detalheBeneficio)}
           />
@@ -486,7 +482,7 @@ function FederalTaxesView({
           dadosContaCliente={impostosFederais.dadosContaCliente}
         />
 
-        <Field
+        <HighlightField
           label="Observações dos impostos federais"
           value={text(impostosFederais.observacao)}
         />
@@ -534,13 +530,16 @@ function AfrmmView({
         <Field label="Regime" value={regimeTributoLabel(afrmm.regime)} />
 
         {afrmm.regime === "BENEFICIO" ? (
-          <Field
+          <HighlightField
             label="Detalhe do benefício"
             value={text(afrmm.detalheBeneficio)}
           />
         ) : null}
 
-        <Field label="Observações AFRMM" value={text(afrmm.observacao)} />
+        <HighlightField
+          label="Observações AFRMM"
+          value={text(afrmm.observacao)}
+        />
       </Grid>
     </>
   );
@@ -567,17 +566,176 @@ function ServiceBlock({
   );
 }
 
-function ImportServicesView({
-  services,
-  scope,
+type ImportServices = NonNullable<EscopoForm["servicos"]["importacao"]>;
+type ExportServices = NonNullable<EscopoForm["servicos"]["exportacao"]>;
+
+function EmptyState({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm text-muted-foreground">{children}</p>;
+}
+
+function AdvisoryServiceView({
+  title,
+  service,
 }: {
-  services: NonNullable<EscopoForm["servicos"]["importacao"]>;
-  scope: EscopoForm;
+  title: string;
+  service?: ImportServices["assessoria"] | ExportServices["assessoria"];
 }) {
+  if (!service?.habilitado) {
+    return <EmptyState>Serviço de assessoria não contratado.</EmptyState>;
+  }
+
+  return (
+    <Grid>
+      <ServiceBlock title={title} enabled={service.habilitado} mode="SIM">
+        <Field label="Tipo de valor" value={text(service.tipoValor)} />
+        <Field label="Valor" value={currency(service.valor)} />
+        <Field
+          label="Última atualização"
+          value={date(service.ultimaAtualizacao)}
+        />
+        <HighlightField
+          label="Observação da assessoria"
+          value={text(service.observacao)}
+        />
+      </ServiceBlock>
+    </Grid>
+  );
+}
+
+function InsuranceServiceView({
+  title,
+  service,
+}: {
+  title: string;
+  service?:
+    | ImportServices["seguroInternacional"]
+    | ExportServices["seguroInternacional"];
+}) {
+  if (!service?.habilitado) {
+    return <EmptyState>Seguro internacional não contratado.</EmptyState>;
+  }
+
   return (
     <Grid>
       <ServiceBlock
-        title="Despacho aduaneiro importação"
+        title={title}
+        enabled={service.habilitado}
+        mode={service.modalidade ?? undefined}
+      >
+        <Field label="Modalidade" value={text(service.modalidade)} />
+        <Field label="Valor mínimo" value={currency(service.valorMinimo)} />
+        <Field
+          label="% sobre frete + mercadoria (CFR/CPT)"
+          value={text(service.percentualSobreCfr)}
+        />
+        <Field
+          label="Data de inclusão da apólice"
+          value={date(service.dataInclusaoApolice)}
+        />
+        <HighlightField
+          label="Descrição complementar"
+          value={text(service.descricaoComplementar)}
+        />
+      </ServiceBlock>
+    </Grid>
+  );
+}
+
+function InternationalFreightServiceView({
+  title,
+  service,
+}: {
+  title: string;
+  service?:
+    ImportServices["freteInternacional"] | ExportServices["freteInternacional"];
+}) {
+  if (!service?.habilitado) {
+    return <EmptyState>Frete internacional não contratado.</EmptyState>;
+  }
+
+  return (
+    <Grid>
+      <ServiceBlock
+        title={title}
+        enabled={service.habilitado}
+        mode={service.modalidade ?? undefined}
+      >
+        <Field label="Modalidade" value={text(service.modalidade)} />
+        <Field
+          label="Responsável pela contratação"
+          value={freightResponsibleLabel(service.responsavelFrete)}
+        />
+        <Field label="% PTAX negociada" value={text(service.ptaxNegociado)} />
+        <HighlightField
+          label="Observação do frete internacional"
+          value={text(service.observacao)}
+        />
+        {service.responsavelFrete === "TERCEIRO" ? (
+          <ThirdPartyFreightProvidersView
+            providers={service.prestadoresTerceiros}
+          />
+        ) : null}
+      </ServiceBlock>
+    </Grid>
+  );
+}
+
+function RoadFreightServiceView({
+  title,
+  service,
+}: {
+  title: string;
+  service?:
+    ImportServices["freteRodoviario"] | ExportServices["freteRodoviario"];
+}) {
+  if (!service?.habilitado) {
+    return <EmptyState>Frete rodoviário não contratado.</EmptyState>;
+  }
+
+  return (
+    <Grid>
+      <ServiceBlock
+        title={title}
+        enabled={service.habilitado}
+        mode={service.modalidade ?? undefined}
+      >
+        <Field label="Modalidade" value={text(service.modalidade)} />
+        <HighlightField
+          label="Observação geral"
+          value={text(service.observacaoGeral)}
+        />
+      </ServiceBlock>
+    </Grid>
+  );
+}
+
+function ImportCustomsServicesView({
+  services,
+  scope,
+}: {
+  services?: ImportServices;
+  scope: EscopoForm;
+}) {
+  if (!services) {
+    return <EmptyState>Sem configuração de serviços de importação.</EmptyState>;
+  }
+
+  const hasCustomsService =
+    services.despachoAduaneiroImportacao?.habilitado ||
+    services.preposto?.habilitado ||
+    services.emissaoLiLpco?.habilitado ||
+    services.cadastroCatalogoProdutos?.habilitado ||
+    services.emissaoNfe?.habilitado ||
+    Boolean(services.regimeEspecial?.length);
+
+  if (!hasCustomsService) {
+    return <EmptyState>Sem serviços aduaneiros contratados.</EmptyState>;
+  }
+
+  return (
+    <Grid>
+      <ServiceBlock
+        title="Despacho aduaneiro de importação"
         enabled={services.despachoAduaneiroImportacao?.habilitado}
         mode="SIM"
       >
@@ -593,8 +751,8 @@ function ImportServicesView({
           label="Última atualização"
           value={date(services.despachoAduaneiroImportacao?.ultimaAtualizacao)}
         />
-        <Field
-          label="Observação despacho aduaneiro"
+        <HighlightField
+          label="Observação do despacho"
           value={text(services.despachoAduaneiroImportacao?.observacao)}
         />
       </ServiceBlock>
@@ -605,25 +763,43 @@ function ImportServicesView({
         mode={services.preposto?.modalidade ?? undefined}
       >
         <Field
-          label="Valor do preposto"
+          label="Valor"
           value={currency(services.preposto?.prepostoSelecionado?.valor)}
         />
         <Field
           label="Incluso no desembaraço CASCO"
           value={text(services.preposto?.inclusoNoDesembaracoCasco)}
         />
-
         <Field
-          label="Prepostos"
+          label="Preposto selecionado"
+          value={text(services.preposto?.prepostoSelecionado?.nome)}
+        />
+        <Field
+          label="Contato"
+          value={text(services.preposto?.prepostoSelecionado?.contatoNome)}
+        />
+        <Field
+          label="Telefone"
+          value={text(services.preposto?.prepostoSelecionado?.telefone)}
+        />
+        <Field
+          label="Consultar prepostos"
           value={
             <Link
-              href={`/scope/prepostos?cidade=${queryList(
-                importPrepostoCities(scope.operacao?.importacao),
-              )}&operacao=${queryList(scope.operacao?.tipos)}`}
+              href={
+                "/scope/prepostos?cidade=" +
+                queryList(importPrepostoCities(scope.operacao.importacao)) +
+                "&operacao=" +
+                queryList(scope.operacao.tipos)
+              }
             >
-              <span className="underline">Consultar Prepostos</span>
+              <span className="underline">Abrir relação de prepostos</span>
             </Link>
           }
+        />
+        <HighlightField
+          label="Observação do preposto"
+          value={text(services.preposto?.observacao)}
         />
       </ServiceBlock>
 
@@ -633,12 +809,13 @@ function ImportServicesView({
         mode={services.emissaoLiLpco?.modalidade ?? undefined}
       >
         <Field
-          label="Modalidade emissão LI/LPCO"
+          label="Modalidade"
           value={text(services.emissaoLiLpco?.modalidade)}
         />
-        <Field
-          label="Valor emissão LI/LPCO"
-          value={currency(services.emissaoLiLpco?.valor)}
+        <Field label="Valor" value={currency(services.emissaoLiLpco?.valor)} />
+        <HighlightField
+          label="Observação"
+          value={text(services.emissaoLiLpco?.observacao)}
         />
       </ServiceBlock>
 
@@ -648,134 +825,78 @@ function ImportServicesView({
         mode={services.cadastroCatalogoProdutos?.modalidade ?? undefined}
       >
         <Field
-          label="Modalidade cadastro de catálogo"
+          label="Modalidade"
           value={text(services.cadastroCatalogoProdutos?.modalidade)}
         />
         <Field
-          label="Valor cadastro de catálogo"
+          label="Valor"
           value={currency(services.cadastroCatalogoProdutos?.valor)}
         />
-      </ServiceBlock>
-
-      <ServiceBlock
-        title="Assessoria"
-        enabled={services.assessoria?.habilitado}
-        mode="SIM"
-      >
-        <Field
-          label="Tipo de valor assessoria"
-          value={text(services.assessoria?.tipoValor)}
-        />
-        <Field
-          label="Valor assessoria"
-          value={currency(services.assessoria?.valor)}
-        />
-        <Field
-          label="Última atualização assessoria"
-          value={date(services.assessoria?.ultimaAtualizacao)}
+        <HighlightField
+          label="Observação"
+          value={text(services.cadastroCatalogoProdutos?.observacao)}
         />
       </ServiceBlock>
 
       <ServiceBlock
-        title="Frete internacional"
-        enabled={services.freteInternacional?.habilitado}
-        mode={services.freteInternacional?.modalidade ?? undefined}
-      >
-        <Field
-          label="Modalidade frete internacional"
-          value={text(services.freteInternacional?.modalidade)}
-        />
-        <Field
-          label="Responsável pela contratação"
-          value={freightResponsibleLabel(
-            services.freteInternacional?.responsavelFrete,
-          )}
-        />
-        <Field
-          label="% PTAX negociada"
-          value={text(services.freteInternacional?.ptaxNegociado)}
-        />
-        <Field
-          label="Observação geral"
-          value={text(services.freteInternacional?.observacao)}
-        />
-        {services.freteInternacional?.responsavelFrete === "TERCEIRO" ? (
-          <ThirdPartyFreightProvidersView
-            providers={services.freteInternacional.prestadoresTerceiros}
-          />
-        ) : null}
-      </ServiceBlock>
-
-      <ServiceBlock
-        title="Seguro internacional"
-        enabled={services.seguroInternacional?.habilitado}
-        mode={services.seguroInternacional?.modalidade ?? undefined}
-      >
-        <Field
-          label="Modalidade seguro internacional"
-          value={text(services.seguroInternacional?.modalidade)}
-        />
-        <Field
-          label="Percentual sobre CFR"
-          value={text(services.seguroInternacional?.percentualSobreCfr)}
-        />
-        <Field
-          label="Data inclusão da apólice"
-          value={date(services.seguroInternacional?.dataInclusaoApolice)}
-        />
-        <Field
-          label="Descrição complementar"
-          value={text(services.seguroInternacional?.descricaoComplementar)}
-        />
-      </ServiceBlock>
-
-      <ServiceBlock
-        title="Frete rodoviário"
-        enabled={services.freteRodoviario?.habilitado}
-        mode={services.freteRodoviario.modalidade ?? undefined}
-      >
-        <Field
-          label="Modalidade frete rodoviário"
-          value={text(services.freteRodoviario?.modalidade)}
-        />
-        <Field
-          label="Observação geral"
-          value={text(services.freteRodoviario?.observacaoGeral)}
-        />
-        <Field
-          label="Regime especial"
-          value={list(services.regimeEspecial?.map((r) => r.nomeRegime))}
-        />
-      </ServiceBlock>
-
-      <ServiceBlock
-        title="Emissão NFe"
+        title="Emissão de NF-e"
         enabled={services.emissaoNfe?.habilitado}
         mode={services.emissaoNfe?.modalidade ?? undefined}
       >
         <Field
-          label="Modalidade emissão NFe"
+          label="Modalidade"
           value={text(services.emissaoNfe?.modalidade)}
         />
-        <Field
-          label="Valor emissão NFe"
-          value={currency(services.emissaoNfe?.valor)}
+        <Field label="Valor" value={currency(services.emissaoNfe?.valor)} />
+        <HighlightField
+          label="Observação"
+          value={text(services.emissaoNfe?.observacao)}
         />
       </ServiceBlock>
+
+      {services.regimeEspecial?.length ? (
+        <div className="grid gap-3 md:col-span-2">
+          <TitleField label="Regimes especiais" value="Cadastrados" />
+          {services.regimeEspecial.map((regime, index) => (
+            <Field
+              key={index}
+              label={regime.nomeRegime}
+              value={currency(regime.valor)}
+            />
+          ))}
+        </div>
+      ) : null}
     </Grid>
   );
 }
 
-function ExportServicesView({
+function ExportCustomsServicesView({
   services,
 }: {
-  services: NonNullable<EscopoForm["servicos"]["exportacao"]>;
+  services?: ExportServices;
 }) {
+  if (!services) {
+    return <EmptyState>Sem configuração de serviços de exportação.</EmptyState>;
+  }
+
+  const hasCustomsService =
+    services.despachoAduaneiroExportacao?.habilitado ||
+    services.preposto?.habilitado ||
+    services.certificadoOrigem?.habilitado ||
+    services.certificadoFitossanitario?.habilitado ||
+    services.outrosCertificados?.habilitado ||
+    Boolean(services.regimeEspecial?.length);
+
+  if (!hasCustomsService) {
+    return <EmptyState>Sem serviços aduaneiros contratados.</EmptyState>;
+  }
+
   return (
     <Grid>
       <ServiceBlock
-        title="Despacho aduaneiro exportação"
+        title="Despacho aduaneiro de exportação"
         enabled={services.despachoAduaneiroExportacao?.habilitado}
+        mode="SIM"
       >
         <Field
           label="Tipo de valor"
@@ -786,14 +907,22 @@ function ExportServicesView({
           value={currency(services.despachoAduaneiroExportacao?.valor)}
         />
         <Field
-          label="Observação despacho aduaneiro"
+          label="Última atualização"
+          value={date(services.despachoAduaneiroExportacao?.ultimaAtualizacao)}
+        />
+        <HighlightField
+          label="Observação do despacho"
           value={text(services.despachoAduaneiroExportacao?.observacao)}
         />
       </ServiceBlock>
 
-      <ServiceBlock title="Preposto" enabled={services.preposto?.habilitado}>
+      <ServiceBlock
+        title="Preposto"
+        enabled={services.preposto?.habilitado}
+        mode={services.preposto?.modalidade ?? undefined}
+      >
         <Field
-          label="Valor do preposto"
+          label="Valor"
           value={currency(services.preposto?.prepostoSelecionado?.valor)}
         />
         <Field
@@ -801,7 +930,7 @@ function ExportServicesView({
           value={text(services.preposto?.inclusoNoDesembaracoCasco)}
         />
         <Field
-          label="Cidades/portos/fronteiras"
+          label="Cidades, portos e fronteiras"
           value={list(services.preposto?.cidadesLiberacao)}
         />
         <Field
@@ -817,141 +946,79 @@ function ExportServicesView({
           value={text(services.preposto?.prepostoSelecionado?.nome)}
         />
         <Field
-          label="Contato do preposto"
+          label="Contato"
           value={text(services.preposto?.prepostoSelecionado?.contatoNome)}
         />
         <Field
-          label="Telefone do preposto"
+          label="Telefone"
           value={text(services.preposto?.prepostoSelecionado?.telefone)}
         />
-        <Field
-          label="Valor do preposto selecionado"
-          value={currency(services.preposto?.prepostoSelecionado?.valor)}
+        <HighlightField
+          label="Observação do preposto"
+          value={text(services.preposto?.observacao)}
         />
       </ServiceBlock>
 
       <ServiceBlock
         title="Certificado de origem"
         enabled={services.certificadoOrigem?.habilitado}
+        mode={services.certificadoOrigem?.modalidade ?? undefined}
       >
         <Field
-          label="Valor certificado de origem"
+          label="Modalidade"
+          value={text(services.certificadoOrigem?.modalidade)}
+        />
+        <Field
+          label="Valor"
           value={currency(services.certificadoOrigem?.valor)}
+        />
+        <HighlightField
+          label="Observação"
+          value={text(services.certificadoOrigem?.observacao)}
         />
       </ServiceBlock>
 
       <ServiceBlock
         title="Certificado fitossanitário"
         enabled={services.certificadoFitossanitario?.habilitado}
+        mode={services.certificadoFitossanitario?.modalidade ?? undefined}
       >
         <Field
-          label="Valor certificado fitossanitário"
+          label="Modalidade"
+          value={text(services.certificadoFitossanitario?.modalidade)}
+        />
+        <Field
+          label="Valor"
           value={currency(services.certificadoFitossanitario?.valor)}
+        />
+        <HighlightField
+          label="Observação"
+          value={text(services.certificadoFitossanitario?.observacao)}
         />
       </ServiceBlock>
 
       <ServiceBlock
         title="Outros certificados"
         enabled={services.outrosCertificados?.habilitado}
+        mode="SIM"
       >
-        <Field
-          label="Itens de outros certificados"
-          value={list(services.outrosCertificados?.itens?.map((i) => i.chave))}
-        />
+        {(services.outrosCertificados?.itens ?? []).map((item, index) => (
+          <Field key={index} label={item.chave} value={currency(item.valor)} />
+        ))}
       </ServiceBlock>
 
-      <ServiceBlock
-        title="Assessoria"
-        enabled={services.assessoria?.habilitado}
-      >
-        <Field
-          label="Tipo de valor assessoria"
-          value={text(services.assessoria?.tipoValor)}
-        />
-        <Field
-          label="Valor assessoria"
-          value={currency(services.assessoria?.valor)}
-        />
-        <Field
-          label="Última atualização assessoria"
-          value={date(services.assessoria?.ultimaAtualizacao)}
-        />
-      </ServiceBlock>
-
-      <ServiceBlock
-        title="Frete internacional"
-        enabled={services.freteInternacional?.habilitado}
-        mode={services.freteInternacional?.modalidade ?? undefined}
-      >
-        <Field
-          label="Modalidade frete internacional"
-          value={text(services.freteInternacional?.modalidade)}
-        />
-        <Field
-          label="Responsável pela contratação"
-          value={freightResponsibleLabel(
-            services.freteInternacional?.responsavelFrete,
-          )}
-        />
-        <Field
-          label="% PTAX negociada"
-          value={text(services.freteInternacional?.ptaxNegociado)}
-        />
-        <Field
-          label="Observação geral"
-          value={text(services.freteInternacional?.observacao)}
-        />
-        {services.freteInternacional?.responsavelFrete === "TERCEIRO" ? (
-          <ThirdPartyFreightProvidersView
-            providers={services.freteInternacional.prestadoresTerceiros}
-          />
-        ) : null}
-      </ServiceBlock>
-
-      <ServiceBlock
-        title="Seguro internacional"
-        enabled={services.seguroInternacional?.habilitado}
-        mode={services.seguroInternacional?.modalidade ?? undefined}
-      >
-        <Field
-          label="Modalidade seguro internacional"
-          value={text(services.seguroInternacional?.modalidade)}
-        />
-        <Field
-          label="Valor mínimo"
-          value={currency(services.seguroInternacional?.valorMinimo)}
-        />
-        <Field
-          label="Percentual sobre CFR"
-          value={text(services.seguroInternacional?.percentualSobreCfr)}
-        />
-        <Field
-          label="Data inclusão da apólice"
-          value={date(services.seguroInternacional?.dataInclusaoApolice)}
-        />
-        <Field
-          label="Descrição complementar"
-          value={text(services.seguroInternacional?.descricaoComplementar)}
-        />
-      </ServiceBlock>
-
-      <ServiceBlock
-        title="Frete rodoviário"
-        enabled={services.freteRodoviario?.habilitado}
-      >
-        <Field
-          label="Modalidade frete rodoviário"
-          value={text(services.freteRodoviario?.modalidade)}
-        />
-        <Field
-          label="Observação geral"
-          value={text(services.freteRodoviario?.observacaoGeral)}
-        />
-        <Field
-          label="Regime especial"
-          value={list(services.regimeEspecial?.map((r) => r.nomeRegime))}
-        />
-      </ServiceBlock>
+      {services.regimeEspecial?.length ? (
+        <div className="grid gap-3 md:col-span-2">
+          <TitleField label="Regimes especiais" value="Cadastrados" />
+          {services.regimeEspecial.map((regime, index) => (
+            <Field
+              key={index}
+              label={regime.nomeRegime}
+              value={currency(regime.valor)}
+            />
+          ))}
+        </div>
+      ) : null}
     </Grid>
   );
 }
@@ -963,19 +1030,14 @@ function ScopeDetails({
   scope: EscopoForm;
   versionLabel: string;
 }) {
-  const i = scope.operacao.importacao;
-  const e = scope.operacao.exportacao;
-  const si = scope.servicos.importacao;
-  const se = scope.servicos.exportacao;
-
-  const showSI = scope.operacao.tipos.includes("IMPORTACAO");
-  const showSE = scope.operacao.tipos.includes("EXPORTACAO");
-
-  const hasImportServices = showSI && hasEnabledService(si);
-  const hasExportServices = showSE && hasEnabledService(se);
+  const importacao = scope.operacao.importacao;
+  const exportacao = scope.operacao.exportacao;
+  const importServices = scope.servicos.importacao;
+  const exportServices = scope.servicos.exportacao;
+  const showImport = scope.operacao.tipos.includes("IMPORTACAO");
+  const showExport = scope.operacao.tipos.includes("EXPORTACAO");
 
   const { data: metadataResponse } = useScopeMetadata();
-
   const { data: salarioMinimoData } = useOrganizationSettingsByKey(
     "salario_minimo_vigente",
   );
@@ -983,257 +1045,441 @@ function ScopeDetails({
     "dados_bancarios_casco",
   );
 
+  const responsaveis = metadataResponse?.responsaveis ?? [];
   const salarioMinimo = salarioMinimoData?.valor;
   const ctaBancariaCasco = ctaBancariaData ?? {};
+  const paymentPreference = scope.financeiro.preferencia as string | undefined;
 
-  const responsaveis = metadataResponse?.responsaveis ?? [];
+  const responsibleNames = (ids?: string[] | null) =>
+    list(
+      (ids ?? []).map(
+        (id) =>
+          responsaveis.find((responsavel) => responsavel.id === id)?.nome ?? id,
+      ),
+    );
 
-  return (
-    <Card className="p-4 md:p-6 print-avoid-break">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">
-            Resumo do escopo
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Visualização consolidada dos dados cadastrados.
-          </p>
-        </div>
-        <Badge>{versionLabel}</Badge>
-      </div>
+  const operationCards = (
+    importContent: React.ReactNode,
+    exportContent: React.ReactNode,
+  ) => (
+    <div className="grid gap-4 xl:grid-cols-2">
+      {showImport ? (
+        <ViewCard title="Importação">{importContent}</ViewCard>
+      ) : null}
+      {showExport ? (
+        <ViewCard title="Exportação">{exportContent}</ViewCard>
+      ) : null}
+      {!showImport && !showExport ? (
+        <EmptyState>Nenhuma operação cadastrada.</EmptyState>
+      ) : null}
+    </div>
+  );
 
-      <div className="grid gap-6">
-        <ViewCard title="Informações fixas">
-          <Grid>
-            <Field
-              label="Salário mínimo vigente"
-              value={currency(salarioMinimo ?? 0)}
-            />
-            <Field
-              label="Dados bancários CASCO"
-              value={account(ctaBancariaCasco)}
-            />
-
-            {i && (
-              <>
-                <Field
-                  label="Analista DA"
-                  value={list(
-                    (i.analistaDA ?? []).map(
-                      (id) => responsaveis.find((r) => r.id === id)?.nome ?? id,
-                    ),
-                  )}
-                />
-                <Field
-                  label="Analista AE"
-                  value={list(
-                    (i.analistaAE ?? []).map(
-                      (id) => responsaveis.find((r) => r.id === id)?.nome ?? id,
-                    ),
-                  )}
-                />
-              </>
+  const tabs = [
+    {
+      id: "dados-cliente",
+      label: "Dados do cliente",
+      content: (
+        <ViewCard title="Contatos">
+          <div className="grid gap-4">
+            {scope.contatos?.length ? (
+              scope.contatos.map((contato, index) => (
+                <Card key={index} className="gap-3 bg-muted/20 p-4">
+                  <h5 className="text-sm font-semibold">
+                    {"Contato " + (index + 1)}
+                  </h5>
+                  <Grid>
+                    <Field label="Nome" value={text(contato.nome)} />
+                    <Field label="E-mail" value={text(contato.email)} />
+                    <Field
+                      label="Cargo / departamento"
+                      value={text(contato.cargoDepartamento)}
+                    />
+                    <Field label="Telefone" value={text(contato.telefone)} />
+                  </Grid>
+                </Card>
+              ))
+            ) : (
+              <EmptyState>Nenhum contato cadastrado.</EmptyState>
             )}
-          </Grid>
+          </div>
         </ViewCard>
+      ),
+    },
+    {
+      id: "sobre-empresa",
+      label: "Sobre a empresa",
+      content: (
+        <div className="grid gap-4">
+          <ViewCard title="Dados cadastrais">
+            <Grid>
+              <Field
+                label="Razão social"
+                value={text(scope.sobreEmpresa.razaoSocial)}
+              />
+              <Field
+                label="Nome resumido"
+                value={text(scope.sobreEmpresa.nomeResumido)}
+              />
+              <Field label="CNPJ" value={formatCNPJ(scope.sobreEmpresa.cnpj)} />
+              <Field
+                label="Inscrição estadual"
+                value={text(scope.sobreEmpresa.inscricaoEstadual)}
+              />
+              <Field
+                label="Inscrição municipal"
+                value={text(scope.sobreEmpresa.inscricaoMunicipal)}
+              />
+              <Field
+                label="Endereço do escritório"
+                value={text(scope.sobreEmpresa.enderecoCompletoEscritorio)}
+              />
+              <Field
+                label="Endereço do armazém"
+                value={text(scope.sobreEmpresa.enderecoCompletoArmazem)}
+              />
+              <Field
+                label="CNAE principal"
+                value={text(scope.sobreEmpresa.cnaePrincipal)}
+              />
+              <Field
+                label="CNAEs secundários"
+                value={text(scope.sobreEmpresa.cnaeSecundario)}
+              />
+              <Field
+                label="Regime de tributação"
+                value={text(scope.sobreEmpresa.regimeTributacao)}
+              />
+              <Field
+                label="Modalidade RADAR"
+                value={text(scope.sobreEmpresa.modalidadeRadar)}
+              />
+              <Field
+                label="Tipos de operação"
+                value={list(scope.operacao.tipos)}
+              />
+            </Grid>
+            <HighlightField
+              label="Particularidades gerais"
+              value={text(scope.geral?.descricao)}
+            />
+          </ViewCard>
 
-        <ViewCard title="Sobre a empresa">
+          {showImport && importacao ? (
+            <ViewCard title="Perfil da importação">
+              <Grid>
+                <Field
+                  label="Produtos importados"
+                  value={text(importacao.produtosImportados)}
+                />
+                <Field
+                  label="Vínculo com exportador"
+                  value={text(importacao.vinculoComExportador)}
+                />
+                <Field
+                  label="Modais de entrada"
+                  value={modalLocalList(importacao.modaisEntrada)}
+                />
+                <Field
+                  label="Locais de entrada"
+                  value={list(importacao.locaisEntrada)}
+                />
+                <Field
+                  label="Outro local de entrada"
+                  value={text(importacao.outroLocalEntrada)}
+                />
+                <Field
+                  label="Locais de desembaraço"
+                  value={list(importacao.locaisDesembaraco)}
+                />
+                <Field
+                  label="Outro local de desembaraço"
+                  value={text(importacao.outroLocalDesembaraco)}
+                />
+                <Field label="Destinação" value={list(importacao.destinacao)} />
+                <Field
+                  label="Subtipo de consumo"
+                  value={list(importacao.subtipoConsumo)}
+                />
+              </Grid>
+
+              <div className="grid gap-3">
+                {(importacao.ncms ?? [])
+                  .filter((ncm) => ncm.codigo)
+                  .map((ncm, index) => (
+                    <Card key={index} className="gap-3 bg-muted/20 p-3">
+                      <Grid>
+                        <Field
+                          label={
+                            index === 0 ? "NCM principal" : "NCM " + (index + 1)
+                          }
+                          value={text(ncm.codigo)}
+                        />
+                        <Field
+                          label="Possui benefício"
+                          value={text(ncm.possuiBeneficio)}
+                        />
+                        <HighlightField
+                          label="Descrição do benefício"
+                          value={text(ncm.descricaoBeneficio)}
+                        />
+                      </Grid>
+                    </Card>
+                  ))}
+              </div>
+
+              <HighlightField
+                label="Observação sobre NCM"
+                value={text(importacao.observacaoNcms)}
+              />
+            </ViewCard>
+          ) : null}
+
+          {showExport && exportacao ? (
+            <ViewCard title="Perfil da exportação">
+              <Grid>
+                <Field
+                  label="Produtos exportados"
+                  value={text(exportacao.produtosExportados)}
+                />
+                <Field label="Destinação" value={list(exportacao.destinacao)} />
+                <Field
+                  label="Subtipo de consumo"
+                  value={list(exportacao.subtipoConsumo)}
+                />
+              </Grid>
+
+              <div className="grid gap-3">
+                {(exportacao.ncms ?? [])
+                  .filter((ncm) => ncm.codigo)
+                  .map((ncm, index) => (
+                    <Card key={index} className="gap-3 bg-muted/20 p-3">
+                      <Grid>
+                        <Field
+                          label={
+                            index === 0 ? "NCM principal" : "NCM " + (index + 1)
+                          }
+                          value={text(ncm.codigo)}
+                        />
+                        <Field
+                          label="Possui benefício"
+                          value={text(ncm.possuiBeneficio)}
+                        />
+                        <HighlightField
+                          label="Descrição do benefício"
+                          value={text(ncm.descricaoBeneficio)}
+                        />
+                      </Grid>
+                    </Card>
+                  ))}
+              </div>
+
+              <HighlightField
+                label="Observação sobre NCM"
+                value={text(exportacao.observacaoNcms)}
+              />
+            </ViewCard>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      id: "comercial-casco",
+      label: "Comercial CASCO",
+      content: (
+        <ViewCard title="Comercial CASCO responsável">
           <Grid>
-            <Field
-              label="Razão social"
-              value={text(scope.sobreEmpresa?.razaoSocial)}
-            />
-            <Field
-              label="Nome resumido"
-              value={text(scope.sobreEmpresa?.nomeResumido)}
-            />
-            <Field label="CNPJ" value={formatCNPJ(scope.sobreEmpresa?.cnpj)} />
-            <Field
-              label="Inscrição estadual"
-              value={text(scope.sobreEmpresa?.inscricaoEstadual)}
-            />
-            <Field
-              label="Inscrição municipal"
-              value={text(scope.sobreEmpresa?.inscricaoMunicipal)}
-            />
-            <Field
-              label="Endereço completo do escritório"
-              value={text(scope.sobreEmpresa?.enderecoCompletoEscritorio)}
-            />
-            <Field
-              label="Endereço completo do armazém"
-              value={text(scope.sobreEmpresa?.enderecoCompletoArmazem)}
-            />
-            <Field
-              label="CNAE principal"
-              value={text(scope.sobreEmpresa?.cnaePrincipal)}
-            />
-            <Field
-              label="CNAEs secundários"
-              value={text(scope.sobreEmpresa?.cnaeSecundario)}
-            />
-            <Field
-              label="Regime de tributação"
-              value={text(scope.sobreEmpresa?.regimeTributacao)}
-            />
-            <Field
-              label="Modalidade RADAR"
-              value={text(scope.sobreEmpresa?.modalidadeRadar)}
-            />
             <Field
               label="Responsável comercial"
               value={
                 <ResponsibleShow
-                  value={scope.sobreEmpresa?.responsavelComercial}
+                  value={scope.sobreEmpresa.responsavelComercial}
                   options={responsaveis}
                 />
               }
             />
           </Grid>
         </ViewCard>
-
-        <ViewCard title="Contatos">
-          <div className="grid gap-3">
-            {scope.contatos?.map((c, index) => (
-              <div className="w-full" key={index}>
-                <Grid>
+      ),
+    },
+    {
+      id: "assessoria-especial",
+      label: "Assessoria especial",
+      content: operationCards(
+        <AdvisoryServiceView
+          title="Assessoria de importação"
+          service={importServices?.assessoria}
+        />,
+        <AdvisoryServiceView
+          title="Assessoria de exportação"
+          service={exportServices?.assessoria}
+        />,
+      ),
+    },
+    {
+      id: "seguro-internacional",
+      label: "Seguro internacional",
+      content: operationCards(
+        <InsuranceServiceView
+          title="Seguro de importação"
+          service={importServices?.seguroInternacional}
+        />,
+        <InsuranceServiceView
+          title="Seguro de exportação"
+          service={exportServices?.seguroInternacional}
+        />,
+      ),
+    },
+    {
+      id: "frete-internacional",
+      label: "Frete internacional",
+      content: operationCards(
+        <InternationalFreightServiceView
+          title="Frete internacional de importação"
+          service={importServices?.freteInternacional}
+        />,
+        <InternationalFreightServiceView
+          title="Frete internacional de exportação"
+          service={exportServices?.freteInternacional}
+        />,
+      ),
+    },
+    {
+      id: "despacho-aduaneiro",
+      label: "Despacho aduaneiro",
+      content: (
+        <div className="grid gap-4">
+          <ViewCard title="Equipe operacional responsável">
+            <Grid>
+              {showImport && importacao ? (
+                <>
                   <Field
-                    label={`Contato ${index + 1} • Nome`}
-                    value={text(c.nome)}
+                    label="Analista DA — Importação"
+                    value={responsibleNames(importacao.analistaDA)}
                   />
-                  <Field label="E-mail" value={text(c.email)} />
                   <Field
-                    label="Cargo / departamento"
-                    value={text(c.cargoDepartamento)}
+                    label="Analista AE — Importação"
+                    value={responsibleNames(importacao.analistaAE)}
                   />
-                  <Field label="Telefone" value={text(c.telefone)} />
-                </Grid>
-                <Separator className="my-4" />
-              </div>
-            ))}
-          </div>
-        </ViewCard>
+                </>
+              ) : null}
+              {showExport && exportacao ? (
+                <>
+                  <Field
+                    label="Analista DA — Exportação"
+                    value={responsibleNames(exportacao.analistaDA)}
+                  />
+                  <Field
+                    label="Analista AE — Exportação"
+                    value={responsibleNames(exportacao.analistaAE)}
+                  />
+                </>
+              ) : null}
+            </Grid>
+          </ViewCard>
 
-        <ViewCard title="Operação">
-          <Grid>
-            <Field
-              label="Tipos de operação"
-              value={list(scope.operacao?.tipos)}
-            />
-          </Grid>
-
-          {i ? (
-            <>
-              <Separator className="my-2" />
-
+          {showImport && importacao ? (
+            <ViewCard title="Exigências da importação">
               <Grid>
                 <Field
-                  label="Produtos importados"
-                  value={text(i.produtosImportados)}
+                  label="Necessidade de DTA"
+                  value={text(importacao.necessidadeDta)}
                 />
                 <Field
-                  label="Vínculo com exportador"
-                  value={text(i.vinculoComExportador)}
-                />
-                <Field label="Modais" value={modalLocalList(i.modaisEntrada)} />
-                <Field
-                  label="Locais de entrada"
-                  value={list(i.locaisEntrada)}
+                  label="Necessidade de DTC"
+                  value={text(importacao.necessidadeDtc)}
                 />
                 <Field
-                  label="Outro local de entrada"
-                  value={text(i.outroLocalEntrada)}
+                  label="Necessidade de LI/LPCO"
+                  value={text(importacao.necessidadeLiLpco)}
                 />
-                <Field
-                  label="Locais de desembaraço"
-                  value={list(i.locaisDesembaraco)}
-                />
-                <Field
-                  label="Outro local de desembaraço"
-                  value={text(i.outroLocalDesembaraco)}
-                />
-                <Field label="Necessidade DTA" value={text(i.necessidadeDta)} />
-                <Field label="Necessidade DTC" value={text(i.necessidadeDtc)} />
-                <Field
-                  label="Necessidade LI / LPCO"
-                  value={text(i.necessidadeLiLpco)}
-                />
-                <Field label="Anuências" value={list(i.anuencias)} />
+                <Field label="Anuências" value={list(importacao.anuencias)} />
                 <Field
                   label="Outro órgão anuente"
-                  value={text(i.outroOrgaoAnuente)}
-                />
-                <Field label="Destinação" value={list(i.destinacao)} />
-                <Field
-                  label="Subtipo de consumo"
-                  value={list(i.subtipoConsumo)}
+                  value={text(importacao.outroOrgaoAnuente)}
                 />
               </Grid>
+            </ViewCard>
+          ) : null}
 
-              <div className="grid gap-3">
-                {(i.ncms ?? [])
-                  .filter((ncm) => ncm.codigo)
-                  .map((ncm, index) => (
-                    <Grid key={index}>
-                      <Field
-                        label={
-                          index === 0 ? "NCM principal" : `NCM ${index + 1}`
-                        }
-                        value={text(ncm.codigo)}
-                      />
-                      <Field
-                        label="Possui benefício"
-                        value={text(ncm.possuiBeneficio)}
-                      />
-                      <Field
-                        label="Descrição do benefício"
-                        value={text(ncm.descricaoBeneficio)}
-                      />
-                    </Grid>
-                  ))}
-              </div>
+          {operationCards(
+            <ImportCustomsServicesView
+              services={importServices}
+              scope={scope}
+            />,
+            <ExportCustomsServicesView services={exportServices} />,
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "frete-rodoviario",
+      label: "Frete rodoviário",
+      content: operationCards(
+        <RoadFreightServiceView
+          title="Frete rodoviário de importação"
+          service={importServices?.freteRodoviario}
+        />,
+        <RoadFreightServiceView
+          title="Frete rodoviário de exportação"
+          service={exportServices?.freteRodoviario}
+        />,
+      ),
+    },
+    {
+      id: "financeiro",
+      label: "Financeiro",
+      content: (
+        <div className="grid gap-4">
+          <ViewCard title="Informações financeiras da CASCO">
+            <Grid>
+              <Field
+                label="Salário mínimo vigente"
+                value={currency(salarioMinimo ?? 0)}
+              />
+              <Field
+                label="Dados bancários CASCO"
+                value={account(ctaBancariaCasco)}
+              />
+            </Grid>
+          </ViewCard>
 
-              <Grid>
-                <Field label="Observação NCM" value={text(i.observacaoNcms)} />
-              </Grid>
-
-              <FederalTaxesView impostosFederais={i.impostosFederais} />
-
-              <AfrmmView afrmm={i.afrmm} />
+          {showImport && importacao ? (
+            <ViewCard title="Tributos da importação">
+              <FederalTaxesView
+                impostosFederais={importacao.impostosFederais}
+              />
+              <AfrmmView afrmm={importacao.afrmm} />
 
               <Separator className="my-2" />
               <h5 className="text-sm font-semibold">ICMS</h5>
-
               <Grid>
                 <PaymentAccountFields
                   subject="do ICMS"
-                  contaPagamento={i.icms?.contaPagamento}
-                  dadosContaCliente={i.icms?.dadosContaCliente}
+                  contaPagamento={importacao.icms?.contaPagamento}
+                  dadosContaCliente={importacao.icms?.dadosContaCliente}
                 />
-
                 <Field
                   label="Regime geral"
-                  value={regimeTributoLabel(i.icms?.regime)}
+                  value={regimeTributoLabel(importacao.icms?.regime)}
                 />
-
-                <Field
+                <HighlightField
                   label="Observações ICMS"
-                  value={text(i.icms?.observacao)}
+                  value={text(importacao.icms?.observacao)}
                 />
               </Grid>
 
-              <div className="grid gap-3">
-                {Object.entries(i.icms?.porDestinacao ?? {})
+              <div className="grid gap-3 md:grid-cols-2">
+                {Object.entries(importacao.icms?.porDestinacao ?? {})
                   .filter(
                     ([destinacao, detalhe]) =>
-                      detalhe && i.destinacao.includes(destinacao),
+                      detalhe && importacao.destinacao.includes(destinacao),
                   )
                   .map(([destinacao, detalhe]) => (
                     <Card key={destinacao} className="gap-3 p-3">
                       <h6 className="text-sm font-semibold">
                         {ICMS_DESTINACAO_LABEL[destinacao] ?? destinacao}
                       </h6>
-
                       <Grid>
                         <Field
                           label="Regime"
@@ -1251,112 +1497,59 @@ function ScopeDetails({
                     </Card>
                   ))}
               </div>
-            </>
+            </ViewCard>
           ) : null}
 
-          {e ? (
-            <>
-              <Separator className="my-2" />
-
-              <Grid>
+          <ViewCard title="Devolução de saldo ao cliente">
+            <Grid>
+              <Field
+                label="Preferência de pagamento"
+                value={text(paymentPreference ?? "TRANSFERENCIA")}
+              />
+              {paymentPreference === "TRANSFERECIA" ||
+              paymentPreference === "TRANSFERENCIA" ||
+              !paymentPreference ? (
                 <Field
-                  label="Produtos exportados"
-                  value={text(e.produtosExportados)}
+                  label="Dados bancários para devolução"
+                  value={list(
+                    (scope.financeiro.dadosBancariosClienteDevolucaoSaldo ?? [])
+                      .map((conta) => account(conta))
+                      .filter(Boolean) as string[],
+                  )}
                 />
-
-                <div className="grid gap-3">
-                  {(e.ncms ?? [])
-                    .filter((ncm) => ncm.codigo)
-                    .map((ncm, index) => (
-                      <Grid key={index}>
-                        <Field
-                          label={
-                            index === 0 ? "NCM principal" : `NCM ${index + 1}`
-                          }
-                          value={text(ncm.codigo)}
-                        />
-                        <Field
-                          label="Possui benefício"
-                          value={text(ncm.possuiBeneficio)}
-                        />
-                        <Field
-                          label="Descrição do benefício"
-                          value={text(ncm.descricaoBeneficio)}
-                        />
-                      </Grid>
-                    ))}
-                </div>
-
-                <Grid>
-                  <Field
-                    label="Observação NCM"
-                    value={text(e.observacaoNcms)}
-                  />
-                </Grid>
-              </Grid>
-            </>
-          ) : null}
-        </ViewCard>
-
-        <ViewCard title="Serviços de importação">
-          {si && hasImportServices ? (
-            <ImportServicesView services={si} scope={scope} />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Sem serviços de importação contratados.
-            </p>
-          )}
-        </ViewCard>
-
-        <ViewCard title="Serviços de exportação">
-          {se && hasExportServices ? (
-            <ExportServicesView services={se} />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Sem serviços de exportação contratados.
-            </p>
-          )}
-        </ViewCard>
-
-        <ViewCard title="Financeiro">
-          <Grid>
-            <Field
-              label="Preferência de pagamento"
-              value={text(scope.financeiro?.preferencia ?? "TRANSFERENCIA")}
-            />
-
-            {(scope.financeiro?.preferencia === "TRANSFERECIA" ||
-              !scope.financeiro?.preferencia) && (
-              <Field
-                label="Dados bancários para devolução de saldo"
-                value={list(
-                  (scope.financeiro?.dadosBancariosClienteDevolucaoSaldo ?? [])
-                    .map((conta) => account(conta))
-                    .filter(Boolean) as string[],
-                )}
+              ) : null}
+              {paymentPreference === "PIX" ? (
+                <Field
+                  label="Chave PIX para devolução"
+                  value={text(scope.financeiro.chavePIXClienteDevolucaoSaldo)}
+                />
+              ) : null}
+              <HighlightField
+                label="Observações financeiras"
+                value={text(scope.financeiro.observacoesFinanceiro)}
               />
-            )}
+            </Grid>
+          </ViewCard>
+        </div>
+      ),
+    },
+  ];
 
-            {scope.financeiro?.preferencia === "PIX" && (
-              <Field
-                label="Chaves PIX para devolução de saldo"
-                value={text(
-                  scope.financeiro?.chavePIXClienteDevolucaoSaldo ?? "",
-                )}
-              />
-            )}
-
-            <Field
-              label="Observações financeiras"
-              value={text(scope.financeiro?.observacoesFinanceiro)}
-            />
-          </Grid>
-        </ViewCard>
-
-        <ViewCard title="Informações gerais">
-          <Field label="" value={text(scope.geral?.descricao)} />
-        </ViewCard>
+  return (
+    <Card className="p-4 md:p-6 print-avoid-break">
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">
+            Resumo do escopo
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Selecione uma categoria para consultar os dados cadastrados.
+          </p>
+        </div>
+        <Badge>{versionLabel}</Badge>
       </div>
+
+      <ScopeViewTabs tabs={tabs} />
     </Card>
   );
 }
