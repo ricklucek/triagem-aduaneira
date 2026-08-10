@@ -42,21 +42,17 @@ export function AppSidebar({
   ],
   ...props
 }: AppSidebarProps) {
-
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <Sidebar
       collapsible="icon"
-      className="pt-16 border-r border-[#FFF]/10 bg-[#121214] text-white"
+      className="border-r border-sidebar-border bg-sidebar pt-16 text-sidebar-foreground"
       {...props}
     >
       <SidebarHeader className="pb-6 flex items-center justify-center group-data-[collapsible=icon]:justify-center">
-        {
-          headerSlot == "tool-navigation" && <NavTool />
-        }
-        {
-          headerSlot == "back-button" &&
+        {headerSlot == "tool-navigation" && <NavTool />}
+        {headerSlot == "back-button" && (
           <SidebarMenuButton
             size="lg"
             className="cursor-pointer"
@@ -67,13 +63,13 @@ export function AppSidebar({
                 <ChevronLeft className="size-5" />
               </div>
               <div className="flex flex-col text-left leading-tight">
-                <span className="text-white font-semibold">
+                <span className="font-semibold text-sidebar-foreground">
                   Voltar
                 </span>
               </div>
             </div>
           </SidebarMenuButton>
-        }
+        )}
       </SidebarHeader>
 
       <Separator />
@@ -90,7 +86,7 @@ export function AppSidebar({
         </div>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-[#FFF]/10">
+      <SidebarFooter className="border-t border-sidebar-border">
         <NavOthers items={hasRole("admin") ? footerItems : []} />
       </SidebarFooter>
 

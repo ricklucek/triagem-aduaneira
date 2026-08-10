@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { ChevronDown, type LucideIcon } from 'lucide-react';
+import Link from "next/link";
+import { ChevronDown, type LucideIcon } from "lucide-react";
 
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+} from "@/components/ui/collapsible";
 
 import {
   SidebarMenu,
@@ -16,7 +16,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 
 type MainItem = {
   title: string;
@@ -53,7 +53,7 @@ export function NavMain({
           <SidebarMenuButton
             asChild
             tooltip={item.title}
-            className="rounded-2xl px-4 font-semibold text-white-light hover:bg-[#FFF]/10 hover:text-white-light data-[active=true]:bg-[#FFF]/10 data-[active=true]:text-white-light group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:px-0"
+            className="rounded-2xl px-4 font-semibold text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:px-0"
           >
             <Link href={item.url}>
               {item.icon && <item.icon className="size-6 shrink-0" />}
@@ -71,7 +71,7 @@ export function NavMain({
             <CollapsibleTrigger asChild>
               <SidebarMenuButton
                 tooltip={settings.title}
-                className="rounded-2xl px-4 font-semibold text-white-light hover:bg-[#FFF]/10 hover:text-white-light group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:px-0"
+                className="rounded-2xl px-4 font-semibold text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:px-0"
               >
                 {settings.icon && <settings.icon className="size-6 shrink-0" />}
                 <span className="group-data-[collapsible=icon]:hidden">
@@ -82,12 +82,12 @@ export function NavMain({
             </CollapsibleTrigger>
 
             <CollapsibleContent className="group-data-[collapsible=icon]:hidden">
-              <SidebarMenuSub className="mt-2 border-l border-[#FFF]/20 gap-5">
+              <SidebarMenuSub className="mt-2 gap-5 border-l border-sidebar-border">
                 {settings.items.map((subItem) => (
                   <SidebarMenuSubItem key={subItem.title}>
                     <SidebarMenuSubButton
                       asChild
-                      className="h-fit rounded-xl text-zinc-200 hover:bg-primary/10"
+                      className="h-fit rounded-xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     >
                       <Link href={subItem.url}>{subItem.title}</Link>
                     </SidebarMenuSubButton>
@@ -104,7 +104,7 @@ export function NavMain({
           <SidebarMenuButton>
             <Link
               href={action.url}
-              className="w-full rounded-md bg-primary py-2 text-center font-semibold text-black hover:bg-primary/90"
+              className="w-full rounded-md bg-action py-2 text-center font-semibold text-action-foreground hover:bg-action/90"
             >
               {action.title}
             </Link>

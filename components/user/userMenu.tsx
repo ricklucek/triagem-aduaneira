@@ -33,10 +33,10 @@ const UserMenu = () => {
                         </AvatarFallback>
                     </Avatar>
                     <div className="max-w-[150px] hidden sm:flex flex-col gap-1 group-data-[collapsible=icon]:hidden">
-                        <span className="text-white-light line-clamp-1">
+                        <span className="line-clamp-1 text-foreground">
                             {data?.nome ?? ''}
                         </span>
-                        <span className="text-white-dark text-xs">{data?.setor ?? ''}</span>
+                        <span className="text-xs text-muted-foreground">{data?.setor ?? ''}</span>
                     </div>
                 </Button>
             </DropdownMenuTrigger>
@@ -53,7 +53,7 @@ const UserMenu = () => {
                                 {getIniciais(data?.nome ?? '')}
                             </AvatarFallback>
                         </Avatar>
-                        <div className="grid flex-1 text-left text-sm leading-tight text-white-light">
+                        <div className="grid flex-1 text-left text-sm leading-tight text-popover-foreground">
                             <span className="truncate font-medium">{data?.nome}</span>
                             <span className="truncate text-xs">{data?.email}</span>
                         </div>
@@ -85,10 +85,10 @@ const UserMenu = () => {
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                    className="text-[#F10000]"
+                    className="text-destructive focus:text-destructive"
                     onClick={handleLoggout}
                 >
-                    <LogOut color="#F10000" />
+                    <LogOut />
                     Sair
                 </DropdownMenuItem>
             </DropdownMenuContent>

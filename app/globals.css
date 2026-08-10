@@ -20,6 +20,9 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
 
+  --color-action: var(--action);
+  --color-action-foreground: var(--action-foreground);
+
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
 
@@ -89,6 +92,9 @@
   --primary: #08cfd3;
   --primary-foreground: #031112;
 
+  --action: #d71920;
+  --action-foreground: #ffffff;
+
   --secondary: #e8eeee;
   --secondary-foreground: #151919;
 
@@ -147,6 +153,9 @@
 
   --primary: #42f7f8;
   --primary-foreground: #031112;
+
+  --action: #42f7f8;
+  --action-foreground: #031112;
 
   --secondary: #1f2323;
   --secondary-foreground: #e7eeee;
@@ -279,7 +288,7 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-md bg-action px-4 py-2 text-sm font-medium text-action-foreground transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50;
   }
 
   .btn-secondary {

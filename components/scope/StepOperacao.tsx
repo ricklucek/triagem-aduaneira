@@ -60,7 +60,7 @@ export default function StepOperacao({ form, errors, onChange }: Props) {
         />
 
         {errors["operacao.tipos"] ? (
-          <div style={{ color: "#b42318", fontSize: 12 }}>
+          <div className="text-xs text-destructive">
             {errors["operacao.tipos"]}
           </div>
         ) : null}
