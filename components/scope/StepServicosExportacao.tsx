@@ -17,6 +17,7 @@ import { ResponsiblePicker } from "./ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { publicApi } from "@/lib/api/services/public";
 import type { PrepostoLookupItem } from "@/lib/api/types/public-api";
+import { PrestadoresFreteInternacional } from "./PrestadoresFreteInternacional";
 
 type Props = {
   form: EscopoForm;
@@ -55,6 +56,8 @@ function emptyExportacaoServicos(): NonNullable<
     },
     freteInternacional: {
       habilitado: false,
+      responsavelFrete: "CASCO",
+      prestadoresTerceiros: [],
       ptaxNegociado: "",
       observacao: "",
     },
@@ -93,7 +96,7 @@ export default function StepServicosExportacao({
   responsaveis,
 }: Props) {
   const data = form.servicos.exportacao ?? emptyExportacaoServicos();
-  
+
   function setData(next: NonNullable<EscopoForm["servicos"]["exportacao"]>) {
     onChange({ ...form, servicos: { ...form.servicos, exportacao: next } });
   }
@@ -225,7 +228,12 @@ export default function StepServicosExportacao({
         <Field label="Valor do preposto" required error={errors?.valor}>
           <NumberInput
             value={data.preposto.prepostoSelecionado?.valor ?? ""}
-            onChange={(e) => update("preposto.prepostoSelecionado.valor", Number(e.target.value),)}
+            onChange={(e) =>
+              update(
+                "preposto.prepostoSelecionado.valor",
+                Number(e.target.value),
+              )
+            }
           />
         </Field>
         <Field label="Observação geral" hint="Campo opcional">
@@ -248,7 +256,9 @@ export default function StepServicosExportacao({
           >
             <Select
               value={data.certificadoOrigem.modalidade ?? ""}
-              onChange={(e) => update("certificadoOrigem.modalidade", e.target.value)}
+              onChange={(e) =>
+                update("certificadoOrigem.modalidade", e.target.value)
+              }
             >
               <option value="">Selecione</option>
               <option value="SIM">Sim</option>
@@ -289,7 +299,9 @@ export default function StepServicosExportacao({
           >
             <Select
               value={data.certificadoFitossanitario.modalidade ?? ""}
-              onChange={(e) => update("certificadoFitossanitario.modalidade", e.target.value)}
+              onChange={(e) =>
+                update("certificadoFitossanitario.modalidade", e.target.value)
+              }
             >
               <option value="">Selecione</option>
               <option value="SIM">Sim</option>
@@ -301,7 +313,10 @@ export default function StepServicosExportacao({
             <NumberInput
               value={data.certificadoFitossanitario.valor ?? ""}
               onChange={(e) =>
-                update("certificadoFitossanitario.valor", Number(e.target.value))
+                update(
+                  "certificadoFitossanitario.valor",
+                  Number(e.target.value),
+                )
               }
             />
           </Field>
@@ -333,7 +348,10 @@ export default function StepServicosExportacao({
         </button>
         <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
           {(data.outrosCertificados.itens ?? []).map((item, index) => (
-            <div key={index} className="rounded-xl border border-border bg-background p-3">
+            <div
+              key={index}
+              className="rounded-xl border border-border bg-background p-3"
+            >
               <Grid columns={2}>
                 <Field label="Certificado" required>
                   <TextInput
@@ -425,19 +443,38 @@ export default function StepServicosExportacao({
         checked={data.freteInternacional.habilitado}
         onToggle={(checked) => update("freteInternacional.habilitado", checked)}
       >
-        <Field label="Modalidade" required>
-          <Select
-            value={data.freteInternacional.modalidade ?? ""}
-            onChange={(e) =>
-              update("freteInternacional.modalidade", e.target.value)
-            }
+        <Grid columns={2}>
+          <Field label="Modalidade" required>
+            <Select
+              value={data.freteInternacional.modalidade ?? ""}
+              onChange={(e) =>
+                update("freteInternacional.modalidade", e.target.value)
+              }
+            >
+              <option value="">Selecione</option>
+              <option value="SIM">Sim</option>
+              <option value="NAO">Não</option>
+              <option value="CASO_A_CASO">Caso a caso</option>
+            </Select>
+          </Field>
+
+          <Field
+            label="Responsável pela contratação"
+            required
+            error={errors["freteInternacional.responsavelFrete"]}
           >
-            <option value="">Selecione</option>
-            <option value="SIM">Sim</option>
-            <option value="NAO">Não</option>
-            <option value="CASO_A_CASO">Caso a caso</option>
-          </Select>
-        </Field>
+            <Select
+              value={data.freteInternacional.responsavelFrete ?? "CASCO"}
+              onChange={(e) =>
+                update("freteInternacional.responsavelFrete", e.target.value)
+              }
+            >
+              <option value="CASCO">CASCO</option>
+              <option value="TERCEIRO">Empresa terceira</option>
+              <option value="CASO_A_CASO">Caso a caso</option>
+            </Select>
+          </Field>
+        </Grid>
 
         <Field
           label="% PTAX negociada"
@@ -460,6 +497,16 @@ export default function StepServicosExportacao({
             }
           />
         </Field>
+
+        {data.freteInternacional.responsavelFrete === "TERCEIRO" ? (
+          <PrestadoresFreteInternacional
+            prestadores={data.freteInternacional.prestadoresTerceiros ?? []}
+            errors={errors}
+            onChange={(prestadores) =>
+              update("freteInternacional.prestadoresTerceiros", prestadores)
+            }
+          />
+        ) : null}
       </ServicoToggleCard>
       <ServicoToggleCard
         title="Seguro Internacional"
