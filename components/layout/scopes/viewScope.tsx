@@ -1306,14 +1306,30 @@ function ScopeDetails({
       id: "assessoria-especial",
       label: "Assessoria especial",
       content: operationCards(
-        <AdvisoryServiceView
-          title="Assessoria de importação"
-          service={importServices?.assessoria}
-        />,
-        <AdvisoryServiceView
-          title="Assessoria de exportação"
-          service={exportServices?.assessoria}
-        />,
+        <div className="grid gap-4">
+          <Grid>
+            <Field
+              label="Analista AE — Importação"
+              value={responsibleNames(importacao?.analistaAE)}
+            />
+          </Grid>
+          <AdvisoryServiceView
+            title="Assessoria de importação"
+            service={importServices?.assessoria}
+          />
+        </div>,
+        <div className="grid gap-4">
+          <Grid>
+            <Field
+              label="Analista AE — Exportação"
+              value={responsibleNames(exportacao?.analistaAE)}
+            />
+          </Grid>
+          <AdvisoryServiceView
+            title="Assessoria de exportação"
+            service={exportServices?.assessoria}
+          />
+        </div>,
       ),
     },
     {
@@ -1349,31 +1365,19 @@ function ScopeDetails({
       label: "Despacho aduaneiro",
       content: (
         <div className="grid gap-4">
-          <ViewCard title="Equipe operacional responsável">
+          <ViewCard title="Analistas de despacho aduaneiro">
             <Grid>
               {showImport && importacao ? (
-                <>
-                  <Field
-                    label="Analista DA — Importação"
-                    value={responsibleNames(importacao.analistaDA)}
-                  />
-                  <Field
-                    label="Analista AE — Importação"
-                    value={responsibleNames(importacao.analistaAE)}
-                  />
-                </>
+                <Field
+                  label="Analista DA — Importação"
+                  value={responsibleNames(importacao.analistaDA)}
+                />
               ) : null}
               {showExport && exportacao ? (
-                <>
-                  <Field
-                    label="Analista DA — Exportação"
-                    value={responsibleNames(exportacao.analistaDA)}
-                  />
-                  <Field
-                    label="Analista AE — Exportação"
-                    value={responsibleNames(exportacao.analistaAE)}
-                  />
-                </>
+                <Field
+                  label="Analista DA — Exportação"
+                  value={responsibleNames(exportacao.analistaDA)}
+                />
               ) : null}
             </Grid>
           </ViewCard>
