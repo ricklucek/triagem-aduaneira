@@ -3,6 +3,7 @@ import { http } from "@/lib/api/config/http";
 import type { ScopeSummary } from "@/data/scope/ScopeRepo";
 import type {
   ClientApi,
+  CreateClientPayload,
   ListClientScopesParams,
   ListClientScopesResponse,
   ListClientsParams,
@@ -92,9 +93,13 @@ function normalizeClientScopesList(
 }
 
 export const clientsApi = {
-  async listClients(params: any): Promise<ListClientsResponse> {
+  async createClient(payload: CreateClientPayload): Promise<ClientApi> {
+    const { data } = await http.post<ClientApi>(API_ROUTES.clients.create, payload);
+    return data;
+  },
+  async listClients(params: ListClientsParams): Promise<ListClientsResponse> {
     const { data } = await http.get<ClientsListResponseApi>(API_ROUTES.clients.list, {
-      params,
+      params: { ...params },
     });
 
     return normalizeClientsList(data, params);
@@ -120,12 +125,12 @@ export const clientsApi = {
 
   async listClientScopes(
     clientId: string,
-    params: any,
+    params: ListClientScopesParams,
   ): Promise<ListClientScopesResponse> {
     const { data } = await http.get<ClientScopesResponseApi>(
       API_ROUTES.clients.scopes(clientId),
       {
-        params,
+        params: { ...params },
       },
     );
 

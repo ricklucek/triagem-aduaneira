@@ -34,10 +34,23 @@ export const API_ROUTES = {
     settingsByKey: (key: string) => `/organizations/settings/${key}`,
   },
   clients: {
+    create: "/clients",
     list: "/clients",
     detail: (clientId: string) => `/clients/${clientId}`,
     update: (clientId: string) => `/clients/${clientId}`,
     scopes: (clientId: string) => `/clients/${clientId}/scopes`,
+    fiscalProfile: (clientId: string) => `/clients/${clientId}/fiscal-profile`,
+    importTaxRules: (clientId: string) => `/clients/${clientId}/import-tax-rules`,
+    nfeNumberSequences: (clientId: string) =>
+      `/clients/${clientId}/nfe-number-sequences`,
+  },
+  nfe: {
+    processes: "/import-processes",
+    process: (processId: string) => `/import-processes/${processId}`,
+    workflowState: (processId: string) =>
+      `/import-processes/${processId}/nfe-workflow-state`,
+    fetchDuimp: (processId: string) =>
+      `/import-processes/${processId}/duimp/fetch`,
   },
   dashboards: {
     admin: "/dashboards/admin",

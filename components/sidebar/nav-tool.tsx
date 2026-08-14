@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, FileText } from "lucide-react";
+import { ChevronsUpDown, FileCode2, FileText } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -27,6 +27,14 @@ const tools = [
     href: "/scope/list",
     reference: "/scope",
     icon: FileText,
+  },
+  {
+    key: "nfe",
+    label: "Emissão NF-e",
+    description: "DUIMP e XML fiscal",
+    href: "/nfe/processes",
+    reference: "/nfe",
+    icon: FileCode2,
   },
 ];
 

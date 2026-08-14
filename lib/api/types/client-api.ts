@@ -74,3 +74,16 @@ export type UpdateClientPayload = Partial<
     | "ativo"
   >
 >;
+
+export type CreateClientPayload = Pick<ClientApi, "cnpj" | "razao_social"> &
+  Partial<
+    Pick<
+      ClientApi,
+      | "nome_resumido"
+      | "inscricao_estadual"
+      | "inscricao_municipal"
+      | "endereco_completo_escritorio"
+      | "regime_tributacao"
+      | "ativo"
+    >
+  >;

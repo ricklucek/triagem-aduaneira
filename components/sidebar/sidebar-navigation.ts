@@ -2,12 +2,11 @@ import {
     Bolt,
     Building2,
     FileText,
-    GitFork,
     Info,
     LayoutDashboard,
-    Locate,
     MessageSquare,
     ShieldCheck,
+    FileCode2,
     User2,
     UserCog,
 } from "lucide-react";
@@ -43,6 +42,20 @@ export const scopeSidebarNavigation: SidebarNavigation = {
     action: {
         title: "Novo Escopo",
         url: "/scope/new",
+    },
+};
+
+export const nfeSidebarNavigation: SidebarNavigation = {
+    navMain: [
+        {
+            title: "Processos NF-e",
+            url: "/nfe/processes",
+            icon: FileCode2,
+        },
+    ],
+    action: {
+        title: "Nova emissão",
+        url: "/nfe/new",
     },
 };
 
