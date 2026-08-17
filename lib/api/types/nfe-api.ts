@@ -1,6 +1,22 @@
 export type FiscalEnvironment = "homologation" | "production";
 export type ImportPurpose = "resale" | "industrialization" | "fixed_asset" | "use_consumption";
 
+export interface ProviderConnectionSummary {
+  id: string;
+  importer_id?: string | null;
+  provider: string;
+  environment: FiscalEnvironment;
+  status: string;
+  credentials_ref?: string | null;
+}
+
+export interface ListProviderConnectionsResponse {
+  items: ProviderConnectionSummary[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface ImportProcessSummary {
   id: string;
   importer_id: string;
