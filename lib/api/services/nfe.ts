@@ -7,6 +7,7 @@ import type {
   ImportPurpose,
   ImportTaxRulePayload,
   ListImportProcessesResponse,
+  ListProviderConnectionsResponse,
   NfeDraftSummary,
   NfeNumberSequencePayload,
   NfeWorkflowState,
@@ -14,6 +15,19 @@ import type {
 } from "@/lib/api/types/nfe-api";
 
 export const nfeApi = {
+  async listProviderConnections(params: {
+    provider: "portal_unico";
+    environment: FiscalEnvironment;
+    status: "active";
+    limit?: number;
+  }): Promise<ListProviderConnectionsResponse> {
+    const { data } = await http.get<ListProviderConnectionsResponse>(
+      API_ROUTES.nfe.providerConnections,
+      { params },
+    );
+    return data;
+  },
+
   async listProcesses(params: {
     q?: string;
     status?: string;
@@ -35,10 +49,10 @@ export const nfeApi = {
     return data;
   },
 
-  async fetchDuimp(processId: string, environment: FiscalEnvironment) {
+  async fetchDuimp(processId: string, providerEnvironment: FiscalEnvironment) {
     const { data } = await http.post<{ snapshot: DuimpSnapshotDetail }>(
       API_ROUTES.nfe.fetchDuimp(processId),
-      { provider_environment: environment, source_provider: "portal_unico", enrich_catalog: true },
+      { provider_environment: providerEnvironment, source_provider: "portal_unico", enrich_catalog: true },
     );
     return data;
   },
