@@ -23,3 +23,17 @@ export function useNfeWorkflowState(
     () => nfeApi.getWorkflowState(processId as string, params),
   );
 }
+
+export function useNfeDrafts(processId: string | null) {
+  return useSWR(
+    processId ? `nfe-drafts:${processId}` : null,
+    () => nfeApi.listDrafts(processId as string),
+  );
+}
+
+export function useDuimpSnapshots(processId: string | null) {
+  return useSWR(
+    processId ? `duimp-snapshots:${processId}` : null,
+    () => nfeApi.listSnapshots(processId as string),
+  );
+}
