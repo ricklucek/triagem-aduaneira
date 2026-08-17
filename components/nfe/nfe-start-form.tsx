@@ -21,6 +21,7 @@ type SetupState = {
   fiscalProfile: boolean;
   taxRule: boolean;
   numberSequence: boolean;
+  providerConnection: boolean;
   checking: boolean;
 };
 
@@ -74,20 +75,27 @@ export function NfeStartForm() {
   const [duimpNumber, setDuimpNumber] = useState("");
   const [purpose, setPurpose] = useState<ImportPurpose>("resale");
   const [environment, setEnvironment] = useState<FiscalEnvironment>("homologation");
+  const [providerEnvironment, setProviderEnvironment] = useState<FiscalEnvironment>("production");
   const [series, setSeries] = useState("1");
   const [setupDialog, setSetupDialog] = useState<"client" | "profile" | "rule" | "sequence" | null>(null);
   const [busy, setBusy] = useState(false);
-  const [setup, setSetup] = useState<SetupState>({ fiscalProfile: false, taxRule: false, numberSequence: false, checking: false });
+  const [setup, setSetup] = useState<SetupState>({ fiscalProfile: false, taxRule: false, numberSequence: false, providerConnection: false, checking: false });
   const { data: clients, mutate: refreshClients } = useClients({ q: search || undefined, ativo: true, limit: 20 });
 
   const normalizedDuimp = useMemo(() => duimpNumber.replace(/\s/g, "").toUpperCase(), [duimpNumber]);
 
   const checkSetup = useCallback(async (client: ClientApi) => {
     setSetup((current) => ({ ...current, checking: true }));
-    const [profile, rules, sequences] = await Promise.allSettled([
+    const [profile, rules, sequences, connections] = await Promise.allSettled([
       nfeApi.getFiscalProfile(client.id),
       nfeApi.listTaxRules(client.id),
       nfeApi.listNumberSequences(client.id),
+      nfeApi.listProviderConnections({
+        provider: "portal_unico",
+        environment: providerEnvironment,
+        status: "active",
+        limit: 100,
+      }),
     ]);
     setSetup({
       fiscalProfile: profile.status === "fulfilled",
@@ -99,9 +107,19 @@ export function NfeStartForm() {
         sequences.value.some((row) =>
           matchesNumberSequence(row, environment, series),
         ),
+      providerConnection:
+        connections.status === "fulfilled" &&
+        connections.value.items.some(
+          (connection) =>
+            normalizeApiEnum(connection.provider) === "portal_unico" &&
+            normalizeApiEnum(connection.environment) === providerEnvironment &&
+            normalizeApiEnum(connection.status) === "active" &&
+            Boolean(connection.credentials_ref) &&
+            (!connection.importer_id || connection.importer_id === client.id),
+        ),
       checking: false,
     });
-  }, [environment, purpose, series]);
+  }, [environment, providerEnvironment, purpose, series]);
 
   useEffect(() => {
     if (!selectedClient) return;
@@ -252,8 +270,8 @@ export function NfeStartForm() {
 
   async function startIssuance() {
     if (!selectedClient || !normalizedDuimp) return;
-    if (!setup.fiscalProfile || !setup.taxRule || !setup.numberSequence) {
-      toast.info("Conclua os cadastros fiscais antes de capturar a DUIMP.");
+    if (!setup.fiscalProfile || !setup.taxRule || !setup.numberSequence || !setup.providerConnection) {
+      toast.info("Conclua os cadastros fiscais e configure a conexão do Portal Único antes de capturar a DUIMP.");
       return;
     }
     setBusy(true);
@@ -264,7 +282,7 @@ export function NfeStartForm() {
         duimp_number: normalizedDuimp,
         source: "portal_unico",
       });
-      await nfeApi.fetchDuimp(process.id, environment);
+      await nfeApi.fetchDuimp(process.id, providerEnvironment);
       router.push(`/nfe/processes/${process.id}?importPurpose=${purpose}&environment=${environment}&series=${series}`);
     } catch (error) {
       toast.error(errorMessage(error));
@@ -273,7 +291,7 @@ export function NfeStartForm() {
     }
   }
 
-  const ready = setup.fiscalProfile && setup.taxRule && setup.numberSequence;
+  const ready = setup.fiscalProfile && setup.taxRule && setup.numberSequence && setup.providerConnection;
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-8">
@@ -302,8 +320,9 @@ export function NfeStartForm() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5"><Label htmlFor="duimp">Número da DUIMP</Label><Input id="duimp" value={duimpNumber} onChange={(event) => setDuimpNumber(event.target.value)} placeholder="26BR0000000000-1" /></div>
               <div className="space-y-1.5"><Label>Finalidade</Label><Select value={purpose} onValueChange={(value) => setPurpose(value as ImportPurpose)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="resale">Revenda</SelectItem><SelectItem value="industrialization">Industrialização</SelectItem><SelectItem value="fixed_asset">Ativo imobilizado</SelectItem><SelectItem value="use_consumption">Uso e consumo</SelectItem></SelectContent></Select></div>
-              <div className="space-y-1.5"><Label>Ambiente</Label><Select value={environment} onValueChange={(value) => setEnvironment(value as FiscalEnvironment)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="homologation">Homologação</SelectItem><SelectItem value="production">Produção</SelectItem></SelectContent></Select></div>
-              <div className="space-y-1.5"><Label htmlFor="series">Série</Label><Input id="series" value={series} onChange={(event) => setSeries(event.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Ambiente da NF-e</Label><Select value={environment} onValueChange={(value) => setEnvironment(value as FiscalEnvironment)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="homologation">Homologação</SelectItem><SelectItem value="production">Produção</SelectItem></SelectContent></Select></div>
+              <div className="space-y-1.5"><Label>Origem da DUIMP</Label><Select value={providerEnvironment} onValueChange={(value) => setProviderEnvironment(value as FiscalEnvironment)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="production">Portal Único — Produção</SelectItem><SelectItem value="homologation">Portal Único — Validação</SelectItem></SelectContent></Select></div>
+              <div className="space-y-1.5"><Label htmlFor="series">Série da NF-e</Label><Input id="series" value={series} onChange={(event) => setSeries(event.target.value)} /></div>
             </div>
           </CardContent>
         </Card>
@@ -323,13 +342,26 @@ export function NfeStartForm() {
                 <Button size="sm" variant="outline" onClick={() => setSetupDialog(dialog as typeof setupDialog)}><Settings2 /> {done ? "Revisar" : "Cadastrar"}</Button>
               </div>
             ))}
-            {selectedClient && ready && <Alert className="border-emerald-500/30 bg-emerald-500/5"><Check /><AlertTitle>Pronto para capturar</AlertTitle><AlertDescription>Os pré-requisitos do cliente estão configurados.</AlertDescription></Alert>}
+            {selectedClient && !setup.checking && (
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex items-center gap-3">{setup.providerConnection ? <Check className="size-5 text-emerald-600" /> : <CircleAlert className="size-5 text-amber-600" />}<div><p className="text-sm font-medium">Portal Único</p><p className="text-xs text-muted-foreground">{setup.providerConnection ? `Conexão ativa · ${providerEnvironment === "production" ? "Produção" : "Validação"}` : `Sem conexão ativa · ${providerEnvironment === "production" ? "Produção" : "Validação"}`}</p></div></div>
+                <Button size="sm" variant="outline" onClick={() => void checkSetup(selectedClient)}><Settings2 /> Verificar</Button>
+              </div>
+            )}
+            {selectedClient && !setup.checking && !setup.providerConnection && (
+              <Alert>
+                <CircleAlert />
+                <AlertTitle>Conexão administrativa necessária</AlertTitle>
+                <AlertDescription>Cadastre uma conexão ativa do Portal Único para o cliente ou uma conexão global da organização. Para esta DUIMP real, use Produção; a NF-e pode continuar em homologação.</AlertDescription>
+              </Alert>
+            )}
+            {selectedClient && ready && <Alert className="border-emerald-500/30 bg-emerald-500/5"><Check /><AlertTitle>Pronto para capturar</AlertTitle><AlertDescription>Cadastros fiscais e conexão do Portal Único estão configurados.</AlertDescription></Alert>}
             <Button className="mt-3 w-full" size="lg" disabled={!selectedClient || !normalizedDuimp || !ready || busy} onClick={startIssuance}>{busy && <Loader2 className="animate-spin" />} Criar processo e capturar DUIMP</Button>
           </CardContent>
         </Card>
       </div>
 
-      <Alert><CircleAlert /><AlertTitle>Homologação por padrão</AlertTitle><AlertDescription>A regra tributária rápida reduz digitação, mas não substitui a conferência fiscal. Pendências e divergências continuarão bloqueando a geração definitiva.</AlertDescription></Alert>
+      <Alert><CircleAlert /><AlertTitle>Ambientes independentes</AlertTitle><AlertDescription>A NF-e pode ser gerada em homologação enquanto a DUIMP real é consultada no Portal Único de produção. A regra tributária rápida não substitui a conferência fiscal.</AlertDescription></Alert>
 
       <Dialog open={setupDialog === "client"} onOpenChange={(open) => !open && setSetupDialog(null)}><DialogContent><DialogHeader><DialogTitle>Cadastro rápido de cliente</DialogTitle><DialogDescription>Crie o cadastro básico agora; o perfil fiscal será preenchido em seguida.</DialogDescription></DialogHeader><form className="grid gap-4" onSubmit={createClient}><Field label="CNPJ" name="cnpj" /><Field label="Razão social" name="razao_social" /><Field label="Nome resumido" name="nome_resumido" required={false} /><Field label="Inscrição estadual" name="inscricao_estadual" required={false} /><Field label="Regime cadastral" name="regime_tributacao" defaultValue="REGIME_NORMAL" /><Button disabled={busy}>{busy && <Loader2 className="animate-spin" />} Salvar cliente</Button></form></DialogContent></Dialog>
 
