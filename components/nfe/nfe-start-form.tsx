@@ -29,6 +29,27 @@ function errorMessage(error: unknown) {
   return candidate.response?.data?.message || candidate.message || "Não foi possível concluir a operação.";
 }
 
+function normalizeApiEnum(value: unknown) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return normalized.split(".").at(-1) ?? "";
+}
+
+function normalizeSeries(value: unknown) {
+  return String(value ?? "").trim().replace(/^0+(?=\d)/, "");
+}
+
+function matchesNumberSequence(
+  sequence: Record<string, unknown>,
+  environment: FiscalEnvironment,
+  series: string,
+) {
+  return (
+    normalizeApiEnum(sequence.environment) === environment &&
+    normalizeSeries(sequence.series) === normalizeSeries(series) &&
+    normalizeApiEnum(sequence.status) === "active"
+  );
+}
+
 function Field({ label, name, defaultValue, required = true, type = "text", placeholder }: {
   label: string;
   name: string;
@@ -76,9 +97,8 @@ export function NfeStartForm() {
       numberSequence:
         sequences.status === "fulfilled" &&
         sequences.value.some((row) =>
-          row.environment === environment &&
-          String(row.series).replace(/^0+/, "") === series.replace(/^0+/, "") &&
-          row.status === "active"),
+          matchesNumberSequence(row, environment, series),
+        ),
       checking: false,
     });
   }, [environment, purpose, series]);
@@ -216,6 +236,11 @@ export function NfeStartForm() {
         status: "active",
       });
       await checkSetup(selectedClient);
+      setSetup((current) => ({
+        ...current,
+        numberSequence: true,
+        checking: false,
+      }));
       setSetupDialog(null);
       toast.success("Sequência numérica configurada.");
     } catch (error) {
