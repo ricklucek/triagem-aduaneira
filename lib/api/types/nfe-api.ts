@@ -71,6 +71,44 @@ export interface NfeNumberSequencePayload {
   status: "active" | "inactive";
 }
 
+export interface NfeXmlVersionSummary {
+  id: string;
+  version_number: number;
+  xml_type: string;
+  xsd_valid?: boolean | null;
+  xsd_errors?: Array<Record<string, unknown>> | null;
+  access_key?: string | null;
+  protocol_number?: string | null;
+  generated_at?: string | null;
+}
+
+export interface NfeDraftSummary {
+  id: string;
+  status: string;
+  environment: FiscalEnvironment;
+  series: string;
+  number?: number | null;
+  access_key?: string | null;
+  duimp_snapshot_id?: string | null;
+  items_count: number;
+  validation_errors: Array<Record<string, unknown>>;
+  validation_warnings: Array<Record<string, unknown>>;
+  created_at?: string | null;
+  updated_at?: string | null;
+  xml_versions: NfeXmlVersionSummary[];
+}
+
+export interface DuimpSnapshotDetail {
+  id: string;
+  duimp_number: string;
+  duimp_version?: string | null;
+  source_provider?: string | null;
+  fetched_at?: string | null;
+  created_at?: string | null;
+  raw_payload: Record<string, unknown>;
+  normalized_payload: Record<string, unknown>;
+}
+
 export interface NfeWorkflowState {
   process: ImportProcessSummary;
   latest_snapshot: null | {
