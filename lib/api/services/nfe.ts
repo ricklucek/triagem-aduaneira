@@ -28,6 +28,22 @@ export const nfeApi = {
     return data;
   },
 
+  async saveProviderConnection(payload: {
+    importer_id?: string | null;
+    provider: "portal_unico";
+    environment: FiscalEnvironment;
+    auth_type: "api_key";
+    status: "active";
+    credentials_ref: string;
+    config_json: { role_type: "IMPEXP" };
+  }) {
+    const { data } = await http.post(
+      API_ROUTES.nfe.providerConnections,
+      payload,
+    );
+    return data;
+  },
+
   async listProcesses(params: {
     q?: string;
     status?: string;
