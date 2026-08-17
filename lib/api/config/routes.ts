@@ -45,6 +45,7 @@ export const API_ROUTES = {
       `/clients/${clientId}/nfe-number-sequences`,
   },
   nfe: {
+    providerConnections: "/external-provider-connections",
     processes: "/import-processes",
     process: (processId: string) => `/import-processes/${processId}`,
     workflowState: (processId: string) =>
