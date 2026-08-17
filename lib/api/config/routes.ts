@@ -51,6 +51,20 @@ export const API_ROUTES = {
       `/import-processes/${processId}/nfe-workflow-state`,
     fetchDuimp: (processId: string) =>
       `/import-processes/${processId}/duimp/fetch`,
+    snapshots: (processId: string) =>
+      `/import-processes/${processId}/duimp-snapshots`,
+    drafts: (processId: string) =>
+      `/import-processes/${processId}/nfe-drafts`,
+    createDraft: (processId: string) =>
+      `/import-processes/${processId}/nfe-draft/from-duimp`,
+    validateDraft: (draftId: string) => `/nfe-drafts/${draftId}/validate`,
+    generateAccessKey: (draftId: string) =>
+      `/nfe-drafts/${draftId}/generate-access-key`,
+    generateXml: (draftId: string) => `/nfe-drafts/${draftId}/generate-xml`,
+    validateXml: (draftId: string, xmlVersionId: string) =>
+      `/nfe-drafts/${draftId}/xml-versions/${xmlVersionId}/validate-xsd`,
+    downloadXml: (draftId: string, xmlVersionId: string) =>
+      `/nfe-drafts/${draftId}/xml-versions/${xmlVersionId}/download`,
   },
   dashboards: {
     admin: "/dashboards/admin",
