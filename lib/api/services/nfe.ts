@@ -98,12 +98,13 @@ export const nfeApi = {
   },
 
   async downloadXml(draftId: string, xmlVersionId: string) {
-    const response = await http.get<Blob>(API_ROUTES.nfe.downloadXml(draftId, xmlVersionId), {
-      responseType: "blob",
-    });
-    const disposition = String(response.headers["content-disposition"] || "");
-    const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] || `nfe-${xmlVersionId}.xml`;
-    return { blob: response.data, filename };
+    const { data } = await http.get<string>(
+      API_ROUTES.nfe.downloadXml(draftId, xmlVersionId),
+    );
+    return {
+      blob: new Blob([data], { type: "application/xml;charset=utf-8" }),
+      filename: `NFe-${xmlVersionId}.xml`,
+    };
   },
 
   async getFiscalProfile(clientId: string): Promise<FiscalProfilePayload> {
