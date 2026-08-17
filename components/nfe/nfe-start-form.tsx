@@ -77,7 +77,7 @@ export function NfeStartForm() {
   const [environment, setEnvironment] = useState<FiscalEnvironment>("homologation");
   const [providerEnvironment, setProviderEnvironment] = useState<FiscalEnvironment>("production");
   const [series, setSeries] = useState("1");
-  const [setupDialog, setSetupDialog] = useState<"client" | "profile" | "rule" | "sequence" | null>(null);
+  const [setupDialog, setSetupDialog] = useState<"client" | "profile" | "rule" | "sequence" | "provider" | null>(null);
   const [busy, setBusy] = useState(false);
   const [setup, setSetup] = useState<SetupState>({ fiscalProfile: false, taxRule: false, numberSequence: false, providerConnection: false, checking: false });
   const { data: clients, mutate: refreshClients } = useClients({ q: search || undefined, ativo: true, limit: 20 });
@@ -268,6 +268,32 @@ export function NfeStartForm() {
     }
   }
 
+  async function saveProviderConnection(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedClient) return;
+    setBusy(true);
+    try {
+      const form = new FormData(event.currentTarget);
+      const scope = String(form.get("connection_scope") || "organization");
+      await nfeApi.saveProviderConnection({
+        importer_id: scope === "client" ? selectedClient.id : null,
+        provider: "portal_unico",
+        environment: providerEnvironment,
+        auth_type: "api_key",
+        status: "active",
+        credentials_ref: String(form.get("credentials_ref") || "gcp:PORTAL_UNICO"),
+        config_json: { role_type: "IMPEXP" },
+      });
+      await checkSetup(selectedClient);
+      setSetupDialog(null);
+      toast.success("Conexão do Portal Único configurada.");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function startIssuance() {
     if (!selectedClient || !normalizedDuimp) return;
     if (!setup.fiscalProfile || !setup.taxRule || !setup.numberSequence || !setup.providerConnection) {
@@ -345,7 +371,7 @@ export function NfeStartForm() {
             {selectedClient && !setup.checking && (
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="flex items-center gap-3">{setup.providerConnection ? <Check className="size-5 text-emerald-600" /> : <CircleAlert className="size-5 text-amber-600" />}<div><p className="text-sm font-medium">Portal Único</p><p className="text-xs text-muted-foreground">{setup.providerConnection ? `Conexão ativa · ${providerEnvironment === "production" ? "Produção" : "Validação"}` : `Sem conexão ativa · ${providerEnvironment === "production" ? "Produção" : "Validação"}`}</p></div></div>
-                <Button size="sm" variant="outline" onClick={() => void checkSetup(selectedClient)}><Settings2 /> Verificar</Button>
+                <Button size="sm" variant="outline" onClick={() => setup.providerConnection ? void checkSetup(selectedClient) : setSetupDialog("provider")}><Settings2 /> {setup.providerConnection ? "Verificar" : "Configurar"}</Button>
               </div>
             )}
             {selectedClient && !setup.checking && !setup.providerConnection && (
@@ -364,6 +390,21 @@ export function NfeStartForm() {
       <Alert><CircleAlert /><AlertTitle>Ambientes independentes</AlertTitle><AlertDescription>A NF-e pode ser gerada em homologação enquanto a DUIMP real é consultada no Portal Único de produção. A regra tributária rápida não substitui a conferência fiscal.</AlertDescription></Alert>
 
       <Dialog open={setupDialog === "client"} onOpenChange={(open) => !open && setSetupDialog(null)}><DialogContent><DialogHeader><DialogTitle>Cadastro rápido de cliente</DialogTitle><DialogDescription>Crie o cadastro básico agora; o perfil fiscal será preenchido em seguida.</DialogDescription></DialogHeader><form className="grid gap-4" onSubmit={createClient}><Field label="CNPJ" name="cnpj" /><Field label="Razão social" name="razao_social" /><Field label="Nome resumido" name="nome_resumido" required={false} /><Field label="Inscrição estadual" name="inscricao_estadual" required={false} /><Field label="Regime cadastral" name="regime_tributacao" defaultValue="REGIME_NORMAL" /><Button disabled={busy}>{busy && <Loader2 className="animate-spin" />} Salvar cliente</Button></form></DialogContent></Dialog>
+
+      <Dialog open={setupDialog === "provider"} onOpenChange={(open) => !open && setSetupDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Conexão com o Portal Único</DialogTitle>
+            <DialogDescription>Configure a referência segura para o ambiente {providerEnvironment === "production" ? "de produção" : "de validação"}. As chaves permanecem no Secret Manager.</DialogDescription>
+          </DialogHeader>
+          <form className="grid gap-4" onSubmit={saveProviderConnection}>
+            <div className="space-y-1.5"><Label>Escopo</Label><Select name="connection_scope" defaultValue="organization"><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="organization">Toda a organização</SelectItem><SelectItem value="client">Somente este cliente</SelectItem></SelectContent></Select></div>
+            <Field label="Referência das credenciais" name="credentials_ref" defaultValue="gcp:PORTAL_UNICO" />
+            <Alert><CircleAlert /><AlertDescription>Esta referência espera os secrets PORTAL_UNICO_CLIENT_ID e PORTAL_UNICO_CLIENT_SECRET no Google Secret Manager. Nenhuma chave será salva no banco.</AlertDescription></Alert>
+            <Button disabled={busy}>{busy && <Loader2 className="animate-spin" />} Salvar conexão</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={setupDialog === "profile"} onOpenChange={(open) => !open && setSetupDialog(null)}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Perfil fiscal</DialogTitle><DialogDescription>Dados do emitente usados no XML da NF-e.</DialogDescription></DialogHeader><form className="grid gap-4 sm:grid-cols-2" onSubmit={saveProfile}><Field label="Razão social" name="legal_name" defaultValue={selectedClient?.razao_social} /><Field label="Nome fantasia" name="trade_name" defaultValue={selectedClient?.nome_resumido || ""} required={false} /><Field label="Inscrição estadual" name="state_registration" defaultValue={selectedClient?.inscricao_estadual || ""} required={false} /><div className="space-y-1.5"><Label>Regime tributário NF-e</Label><Select name="tax_regime" defaultValue="3"><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">1 — Simples Nacional</SelectItem><SelectItem value="2">2 — Excesso sublimite</SelectItem><SelectItem value="3">3 — Regime normal</SelectItem></SelectContent></Select></div><Field label="Logradouro" name="street" /><Field label="Número" name="number" /><Field label="Complemento" name="complement" required={false} /><Field label="Bairro" name="district" /><Field label="Código IBGE" name="city_code" placeholder="4106902" /><Field label="Município" name="city_name" /><Field label="UF" name="state" placeholder="PR" /><Field label="CEP" name="zip_code" /><Field label="Telefone" name="phone" required={false} /><Field label="E-mail" name="email" type="email" required={false} /><Button className="sm:col-span-2" disabled={busy}>Salvar perfil fiscal</Button></form></DialogContent></Dialog>
 
