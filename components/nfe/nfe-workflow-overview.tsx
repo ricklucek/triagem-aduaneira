@@ -108,6 +108,8 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   }
 
   const data = workflow.data;
+  const draftItems = drafts.data?.items ?? [];
+  const snapshotItems = snapshots.data ?? [];
   const completedSteps = data.latest_draft
     ? data.latest_draft.xmlVersions.length
       ? data.latest_draft.xmlVersions[0]?.xsd_valid ? 5 : 4
@@ -220,11 +222,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         <Card>
           <CardHeader><CardTitle className="text-base">Resumo técnico</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Snapshots DUIMP</span><strong>{snapshots.data?.length || 0}</strong></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Snapshots DUIMP</span><strong>{snapshotItems.length}</strong></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Perfil fiscal</span><strong>{data.prerequisites.has_fiscal_profile ? "Configurado" : "Pendente"}</strong></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Regra tributária</span><strong>{data.prerequisites.has_active_tax_rule ? "Aplicada" : "Pendente"}</strong></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Sequência</span><strong>{data.prerequisites.has_number_sequence ? "Configurada" : "Pendente"}</strong></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Rascunhos</span><strong>{drafts.data?.items.length || 0}</strong></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Rascunhos</span><strong>{draftItems.length}</strong></div>
           </CardContent>
         </Card>
       </div>
@@ -239,11 +241,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         <CardContent className="space-y-4">
           {drafts.isLoading && <p className="text-sm text-muted-foreground">Carregando rascunhos…</p>}
           {drafts.error && <Alert variant="destructive"><CircleAlert /><AlertDescription>Não foi possível consultar o histórico de rascunhos.</AlertDescription></Alert>}
-          {drafts.data?.items.map((draft, index) => (
+          {draftItems.map((draft, index) => (
             <div key={draft.id} className="rounded-xl border p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">Rascunho {draft.number ? `NF-e nº ${draft.number}` : `#${drafts.data.items.length - index}`}</h3><Badge variant={draft.validation_errors.length ? "destructive" : "secondary"}>{draftStatusLabels[draft.status] || draft.status}</Badge></div>
+                  <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">Rascunho {draft.number ? `NF-e nº ${draft.number}` : `#${draftItems.length - index}`}</h3><Badge variant={draft.validation_errors.length ? "destructive" : "secondary"}>{draftStatusLabels[draft.status] || draft.status}</Badge></div>
                   <p className="mt-1 text-xs text-muted-foreground">Criado em {dateLabel(draft.created_at)} · {draft.items_count} itens · Série {draft.series}</p>
                   {draft.access_key && <p className="mt-1 break-all font-mono text-xs text-muted-foreground">Chave: {draft.access_key}</p>}
                 </div>
@@ -273,16 +275,16 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               </div>
             </div>
           ))}
-          {!drafts.isLoading && drafts.data?.items.length === 0 && <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">Ainda não há rascunhos para este processo.</p>}
+          {!drafts.isLoading && draftItems.length === 0 && <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">Ainda não há rascunhos para este processo.</p>}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader><CardTitle>Documentos da origem</CardTitle><CardDescription>Baixe os dados recebidos do Portal Único para conferência e auditoria.</CardDescription></CardHeader>
         <CardContent className="space-y-3">
-          {snapshots.data?.map((snapshot, index) => (
+          {snapshotItems.map((snapshot, index) => (
             <div key={snapshot.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3"><FileJson className="size-5 text-primary" /><div><p className="text-sm font-medium">Snapshot {snapshots.data.length - index} · DUIMP {snapshot.duimp_number}</p><p className="text-xs text-muted-foreground">Capturado em {dateLabel(snapshot.fetched_at || snapshot.created_at)}</p></div></div>
+              <div className="flex items-center gap-3"><FileJson className="size-5 text-primary" /><div><p className="text-sm font-medium">Snapshot {snapshotItems.length - index} · DUIMP {snapshot.duimp_number}</p><p className="text-xs text-muted-foreground">Capturado em {dateLabel(snapshot.fetched_at || snapshot.created_at)}</p></div></div>
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => saveJson(snapshot.normalized_payload, `DUIMP-${snapshot.duimp_number}-normalizado.json`)}><Download /> Normalizado</Button>
                 <Button size="sm" variant="ghost" onClick={() => saveJson(snapshot.raw_payload, `DUIMP-${snapshot.duimp_number}-original.json`)}><Download /> Original</Button>
