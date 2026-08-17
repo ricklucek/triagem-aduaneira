@@ -1,13 +1,16 @@
 import { http } from "@/lib/api/config/http";
 import { API_ROUTES } from "@/lib/api/config/routes";
 import type {
+  DuimpSnapshotDetail,
   FiscalEnvironment,
   FiscalProfilePayload,
   ImportPurpose,
   ImportTaxRulePayload,
   ListImportProcessesResponse,
+  NfeDraftSummary,
   NfeNumberSequencePayload,
   NfeWorkflowState,
+  NfeXmlVersionSummary,
 } from "@/lib/api/types/nfe-api";
 
 export const nfeApi = {
@@ -18,10 +21,7 @@ export const nfeApi = {
     limit?: number;
     offset?: number;
   }): Promise<ListImportProcessesResponse> {
-    const { data } = await http.get<ListImportProcessesResponse>(
-      API_ROUTES.nfe.processes,
-      { params },
-    );
+    const { data } = await http.get<ListImportProcessesResponse>(API_ROUTES.nfe.processes, { params });
     return data;
   },
 
@@ -36,11 +36,10 @@ export const nfeApi = {
   },
 
   async fetchDuimp(processId: string, environment: FiscalEnvironment) {
-    const { data } = await http.post(API_ROUTES.nfe.fetchDuimp(processId), {
-      provider_environment: environment,
-      source_provider: "portal_unico",
-      enrich_catalog: true,
-    });
+    const { data } = await http.post<{ snapshot: DuimpSnapshotDetail }>(
+      API_ROUTES.nfe.fetchDuimp(processId),
+      { provider_environment: environment, source_provider: "portal_unico", enrich_catalog: true },
+    );
     return data;
   },
 
@@ -48,55 +47,92 @@ export const nfeApi = {
     processId: string,
     params: { import_purpose?: ImportPurpose; environment: FiscalEnvironment; series: string },
   ): Promise<NfeWorkflowState> {
-    const { data } = await http.get<NfeWorkflowState>(
-      API_ROUTES.nfe.workflowState(processId),
-      { params },
+    const { data } = await http.get<NfeWorkflowState>(API_ROUTES.nfe.workflowState(processId), { params });
+    return data;
+  },
+
+  async listDrafts(processId: string): Promise<{ items: NfeDraftSummary[] }> {
+    const { data } = await http.get<{ items: NfeDraftSummary[] }>(API_ROUTES.nfe.drafts(processId));
+    return data;
+  },
+
+  async listSnapshots(processId: string): Promise<DuimpSnapshotDetail[]> {
+    const { data } = await http.get<DuimpSnapshotDetail[]>(API_ROUTES.nfe.snapshots(processId));
+    return data;
+  },
+
+  async createDraft(processId: string, payload: {
+    environment: FiscalEnvironment;
+    series: string;
+    import_purpose: ImportPurpose;
+    duimp_snapshot_id?: string;
+  }) {
+    const { data } = await http.post<{ draft: { id: string }; validation: { valid: boolean } }>(
+      API_ROUTES.nfe.createDraft(processId),
+      payload,
     );
     return data;
   },
 
-  async getFiscalProfile(clientId: string): Promise<FiscalProfilePayload> {
-    const { data } = await http.get<FiscalProfilePayload>(
-      API_ROUTES.clients.fiscalProfile(clientId),
+  async validateDraft(draftId: string) {
+    const { data } = await http.post<{ valid: boolean; errors?: Array<Record<string, unknown>> }>(
+      API_ROUTES.nfe.validateDraft(draftId),
+      {},
     );
+    return data;
+  },
+
+  async generateAccessKey(draftId: string) {
+    const { data } = await http.post(API_ROUTES.nfe.generateAccessKey(draftId), {});
+    return data;
+  },
+
+  async generateXml(draftId: string): Promise<NfeXmlVersionSummary> {
+    const { data } = await http.post<NfeXmlVersionSummary>(API_ROUTES.nfe.generateXml(draftId), {});
+    return data;
+  },
+
+  async validateXml(draftId: string, xmlVersionId: string) {
+    const { data } = await http.post(API_ROUTES.nfe.validateXml(draftId, xmlVersionId), {});
+    return data;
+  },
+
+  async downloadXml(draftId: string, xmlVersionId: string) {
+    const response = await http.get<Blob>(API_ROUTES.nfe.downloadXml(draftId, xmlVersionId), {
+      responseType: "blob",
+    });
+    const disposition = String(response.headers["content-disposition"] || "");
+    const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] || `nfe-${xmlVersionId}.xml`;
+    return { blob: response.data, filename };
+  },
+
+  async getFiscalProfile(clientId: string): Promise<FiscalProfilePayload> {
+    const { data } = await http.get<FiscalProfilePayload>(API_ROUTES.clients.fiscalProfile(clientId));
     return data;
   },
 
   async saveFiscalProfile(clientId: string, payload: FiscalProfilePayload) {
-    const { data } = await http.put(
-      API_ROUTES.clients.fiscalProfile(clientId),
-      payload,
-    );
+    const { data } = await http.put(API_ROUTES.clients.fiscalProfile(clientId), payload);
     return data;
   },
 
   async listTaxRules(clientId: string): Promise<Array<{ id: string; name: string; import_purpose: ImportPurpose; active: boolean }>> {
-    const { data } = await http.get<Array<{ id: string; name: string; import_purpose: ImportPurpose; active: boolean }>>(
-      API_ROUTES.clients.importTaxRules(clientId),
-    );
+    const { data } = await http.get<Array<{ id: string; name: string; import_purpose: ImportPurpose; active: boolean }>>(API_ROUTES.clients.importTaxRules(clientId));
     return data;
   },
 
   async createTaxRule(clientId: string, payload: ImportTaxRulePayload) {
-    const { data } = await http.post(
-      API_ROUTES.clients.importTaxRules(clientId),
-      payload,
-    );
+    const { data } = await http.post(API_ROUTES.clients.importTaxRules(clientId), payload);
     return data;
   },
 
   async listNumberSequences(clientId: string): Promise<Array<Record<string, unknown>>> {
-    const { data } = await http.get<Array<Record<string, unknown>>>(
-      API_ROUTES.clients.nfeNumberSequences(clientId),
-    );
+    const { data } = await http.get<Array<Record<string, unknown>>>(API_ROUTES.clients.nfeNumberSequences(clientId));
     return data;
   },
 
   async saveNumberSequence(clientId: string, payload: NfeNumberSequencePayload) {
-    const { data } = await http.put(
-      API_ROUTES.clients.nfeNumberSequences(clientId),
-      payload,
-    );
+    const { data } = await http.put(API_ROUTES.clients.nfeNumberSequences(clientId), payload);
     return data;
   },
 };
