@@ -243,6 +243,26 @@ export interface NfeItemClassificationItem {
   cfop_source?: "tax_rule" | "purpose_default" | null;
   tax_rule?: { id: string; name: string; active: boolean } | null;
   status: "unclassified" | "missing_tax_rule" | "inactive_tax_rule" | "missing_cfop" | "classified";
+  rule_candidates?: Array<{
+    id: string;
+    name: string;
+    mismatch_reasons: Array<
+      | "issuer_state"
+      | "import_purpose"
+      | "tax_regime"
+      | "import_modality"
+      | "effective_from"
+      | "effective_until"
+      | "ncm_pattern"
+    >;
+    issuer_state: string;
+    tax_regime?: string | null;
+    import_modality?: string | null;
+    ncm_pattern?: string | null;
+    effective_from?: string | null;
+    effective_until?: string | null;
+    cfop?: string | null;
+  }>;
   classified_by?: { id: string; name: string } | null;
   updated_at?: string | null;
 }
@@ -255,6 +275,7 @@ export interface NfeItemClassificationState {
   classified_count: number;
   pending_count: number;
   purpose_counts: Partial<Record<ImportPurpose, number>>;
+  registration_date?: string | null;
   has_classifications: boolean;
   ready_for_draft: boolean;
   latest_updated_at?: string | null;
