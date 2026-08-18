@@ -62,6 +62,9 @@ export const API_ROUTES = {
       `/import-processes/${processId}/nfe-drafts`,
     createDraft: (processId: string) =>
       `/import-processes/${processId}/nfe-draft/from-duimp`,
+    draft: (draftId: string) => `/nfe-drafts/${draftId}`,
+    draftItem: (draftId: string, itemId: string) =>
+      `/nfe-drafts/${draftId}/items/${itemId}`,
     validateDraft: (draftId: string) => `/nfe-drafts/${draftId}/validate`,
     generateAccessKey: (draftId: string) =>
       `/nfe-drafts/${draftId}/generate-access-key`,
