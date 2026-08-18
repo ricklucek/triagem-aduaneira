@@ -50,6 +50,10 @@ export const API_ROUTES = {
     process: (processId: string) => `/import-processes/${processId}`,
     workflowState: (processId: string) =>
       `/import-processes/${processId}/nfe-workflow-state`,
+    context: (processId: string) =>
+      `/import-processes/${processId}/nfe-context`,
+    resolveContext: (processId: string) =>
+      `/import-processes/${processId}/nfe-context/resolve`,
     fetchDuimp: (processId: string) =>
       `/import-processes/${processId}/duimp/fetch`,
     snapshots: (processId: string) =>
