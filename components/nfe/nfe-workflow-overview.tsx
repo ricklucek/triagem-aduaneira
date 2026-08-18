@@ -295,9 +295,12 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     const supplierForeignId = value("supplier_foreign_id");
     const supplierCountryIso = value("supplier_country_iso_alpha_2").toUpperCase();
     const payload: UpdateNfeDraftPayload = {
+      issuer: {
+        state_registration: value("issuer_state_registration"),
+      },
       foreign_supplier: {
         ...(supplierLegalName ? { legal_name: supplierLegalName } : {}),
-        ...(supplierForeignId ? { foreign_id: supplierForeignId } : {}),
+        foreign_id: supplierForeignId || null,
         country_code: value("supplier_country_code"),
         country_name: value("supplier_country_name"),
         ...(supplierCountryIso ? { country_iso_alpha_2: supplierCountryIso } : {}),
@@ -321,7 +324,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       if (result.validation.valid) {
         setCorrectionOpen(false);
         setCorrectionDetail(null);
-        toast.success("Rascunho corrigido e validado. A geração do XML foi liberada.");
+        toast.success(
+          result.requires_new_xml
+            ? "Dados atualizados. A versão XML anterior foi preservada; gere uma nova versão."
+            : "Rascunho corrigido e validado. A geração do XML foi liberada.",
+        );
       } else {
         const detail = await nfeApi.getDraft(correctionDetail.draft.id);
         setCorrectionDetail(detail);
@@ -561,10 +568,10 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                   {draft.access_key && <p className="mt-1 break-all font-mono text-xs text-muted-foreground">Chave: {draft.access_key}</p>}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {draft.validation_errors.length > 0 && (
-                    <Button variant="default" onClick={() => void openDraftCorrection(draft)} disabled={Boolean(busyAction)}>
+                  {!["signed", "transmitted", "authorized", "cancelled"].includes(draft.status) && (
+                    <Button variant={draft.validation_errors.length ? "default" : "outline"} onClick={() => void openDraftCorrection(draft)} disabled={Boolean(busyAction)}>
                       {busyAction === `load-correction:${draft.id}` ? <Loader2 className="animate-spin" /> : <PencilLine />}
-                      Corrigir rascunho
+                      {draft.validation_errors.length ? "Corrigir rascunho" : "Editar dados"}
                     </Button>
                   )}
                   <Button variant="outline" onClick={() => void generateDiagnosticXml(draft)} disabled={Boolean(busyAction) || draft.validation_errors.length > 0}>
@@ -594,8 +601,13 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               <div className="mt-4 space-y-2">
                 {draft.xml_versions.length === 0 && <p className="text-sm text-muted-foreground">Nenhum XML gerado para este rascunho.</p>}
                 {draft.xml_versions.map((version) => {
-                  const xsdApproved = version.xsd_valid === true;
-                  const xsdRejected = version.xsd_valid === false;
+                  const xmlOutdated = Boolean(
+                    draft.updated_at &&
+                    version.generated_at &&
+                    new Date(draft.updated_at).getTime() > new Date(version.generated_at).getTime()
+                  );
+                  const xsdApproved = version.xsd_valid === true && !xmlOutdated;
+                  const xsdRejected = version.xsd_valid === false && !xmlOutdated;
                   const xsdErrors = version.xsd_errors || [];
                   return (
                     <div id={`xml-version-${version.id}`} key={version.id} className="space-y-3 rounded-lg bg-muted/50 p-3">
@@ -604,11 +616,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                           <FileCode2 className="size-4" />
                           <span className="text-sm font-medium">XML {version.xml_type === "unsigned" ? "não assinado" : version.xml_type} v{version.version_number}</span>
                           <Badge variant={xsdApproved ? "default" : xsdRejected ? "destructive" : "outline"}>
-                            {xsdApproved ? "XSD válido" : xsdRejected ? "XSD inválido" : "Ainda não validado"}
+                            {xmlOutdated ? "Versão anterior" : xsdApproved ? "XSD válido" : xsdRejected ? "XSD inválido" : "Ainda não validado"}
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {!xsdApproved && (
+                          {!xsdApproved && !xmlOutdated && (
                             <Button size="sm" variant={xsdRejected ? "destructive" : "outline"} onClick={() => void validateExistingXml(draft.id, version)} disabled={Boolean(busyAction)}>
                               {busyAction === `validate-xml:${version.id}` ? <Loader2 className="animate-spin" /> : <Check />}
                               {xsdRejected ? "Validar novamente" : "Validar XML"}
@@ -619,6 +631,13 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                           </Button>
                         </div>
                       </div>
+                      {xmlOutdated && (
+                        <Alert>
+                          <CircleAlert />
+                          <AlertTitle>XML preservado apenas para histórico</AlertTitle>
+                          <AlertDescription>Os dados do rascunho foram alterados depois desta geração. Gere uma nova versão XML antes de validar ou assinar.</AlertDescription>
+                        </Alert>
+                      )}
                       {xsdRejected && (
                         <Alert variant="destructive">
                           <CircleAlert />
@@ -700,7 +719,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
           <DialogHeader>
             <DialogTitle>Corrigir rascunho da NF-e</DialogTitle>
             <DialogDescription>
-              Corrija os erros obrigatórios e, se já tiver os dados, complete os alertas de transporte. Ao salvar, a API valida novamente o rascunho.
+              Revise os dados do rascunho em qualquer etapa anterior à assinatura. Se já houver XML, ele será preservado no histórico e uma nova versão deverá ser gerada.
             </DialogDescription>
           </DialogHeader>
           {correctionDetail && (
@@ -719,6 +738,17 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
 
               <section className="space-y-3">
                 <div>
+                  <h3 className="font-semibold">Emitente da NF-e</h3>
+                  <p className="text-xs text-muted-foreground">A inscrição estadual não deve receber o CNPJ. Informe ISENTO ou de 2 a 14 dígitos, conforme o cadastro fiscal do emitente.</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5"><Label htmlFor="issuer_cnpj">CNPJ do emitente</Label><Input id="issuer_cnpj" value={nestedText(correctionPayload, "issuer", "cnpj")} disabled /></div>
+                  <div className="space-y-1.5"><Label htmlFor="issuer_state_registration">Inscrição estadual do emitente</Label><Input id="issuer_state_registration" name="issuer_state_registration" defaultValue={nestedText(correctionPayload, "issuer", "state_registration")} required placeholder="Somente números ou ISENTO" /></div>
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <div>
                   <h3 className="font-semibold">Exportador estrangeiro</h3>
                   <p className="text-xs text-muted-foreground">O código BACEN e o nome do país são obrigatórios para o XML.</p>
                 </div>
@@ -727,7 +757,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                   <div className="space-y-1.5"><Label htmlFor="supplier_country_code">Código BACEN do país</Label><Input id="supplier_country_code" name="supplier_country_code" defaultValue={nestedText(correctionPayload, "recipient", "address", "country_code")} required /></div>
                   <div className="space-y-1.5"><Label htmlFor="supplier_country_name">Nome do país</Label><Input id="supplier_country_name" name="supplier_country_name" defaultValue={nestedText(correctionPayload, "recipient", "address", "country_name")} required /></div>
                   <div className="space-y-1.5"><Label htmlFor="supplier_country_iso_alpha_2">ISO do país</Label><Input id="supplier_country_iso_alpha_2" name="supplier_country_iso_alpha_2" defaultValue={nestedText(correctionPayload, "recipient", "address", "country_iso_alpha_2")} maxLength={2} placeholder="US" /></div>
-                  <div className="space-y-1.5"><Label htmlFor="supplier_foreign_id">Identificação estrangeira</Label><Input id="supplier_foreign_id" name="supplier_foreign_id" defaultValue={nestedText(correctionPayload, "recipient", "foreign_id")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="supplier_foreign_id">Identificador estrangeiro</Label><Input id="supplier_foreign_id" name="supplier_foreign_id" defaultValue={nestedText(correctionPayload, "recipient", "foreign_id")} placeholder="Deixe em branco quando não existir" /><p className="text-xs text-muted-foreground">Ao deixar em branco, o campo idEstrangeiro será removido do próximo XML.</p></div>
                   <div className="space-y-1.5"><Label htmlFor="supplier_street">Endereço</Label><Input id="supplier_street" name="supplier_street" defaultValue={nestedText(correctionPayload, "recipient", "address", "street")} /></div>
                   <div className="space-y-1.5"><Label htmlFor="supplier_number">Número</Label><Input id="supplier_number" name="supplier_number" defaultValue={nestedText(correctionPayload, "recipient", "address", "number")} /></div>
                   <div className="space-y-1.5"><Label htmlFor="supplier_district">Bairro/distrito</Label><Input id="supplier_district" name="supplier_district" defaultValue={nestedText(correctionPayload, "recipient", "address", "district")} /></div>
