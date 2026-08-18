@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import {
   Check,
   ChevronLeft,
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { nfeApi } from "@/lib/api/services/nfe";
 import { useDuimpSnapshots, useNfeDrafts, useNfeWorkflowState } from "@/lib/api/hooks/use-nfe-api";
-import type { FiscalEnvironment, ImportPurpose, NfeDraftSummary } from "@/lib/api/types/nfe-api";
+import type { FiscalEnvironment, ImportPurpose, NfeDraftSummary, NfeWorkflowState } from "@/lib/api/types/nfe-api";
 import { useToast } from "@/components/ui/toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +56,34 @@ const draftStatusLabels: Record<string, string> = {
 
 const steps = ["DUIMP", "Contexto fiscal", "Rascunho", "XML", "Conferência"];
 
+const contextFieldLabels: Record<string, string> = {
+  clearance_location: "Local de desembaraço",
+  clearance_state: "UF do desembaraço",
+  clearance_date: "Data de desembaraço",
+  transport_mode_code: "Via de transporte",
+  "foreign_supplier.country_code": "País do exportador",
+  "client.fiscal_profile": "Perfil fiscal do cliente",
+  tax_configuration: "Regra tributária",
+};
+
+const primaryActionLabels: Record<string, string> = {
+  resolve_context: "Completar dados da importação",
+  create_draft: "Gerar rascunho da NF-e",
+  correct_draft: "Revisar divergências",
+  generate_access_key: "Gerar chave e XML",
+  generate_xml: "Gerar XML",
+  validate_xml: "Validar XML",
+  completed: "Baixar XML validado",
+};
+
+function contextValue(
+  context: NfeWorkflowState["context"],
+  field: string,
+) {
+  const value = context?.fields?.[field]?.value;
+  return value === null || value === undefined ? "" : String(value);
+}
+
 function errorMessage(error: unknown) {
   const candidate = error as { response?: { data?: { message?: string } }; message?: string };
   return candidate.response?.data?.message || candidate.message || "Não foi possível concluir a operação.";
@@ -89,12 +117,15 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const toast = useToast();
   const initialPurpose = (searchParams.get("importPurpose") || "resale") as ImportPurpose;
   const initialEnvironment = (searchParams.get("environment") || "homologation") as FiscalEnvironment;
+  const initialProviderEnvironment = (searchParams.get("providerEnvironment") || "production") as FiscalEnvironment;
   const initialSeries = searchParams.get("series") || "1";
   const [purpose, setPurpose] = useState<ImportPurpose>(initialPurpose);
   const [environment, setEnvironment] = useState<FiscalEnvironment>(initialEnvironment);
+  const [providerEnvironment, setProviderEnvironment] = useState<FiscalEnvironment>(initialProviderEnvironment);
   const [series, setSeries] = useState(initialSeries);
-  const [refreshDuimp, setRefreshDuimp] = useState(true);
+  const [refreshDuimp, setRefreshDuimp] = useState(false);
   const [newDraftOpen, setNewDraftOpen] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const workflow = useNfeWorkflowState(processId, { import_purpose: purpose, environment, series });
   const drafts = useNfeDrafts(processId);
@@ -121,6 +152,19 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     data.prerequisites.has_active_tax_rule &&
     data.context?.ready_for_draft,
   );
+  const latestDraft = draftItems[0];
+  const latestXml = latestDraft?.xml_versions[0];
+  const primaryActionLabel = primaryActionLabels[data.next_action];
+  const primaryActionSupported = Boolean(
+    primaryActionLabel &&
+    (
+      data.next_action === "resolve_context" ||
+      data.next_action === "create_draft" ||
+      data.next_action === "correct_draft" ||
+      (["generate_access_key", "generate_xml", "validate_xml"].includes(data.next_action) && latestDraft) ||
+      (data.next_action === "completed" && latestDraft && latestXml)
+    ),
+  );
 
   async function createNewDraft() {
     if (!canCreateDraft) {
@@ -131,7 +175,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     try {
       let snapshotId = data.latest_snapshot?.id;
       if (refreshDuimp) {
-        const refreshed = await nfeApi.fetchDuimp(processId, environment);
+        const refreshed = await nfeApi.fetchDuimp(processId, providerEnvironment);
         snapshotId = refreshed.snapshot.id;
       }
       await nfeApi.createDraft(processId, {
@@ -181,6 +225,117 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     }
   }
 
+
+  async function resolveContext(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!data.latest_snapshot) return;
+
+    const form = new FormData(event.currentTarget);
+    const overrides: Record<string, unknown> = {};
+    const directFields = [
+      "clearance_location",
+      "clearance_state",
+      "clearance_date",
+      "transport_mode_code",
+    ];
+
+    for (const field of directFields) {
+      const value = String(form.get(field) || "").trim();
+      if (value) overrides[field] = field === "clearance_state" ? value.toUpperCase() : value;
+    }
+
+    const countryCode = String(form.get("foreign_supplier_country_code") || "").trim();
+    if (countryCode) {
+      overrides.foreign_supplier = { country_code: countryCode };
+    }
+
+    setBusyAction("resolve-context");
+    try {
+      const result = await nfeApi.resolveContext(processId, {
+        duimp_snapshot_id: data.latest_snapshot.id,
+        import_purpose: purpose,
+        provider_environment: providerEnvironment,
+        refresh_external: true,
+        overrides,
+      });
+      await Promise.all([workflow.mutate(), snapshots.mutate()]);
+      if (result.ready_for_draft) {
+        setContextOpen(false);
+        toast.success("Dados da importação completos. O rascunho já pode ser gerado.");
+      } else {
+        toast.info(`Ainda existem ${result.missing_fields.length} pendência(s) para completar.`);
+      }
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function retryAutomaticContext() {
+    if (!data.latest_snapshot) return;
+    setBusyAction("refresh-context");
+    try {
+      const result = await nfeApi.resolveContext(processId, {
+        duimp_snapshot_id: data.latest_snapshot.id,
+        import_purpose: purpose,
+        provider_environment: providerEnvironment,
+        refresh_external: true,
+        overrides: {},
+      });
+      await Promise.all([workflow.mutate(), snapshots.mutate()]);
+      if (result.ready_for_draft) {
+        setContextOpen(false);
+        toast.success("Portal Único completou os dados necessários.");
+      } else {
+        toast.info("A consulta terminou, mas alguns campos ainda precisam ser informados.");
+      }
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function continueWorkflow() {
+    if (data.next_action === "resolve_context") {
+      setContextOpen(true);
+      return;
+    }
+    if (data.next_action === "create_draft") {
+      setNewDraftOpen(true);
+      return;
+    }
+    if (data.next_action === "correct_draft") {
+      document.getElementById("drafts-and-xmls")?.scrollIntoView({ behavior: "smooth" });
+      toast.info("Revise as divergências exibidas no rascunho antes de gerar o XML.");
+      return;
+    }
+    if (data.next_action === "validate_xml" && latestDraft && latestXml) {
+      setBusyAction(`validate-xml:${latestXml.id}`);
+      try {
+        await nfeApi.validateXml(latestDraft.id, latestXml.id);
+        await Promise.all([workflow.mutate(), drafts.mutate()]);
+        toast.success("XML validado no XSD.");
+      } catch (error) {
+        toast.error(errorMessage(error));
+      } finally {
+        setBusyAction(null);
+      }
+      return;
+    }
+    if (
+      ["generate_access_key", "generate_xml"].includes(data.next_action) &&
+      latestDraft
+    ) {
+      await generateDiagnosticXml(latestDraft);
+      return;
+    }
+    if (data.next_action === "completed" && latestDraft && latestXml) {
+      await downloadXml(latestDraft.id, latestXml.id);
+    }
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-8">
       <Button variant="ghost" asChild><Link href="/nfe/processes"><ChevronLeft /> Voltar aos processos</Link></Button>
@@ -192,7 +347,15 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge variant={data.next_action === "completed" ? "default" : "secondary"}>{actionLabels[data.next_action] || data.next_action}</Badge>
-          <Button onClick={() => setNewDraftOpen(true)} disabled={!canCreateDraft}><Plus /> Novo rascunho</Button>
+          {primaryActionSupported && (
+            <Button onClick={() => void continueWorkflow()} disabled={Boolean(busyAction)}>
+              {busyAction && <Loader2 className="animate-spin" />}
+              {primaryActionLabel}
+            </Button>
+          )}
+          {data.next_action !== "create_draft" && (
+            <Button variant="outline" onClick={() => setNewDraftOpen(true)} disabled={!canCreateDraft || Boolean(busyAction)}><Plus /> Novo rascunho</Button>
+          )}
         </div>
       </div>
 
@@ -211,11 +374,17 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
           <CardHeader><CardTitle>Próxima ação</CardTitle><CardDescription>{actionLabels[data.next_action] || data.next_action}</CardDescription></CardHeader>
           <CardContent className="space-y-4">
             {data.next_action === "completed" ? (
-              <Alert className="border-emerald-500/30 bg-emerald-500/5"><Check /><AlertTitle>Checkpoint concluído</AlertTitle><AlertDescription>O XML não assinado foi validado. Você pode baixar a versão ou atualizar a DUIMP e criar outro rascunho.</AlertDescription></Alert>
+              <Alert className="border-emerald-500/30 bg-emerald-500/5"><Check /><AlertTitle>Checkpoint concluído</AlertTitle><AlertDescription>O XML não assinado foi validado. Você pode baixá-lo ou criar outro rascunho preservando o histórico.</AlertDescription></Alert>
             ) : (
-              <Alert><CircleAlert /><AlertTitle>Fluxo protegido por validações</AlertTitle><AlertDescription>Conclua as pendências abaixo antes de gerar um novo rascunho.</AlertDescription></Alert>
+              <Alert><CircleAlert /><AlertTitle>Próxima etapa disponível</AlertTitle><AlertDescription>Preencha ou confirme os dados solicitados para continuar o processo até o XML.</AlertDescription></Alert>
             )}
-            {data.context?.missing_fields?.length ? <div className="flex flex-wrap gap-2">{data.context.missing_fields.map((field) => <Badge key={field} variant="outline">{field}</Badge>)}</div> : null}
+            {data.context?.missing_fields?.length ? <div className="flex flex-wrap gap-2">{data.context.missing_fields.map((field) => <Badge key={field} variant="outline">{contextFieldLabels[field] || field}</Badge>)}</div> : null}
+            {primaryActionSupported && (
+              <Button onClick={() => void continueWorkflow()} disabled={Boolean(busyAction)}>
+                {busyAction && <Loader2 className="animate-spin" />}
+                {primaryActionLabel}
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -226,12 +395,13 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
             <div className="flex justify-between"><span className="text-muted-foreground">Perfil fiscal</span><strong>{data.prerequisites.has_fiscal_profile ? "Configurado" : "Pendente"}</strong></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Regra tributária</span><strong>{data.prerequisites.has_active_tax_rule ? "Aplicada" : "Pendente"}</strong></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Sequência</span><strong>{data.prerequisites.has_number_sequence ? "Configurada" : "Pendente"}</strong></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Dados da importação</span><strong>{data.context?.ready_for_draft ? "Completos" : `${data.context?.missing_fields?.length || 0} pendência(s)`}</strong></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Rascunhos</span><strong>{draftItems.length}</strong></div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card id="drafts-and-xmls">
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div><CardTitle>Rascunhos e XMLs</CardTitle><CardDescription>Histórico auditável; nenhuma geração substitui um XML anterior.</CardDescription></div>
@@ -294,15 +464,43 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         </CardContent>
       </Card>
 
+      <Dialog open={contextOpen} onOpenChange={setContextOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Completar dados da importação</DialogTitle>
+            <DialogDescription>O sistema consulta novamente o Portal Único e registra como intervenção do operador somente os campos preenchidos abaixo.</DialogDescription>
+          </DialogHeader>
+          <form className="space-y-5" onSubmit={resolveContext}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5"><Label htmlFor="clearance_location">Local de desembaraço</Label><Input id="clearance_location" name="clearance_location" defaultValue={contextValue(data.context, "clearance_location")} required={data.context?.missing_fields.includes("clearance_location")} placeholder="Ex.: ALF/PORTO DE ITAJAI" /></div>
+              <div className="space-y-1.5"><Label htmlFor="clearance_state">UF do desembaraço</Label><Input id="clearance_state" name="clearance_state" defaultValue={contextValue(data.context, "clearance_state")} required={data.context?.missing_fields.includes("clearance_state")} maxLength={2} placeholder="SC" /></div>
+              <div className="space-y-1.5"><Label htmlFor="clearance_date">Data de desembaraço</Label><Input id="clearance_date" name="clearance_date" type="date" defaultValue={contextValue(data.context, "clearance_date").slice(0, 10)} required={data.context?.missing_fields.includes("clearance_date")} /></div>
+              <div className="space-y-1.5"><Label htmlFor="transport_mode_code">Código da via de transporte</Label><Input id="transport_mode_code" name="transport_mode_code" defaultValue={contextValue(data.context, "transport_mode_code")} required={data.context?.missing_fields.includes("transport_mode_code")} placeholder="Ex.: 4 para aérea" /></div>
+              <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="foreign_supplier_country_code">Código BACEN do país do exportador</Label><Input id="foreign_supplier_country_code" name="foreign_supplier_country_code" defaultValue={contextValue(data.context, "foreign_supplier.country_code")} required={data.context?.missing_fields.includes("foreign_supplier.country_code")} placeholder="Ex.: 2496 para Estados Unidos" /></div>
+            </div>
+            <Alert><CircleAlert /><AlertTitle>Origem da DUIMP: {providerEnvironment === "production" ? "Portal Único de produção" : "Portal Único de validação"}</AlertTitle><AlertDescription>A NF-e continuará no ambiente {environment === "homologation" ? "de homologação" : "de produção"}. Os ambientes são independentes.</AlertDescription></Alert>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="outline" onClick={() => void retryAutomaticContext()} disabled={Boolean(busyAction)}>
+                {busyAction === "refresh-context" && <Loader2 className="animate-spin" />} Consultar novamente
+              </Button>
+              <Button type="submit" disabled={Boolean(busyAction)}>
+                {busyAction === "resolve-context" && <Loader2 className="animate-spin" />} Salvar e continuar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={newDraftOpen} onOpenChange={setNewDraftOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Criar novo rascunho</DialogTitle><DialogDescription>A versão anterior e seus XMLs continuarão disponíveis.</DialogDescription></DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5"><Label htmlFor="draft-purpose">Finalidade</Label><select id="draft-purpose" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={purpose} onChange={(event) => setPurpose(event.target.value as ImportPurpose)}><option value="resale">Revenda</option><option value="industrialization">Industrialização</option><option value="fixed_asset">Ativo imobilizado</option><option value="use_consumption">Uso e consumo</option></select></div>
-            <div className="space-y-1.5"><Label htmlFor="draft-environment">Ambiente</Label><select id="draft-environment" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={environment} onChange={(event) => setEnvironment(event.target.value as FiscalEnvironment)}><option value="homologation">Homologação</option><option value="production">Produção</option></select></div>
+            <div className="space-y-1.5"><Label htmlFor="draft-environment">Ambiente da NF-e</Label><select id="draft-environment" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={environment} onChange={(event) => setEnvironment(event.target.value as FiscalEnvironment)}><option value="homologation">Homologação</option><option value="production">Produção</option></select></div>
             <div className="space-y-1.5"><Label htmlFor="draft-series">Série</Label><Input id="draft-series" value={series} onChange={(event) => setSeries(event.target.value)} /></div>
+            {refreshDuimp && <div className="space-y-1.5"><Label htmlFor="provider-environment">Origem da DUIMP</Label><select id="provider-environment" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={providerEnvironment} onChange={(event) => setProviderEnvironment(event.target.value as FiscalEnvironment)}><option value="production">Portal Único — Produção</option><option value="homologation">Portal Único — Validação</option></select></div>}
           </div>
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm"><input className="mt-1" type="checkbox" checked={refreshDuimp} onChange={(event) => setRefreshDuimp(event.target.checked)} /><span><strong className="block">Atualizar a DUIMP antes de criar</strong><span className="text-muted-foreground">Consulta novamente o Portal Único e vincula o rascunho ao snapshot mais recente.</span></span></label>
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm"><input className="mt-1" type="checkbox" checked={refreshDuimp} onChange={(event) => setRefreshDuimp(event.target.checked)} /><span><strong className="block">Atualizar a DUIMP antes de criar</strong><span className="text-muted-foreground">Use somente quando precisar recapturar. Um novo snapshot poderá exigir nova conferência dos dados da importação.</span></span></label>
           <Alert><CircleAlert /><AlertDescription>A numeração da NF-e só será reservada quando a chave de acesso for gerada.</AlertDescription></Alert>
           <Button onClick={() => void createNewDraft()} disabled={busyAction === "new-draft"}>{busyAction === "new-draft" && <Loader2 className="animate-spin" />} Criar novo rascunho</Button>
         </DialogContent>
