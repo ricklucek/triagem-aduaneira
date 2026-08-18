@@ -227,8 +227,34 @@ export const nfeApi = {
     return data;
   },
 
-  async listTaxRules(clientId: string): Promise<Array<{ id: string; name: string; import_purpose: ImportPurpose; active: boolean }>> {
-    const { data } = await http.get<Array<{ id: string; name: string; import_purpose: ImportPurpose; active: boolean }>>(API_ROUTES.clients.importTaxRules(clientId));
+  async listTaxRules(clientId: string): Promise<Array<{
+    id: string;
+    name: string;
+    import_purpose: ImportPurpose;
+    active: boolean;
+    effective_from?: string | null;
+    effective_until?: string | null;
+  }>> {
+    const { data } = await http.get<Array<{
+      id: string;
+      name: string;
+      import_purpose: ImportPurpose;
+      active: boolean;
+      effective_from?: string | null;
+      effective_until?: string | null;
+    }>>(API_ROUTES.clients.importTaxRules(clientId));
+    return data;
+  },
+
+  async updateTaxRule(
+    clientId: string,
+    ruleId: string,
+    payload: Partial<ImportTaxRulePayload>,
+  ) {
+    const { data } = await http.put(
+      `${API_ROUTES.clients.importTaxRules(clientId)}/${ruleId}`,
+      payload,
+    );
     return data;
   },
 
