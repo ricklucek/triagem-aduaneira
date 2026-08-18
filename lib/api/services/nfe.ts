@@ -10,6 +10,8 @@ import type {
   ListProviderConnectionsResponse,
   NfeDraftSummary,
   NfeNumberSequencePayload,
+  NfeContextState,
+  ResolveNfeContextPayload,
   NfeWorkflowState,
   NfeXmlVersionSummary,
 } from "@/lib/api/types/nfe-api";
@@ -78,6 +80,17 @@ export const nfeApi = {
     params: { import_purpose?: ImportPurpose; environment: FiscalEnvironment; series: string },
   ): Promise<NfeWorkflowState> {
     const { data } = await http.get<NfeWorkflowState>(API_ROUTES.nfe.workflowState(processId), { params });
+    return data;
+  },
+
+  async resolveContext(
+    processId: string,
+    payload: ResolveNfeContextPayload,
+  ): Promise<NfeContextState> {
+    const { data } = await http.post<NfeContextState>(
+      API_ROUTES.nfe.resolveContext(processId),
+      payload,
+    );
     return data;
   },
 
