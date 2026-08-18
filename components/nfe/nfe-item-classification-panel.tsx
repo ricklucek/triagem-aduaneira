@@ -143,7 +143,8 @@ export function NfeItemClassificationPanel({
         <div className="space-y-3">
           {state.items.map((item) => {
             const purpose = purposes[item.duimp_item_number];
-            const ready = item.status === "classified";
+            const changed = purpose !== item.import_purpose;
+            const ready = !changed && item.status === "classified";
             return (
               <div key={item.duimp_item_number}
                 className="grid gap-3 rounded-xl border p-4 lg:grid-cols-[auto_minmax(0,1.5fr)_minmax(190px,.8fr)_minmax(180px,.8fr)] lg:items-center">
@@ -178,9 +179,11 @@ export function NfeItemClassificationPanel({
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {item.tax_rule
-                      ? item.tax_rule.name + (item.cfop ? " · CFOP " + item.cfop : "")
-                      : purpose ? "Nenhuma regra ativa encontrada" : "Aguardando finalidade"}
+                    {changed
+                      ? "Regra e CFOP serão recalculados ao salvar"
+                      : item.tax_rule
+                        ? item.tax_rule.name + (item.cfop ? " · CFOP " + item.cfop : "")
+                        : purpose ? "Nenhuma regra ativa encontrada" : "Aguardando finalidade"}
                   </p>
                 </div>
               </div>
