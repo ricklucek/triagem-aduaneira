@@ -563,6 +563,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
 
       {data.item_classification && (
         <NfeItemClassificationPanel
+          clientId={data.process.importer_id}
           processId={processId}
           state={data.item_classification}
           onSaved={async () => {
