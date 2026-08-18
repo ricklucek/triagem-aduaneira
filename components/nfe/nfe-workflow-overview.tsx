@@ -276,14 +276,17 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       if (fieldValue) volumeEntries.push([field, fieldValue]);
     }
 
+    const supplierLegalName = value("supplier_legal_name");
+    const supplierForeignId = value("supplier_foreign_id");
+    const supplierCountryIso = value("supplier_country_iso_alpha_2").toUpperCase();
     const payload: UpdateNfeDraftPayload = {
       foreign_supplier: {
-        legal_name: value("supplier_legal_name"),
-        foreign_id: value("supplier_foreign_id"),
+        ...(supplierLegalName ? { legal_name: supplierLegalName } : {}),
+        ...(supplierForeignId ? { foreign_id: supplierForeignId } : {}),
         country_code: value("supplier_country_code"),
         country_name: value("supplier_country_name"),
-        country_iso_alpha_2: value("supplier_country_iso_alpha_2").toUpperCase(),
-        address,
+        ...(supplierCountryIso ? { country_iso_alpha_2: supplierCountryIso } : {}),
+        ...(Object.keys(address).length ? { address } : {}),
       },
       transport: {
         freight_mode: value("freight_mode"),
