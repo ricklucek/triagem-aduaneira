@@ -8,10 +8,12 @@ import type {
   ImportTaxRulePayload,
   ListImportProcessesResponse,
   ListProviderConnectionsResponse,
+  NfeDraftDetailResponse,
   NfeDraftSummary,
   NfeNumberSequencePayload,
   NfeContextState,
   ResolveNfeContextPayload,
+  UpdateNfeDraftPayload,
   NfeWorkflowState,
   NfeXmlVersionSummary,
 } from "@/lib/api/types/nfe-api";
@@ -114,6 +116,27 @@ export const nfeApi = {
       API_ROUTES.nfe.createDraft(processId),
       payload,
     );
+    return data;
+  },
+
+  async getDraft(draftId: string): Promise<NfeDraftDetailResponse> {
+    const { data } = await http.get<NfeDraftDetailResponse>(
+      API_ROUTES.nfe.draft(draftId),
+    );
+    return data;
+  },
+
+  async updateDraft(draftId: string, payload: UpdateNfeDraftPayload) {
+    const { data } = await http.patch<{
+      draft: NfeDraftDetailResponse["draft"];
+      items: NfeDraftDetailResponse["items"];
+      validation: {
+        valid: boolean;
+        errors?: Array<Record<string, unknown>>;
+        warnings?: Array<Record<string, unknown>>;
+      };
+      requires_new_xml: boolean;
+    }>(API_ROUTES.nfe.draft(draftId), payload);
     return data;
   },
 
