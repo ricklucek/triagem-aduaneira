@@ -114,6 +114,34 @@ export interface NfeDraftSummary {
   xml_versions: NfeXmlVersionSummary[];
 }
 
+export interface NfeDraftDetailResponse {
+  draft: NfeDraftSummary & {
+    fiscal_payload: Record<string, unknown>;
+  };
+  items: Array<Record<string, unknown> & { id: string }>;
+  xmlVersions: NfeXmlVersionSummary[];
+}
+
+export interface UpdateNfeDraftPayload {
+  document?: Record<string, unknown>;
+  foreign_supplier?: {
+    legal_name?: string;
+    foreign_id?: string;
+    country_code?: string;
+    country_name?: string;
+    country_iso_alpha_2?: string;
+    address?: Record<string, string>;
+  };
+  item_defaults?: Record<string, unknown>;
+  transport?: {
+    freight_mode?: string;
+    carrier?: Record<string, string>;
+    volume?: Record<string, string | number>;
+  };
+  payment?: Record<string, unknown>;
+  additional_info?: Record<string, unknown>;
+}
+
 export interface DuimpSnapshotDetail {
   id: string;
   duimp_number: string;
