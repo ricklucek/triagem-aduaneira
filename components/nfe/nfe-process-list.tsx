@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useDeferredValue, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -228,7 +228,15 @@ export function NfeProcessList() {
   const selectedClientId = searchParams.get("client");
   const mine = searchParams.get("mine") === "1";
   const [query, setQuery] = useState(urlQuery);
-  const deferredQuery = useDeferredValue(query.trim());
+  const [debouncedQuery, setDebouncedQuery] = useState(urlQuery.trim());
+
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => setDebouncedQuery(query.trim()),
+      300,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [query]);
 
   const updateUrl = useCallback(
     (updates: Record<string, string | null>) => {
@@ -247,16 +255,16 @@ export function NfeProcessList() {
   );
 
   useEffect(() => {
-    if (deferredQuery === urlQuery) return;
-    updateUrl({ q: deferredQuery || null });
-  }, [deferredQuery, updateUrl, urlQuery]);
+    if (debouncedQuery === urlQuery) return;
+    updateUrl({ q: debouncedQuery || null });
+  }, [debouncedQuery, updateUrl, urlQuery]);
 
   const {
     data: groups,
     error: groupsError,
     isLoading: groupsLoading,
   } = useNfeClientGroups({
-    q: deferredQuery || undefined,
+    q: debouncedQuery || undefined,
     created_by_me: mine || undefined,
     limit: 100,
   });
@@ -273,7 +281,7 @@ export function NfeProcessList() {
     selectedClientId
       ? {
           importer_id: selectedClientId,
-          q: deferredQuery || undefined,
+          q: debouncedQuery || undefined,
           created_by_me: mine || undefined,
           limit: 100,
         }
