@@ -10,7 +10,6 @@ import {
   CircleAlert,
   Download,
   FileCode2,
-  FileJson,
   Loader2,
   LockKeyhole,
   PencilLine,
@@ -139,10 +138,6 @@ function saveBlob(blob: Blob, filename: string) {
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
-}
-
-function saveJson(value: Record<string, unknown>, filename: string) {
-  saveBlob(new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }), filename);
 }
 
 export function NfeWorkflowOverview({ processId }: { processId: string }) {
