@@ -98,6 +98,21 @@ export interface NfeXmlVersionSummary {
   generated_at?: string | null;
 }
 
+export interface NfeXmlValidationResult {
+  xml_version_id: string;
+  nfe_draft_id: string;
+  version_number: number;
+  xml_type: string;
+  valid: boolean;
+  errors: Array<Record<string, unknown>>;
+  xsd_valid: boolean;
+  xsd_errors: Array<Record<string, unknown>>;
+  schema?: {
+    package?: string;
+    file?: string;
+  };
+}
+
 export interface NfeDraftSummary {
   id: string;
   status: string;
