@@ -139,9 +139,12 @@ export interface NfeDraftDetailResponse {
 
 export interface UpdateNfeDraftPayload {
   document?: Record<string, unknown>;
+  issuer?: {
+    state_registration?: string;
+  };
   foreign_supplier?: {
     legal_name?: string;
-    foreign_id?: string;
+    foreign_id?: string | null;
     country_code?: string;
     country_name?: string;
     country_iso_alpha_2?: string;
