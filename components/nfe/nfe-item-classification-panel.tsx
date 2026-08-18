@@ -3,12 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, CircleAlert, Loader2, Tags } from "lucide-react";
 import { nfeApi } from "@/lib/api/services/nfe";
-import type { ImportPurpose, NfeItemClassificationState } from "@/lib/api/types/nfe-api";
+import type {
+  ImportPurpose,
+  NfeItemClassificationItem,
+  NfeItemClassificationState,
+} from "@/lib/api/types/nfe-api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
+
+type TaxRuleCandidate = NonNullable<NfeItemClassificationItem["rule_candidates"]>[number];
+type MismatchReason = TaxRuleCandidate["mismatch_reasons"][number];
 
 const purposeLabels: Record<ImportPurpose, string> = {
   resale: "Revenda",
@@ -18,19 +25,64 @@ const purposeLabels: Record<ImportPurpose, string> = {
 };
 const statusLabels: Record<string, string> = {
   unclassified: "Finalidade pendente",
-  missing_tax_rule: "Regra tributária ausente",
+  missing_tax_rule: "Regra tributária não aplicável",
   inactive_tax_rule: "Regra tributária inativa",
   missing_cfop: "CFOP pendente",
   classified: "Classificado",
 };
+const mismatchLabels: Record<MismatchReason, string> = {
+  issuer_state: "UF do emitente",
+  import_purpose: "finalidade",
+  tax_regime: "regime tributário",
+  import_modality: "modalidade da importação",
+  effective_from: "vigência inicial",
+  effective_until: "vigência final",
+  ncm_pattern: "NCM",
+};
+
 function apiError(error: unknown) {
   const value = error as { response?: { data?: { message?: string } }; message?: string };
   return value.response?.data?.message || value.message || "Não foi possível salvar a classificação.";
 }
 
+function dateLabel(value?: string | null) {
+  if (!value) return "não informada";
+  const normalized = value.slice(0, 10);
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(normalized + "T12:00:00Z"));
+}
+
+function validityCandidate(state: NfeItemClassificationState) {
+  const pending = state.items.filter((item) => item.status !== "classified");
+  if (!pending.length) return null;
+  const candidates = pending.map((item) => item.rule_candidates?.[0]);
+  if (candidates.some((candidate) => !candidate)) return null;
+  const first = candidates[0] as TaxRuleCandidate;
+  if (!candidates.every((candidate) => candidate?.id === first.id)) return null;
+  if (!candidates.every((candidate) =>
+    candidate?.mismatch_reasons.length === 1 &&
+    candidate.mismatch_reasons[0] === "effective_from"
+  )) return null;
+  return first;
+}
+
+function candidateDetail(item: NfeItemClassificationItem, registrationDate?: string | null) {
+  const candidate = item.rule_candidates?.[0];
+  if (!candidate) return item.import_purpose ? "Nenhuma regra ativa encontrada" : "Aguardando finalidade";
+  if (
+    candidate.mismatch_reasons.length === 1 &&
+    candidate.mismatch_reasons[0] === "effective_from"
+  ) {
+    return "A regra " + candidate.name + " começa em " + dateLabel(candidate.effective_from) +
+      ", depois do registro da DUIMP em " + dateLabel(registrationDate) + ".";
+  }
+  const reasons = candidate.mismatch_reasons.map((reason) => mismatchLabels[reason]).join(", ");
+  return "Regra mais próxima: " + candidate.name + ". Revise: " + reasons + ".";
+}
+
 export function NfeItemClassificationPanel({
-  processId, state, onSaved,
+  clientId, processId, state, onSaved,
 }: {
+  clientId: string;
   processId: string;
   state: NfeItemClassificationState;
   onSaved: () => Promise<unknown>;
@@ -56,6 +108,8 @@ export function NfeItemClassificationPanel({
     () => state.items.filter((item) => Boolean(purposes[item.duimp_item_number])).length,
     [purposes, state.items],
   );
+  const hasRuleDiagnostics = state.items.some((item) => Boolean(item.rule_candidates?.length));
+
   function toggle(number: string) {
     setSelected((current) => {
       const next = new Set(current);
@@ -63,9 +117,11 @@ export function NfeItemClassificationPanel({
       return next;
     });
   }
+
   function selectPending() {
     setSelected(new Set(state.items.filter((item) => item.status !== "classified").map((item) => item.duimp_item_number)));
   }
+
   function applyBulk() {
     if (!selected.size) return toast.info("Selecione ao menos um item.");
     setPurposes((current) => {
@@ -74,6 +130,7 @@ export function NfeItemClassificationPanel({
       return next;
     });
   }
+
   async function save() {
     const items = state.items
       .filter((item) => Boolean(purposes[item.duimp_item_number]))
@@ -82,14 +139,45 @@ export function NfeItemClassificationPanel({
         import_purpose: purposes[item.duimp_item_number],
       }));
     if (!items.length) return toast.info("Defina a finalidade de ao menos um item.");
+
     setSaving(true);
     try {
-      const result = await nfeApi.saveItemClassifications(processId, {
-        duimp_snapshot_id: state.snapshot_id, items,
-      });
+      const payload = { duimp_snapshot_id: state.snapshot_id, items };
+      let result = await nfeApi.saveItemClassifications(processId, payload);
+
+      if (!result.ready_for_draft) {
+        const candidate = validityCandidate(result);
+        if (candidate && result.registration_date) {
+          const confirmed = window.confirm(
+            "A regra \"" + candidate.name + "\" começa em " + dateLabel(candidate.effective_from) +
+            ", depois do registro da DUIMP (" + dateLabel(result.registration_date) + ").\n\n" +
+            "Deseja ajustar a vigência inicial para a data da DUIMP e reaplicar a classificação? " +
+            "Essa alteração afeta outros processos que utilizam a mesma regra."
+          );
+          if (confirmed) {
+            await nfeApi.updateTaxRule(clientId, candidate.id, {
+              effective_from: result.registration_date,
+            });
+            result = await nfeApi.saveItemClassifications(processId, payload);
+          }
+        }
+      }
+
       await onSaved();
-      if (result.ready_for_draft) toast.success("Todos os itens foram classificados. A geração de um novo rascunho foi liberada.");
-      else toast.info(result.pending_count + " item(ns) ainda precisam de finalidade, regra tributária ativa e CFOP.");
+      if (result.ready_for_draft) {
+        toast.success("Todos os itens foram classificados. A geração de um novo rascunho foi liberada.");
+        return;
+      }
+
+      const candidate = validityCandidate(result);
+      if (candidate) {
+        toast.info("As finalidades foram salvas, mas a regra começa após a data de registro da DUIMP.");
+      } else {
+        toast.info(
+          "As finalidades foram salvas, porém " + result.pending_count +
+          " item(ns) não encontraram uma regra tributária aplicável. Revise o motivo exibido em cada item."
+        );
+      }
     } catch (error) {
       toast.error(apiError(error));
     } finally {
@@ -117,9 +205,15 @@ export function NfeItemClassificationPanel({
         {!state.ready_for_draft && (
           <Alert>
             <CircleAlert />
-            <AlertTitle>Classificação necessária antes do próximo rascunho</AlertTitle>
+            <AlertTitle>
+              {hasRuleDiagnostics
+                ? "Finalidades salvas; revise a regra tributária indicada"
+                : "Classificação necessária antes do próximo rascunho"}
+            </AlertTitle>
             <AlertDescription>
-              Se uma finalidade não encontrar regra ativa para o cliente, cadastre a parametrização correspondente e salve novamente.
+              {hasRuleDiagnostics
+                ? "A API não encontrou uma regra aplicável a todos os itens. O motivo exato aparece em cada item abaixo."
+                : "Defina as finalidades e salve. O sistema aplicará a regra tributária e o CFOP compatíveis."}
             </AlertDescription>
           </Alert>
         )}
@@ -147,7 +241,7 @@ export function NfeItemClassificationPanel({
             const ready = !changed && item.status === "classified";
             return (
               <div key={item.duimp_item_number}
-                className="grid gap-3 rounded-xl border p-4 lg:grid-cols-[auto_minmax(0,1.5fr)_minmax(190px,.8fr)_minmax(180px,.8fr)] lg:items-center">
+                className="grid gap-3 rounded-xl border p-4 lg:grid-cols-[auto_minmax(0,1.5fr)_minmax(190px,.8fr)_minmax(220px,.9fr)] lg:items-center">
                 <input type="checkbox" className="size-4 accent-primary"
                   aria-label={"Selecionar item " + item.duimp_item_number}
                   checked={selected.has(item.duimp_item_number)} onChange={() => toggle(item.duimp_item_number)} />
@@ -183,7 +277,7 @@ export function NfeItemClassificationPanel({
                       ? "Regra e CFOP serão recalculados ao salvar"
                       : item.tax_rule
                         ? item.tax_rule.name + (item.cfop ? " · CFOP " + item.cfop : "")
-                        : purpose ? "Nenhuma regra ativa encontrada" : "Aguardando finalidade"}
+                        : candidateDetail(item, state.registration_date)}
                   </p>
                 </div>
               </div>
