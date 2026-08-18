@@ -6,6 +6,7 @@ import type {
   FiscalProfilePayload,
   ImportPurpose,
   ImportTaxRulePayload,
+  ListImportProcessClientGroupsResponse,
   ListImportProcessesResponse,
   ListProviderConnectionsResponse,
   NfeDraftDetailResponse,
@@ -49,14 +50,31 @@ export const nfeApi = {
     return data;
   },
 
+  async listProcessClientGroups(params: {
+    q?: string;
+    created_by_me?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<ListImportProcessClientGroupsResponse> {
+    const { data } = await http.get<ListImportProcessClientGroupsResponse>(
+      API_ROUTES.nfe.processClientGroups,
+      { params },
+    );
+    return data;
+  },
+
   async listProcesses(params: {
     q?: string;
     status?: string;
+    importer_id?: string;
     created_by_me?: boolean;
     limit?: number;
     offset?: number;
   }): Promise<ListImportProcessesResponse> {
-    const { data } = await http.get<ListImportProcessesResponse>(API_ROUTES.nfe.processes, { params });
+    const { data } = await http.get<ListImportProcessesResponse>(
+      API_ROUTES.nfe.processes,
+      { params },
+    );
     return data;
   },
 

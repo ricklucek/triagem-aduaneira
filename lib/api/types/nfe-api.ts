@@ -32,6 +32,20 @@ export interface ImportProcessSummary {
   latest_draft_id?: string | null;
   latest_draft_status?: string | null;
   items_count: number;
+  importer?: {
+    id: string;
+    name: string;
+    legal_name: string;
+    cnpj: string;
+  };
+  next_action?: string;
+  pending?: boolean;
+  planned_documents_count?: number;
+  last_responsible?: {
+    id: string;
+    name: string;
+    is_current_user: boolean;
+  } | null;
   created_at?: string | null;
   updated_at?: string | null;
 }
@@ -41,6 +55,25 @@ export interface ListImportProcessesResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface ImportProcessClientGroup {
+  client_id: string;
+  name: string;
+  legal_name: string;
+  cnpj: string;
+  process_count: number;
+  pending_count: number;
+  last_updated_at?: string | null;
+}
+
+export interface ListImportProcessClientGroupsResponse {
+  items: ImportProcessClientGroup[];
+  total: number;
+  limit: number;
+  offset: number;
+  q?: string | null;
+  created_by_me: boolean;
 }
 
 export interface FiscalProfilePayload {

@@ -47,6 +47,7 @@ export const API_ROUTES = {
   nfe: {
     providerConnections: "/external-provider-connections",
     processes: "/import-processes",
+    processClientGroups: "/import-processes/client-groups",
     process: (processId: string) => `/import-processes/${processId}`,
     workflowState: (processId: string) =>
       `/import-processes/${processId}/nfe-workflow-state`,

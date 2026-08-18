@@ -4,14 +4,30 @@ import useSWR from "swr";
 import { nfeApi } from "@/lib/api/services/nfe";
 import type { FiscalEnvironment, ImportPurpose } from "@/lib/api/types/nfe-api";
 
-export function useNfeProcesses(params: {
+export function useNfeClientGroups(params: {
   q?: string;
-  status?: string;
   created_by_me?: boolean;
   limit?: number;
   offset?: number;
 }) {
-  return useSWR(`nfe-processes:${JSON.stringify(params)}`, () => nfeApi.listProcesses(params));
+  return useSWR(
+    `nfe-client-groups:${JSON.stringify(params)}`,
+    () => nfeApi.listProcessClientGroups(params),
+  );
+}
+
+export function useNfeProcesses(params: {
+  q?: string;
+  status?: string;
+  importer_id?: string;
+  created_by_me?: boolean;
+  limit?: number;
+  offset?: number;
+} | null) {
+  return useSWR(
+    params ? `nfe-processes:${JSON.stringify(params)}` : null,
+    () => nfeApi.listProcesses(params as NonNullable<typeof params>),
+  );
 }
 
 export function useNfeWorkflowState(
