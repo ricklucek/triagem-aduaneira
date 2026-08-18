@@ -35,6 +35,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { NfeItemClassificationPanel } from "@/components/nfe/nfe-item-classification-panel";
 
 const actionLabels: Record<string, string> = {
   fetch_duimp: "Capturar a DUIMP",
@@ -42,6 +43,7 @@ const actionLabels: Record<string, string> = {
   select_import_purpose: "Selecionar a finalidade",
   configure_tax_rule: "Cadastrar a regra tributária",
   resolve_context: "Completar os dados da DUIMP",
+  classify_items: "Classificar a finalidade fiscal dos itens",
   create_draft: "Gerar o rascunho da NF-e",
   configure_number_sequence: "Configurar a sequência numérica",
   correct_draft: "Corrigir as divergências do rascunho",
@@ -63,7 +65,7 @@ const draftStatusLabels: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
-const steps = ["DUIMP", "Contexto fiscal", "Rascunho", "XML", "Conferência"];
+const steps = ["DUIMP", "Contexto fiscal", "Finalidades", "Rascunho", "XML", "Conferência"];
 
 const contextFieldLabels: Record<string, string> = {
   clearance_location: "Local de desembaraço",
@@ -78,6 +80,7 @@ const contextFieldLabels: Record<string, string> = {
 
 const primaryActionLabels: Record<string, string> = {
   resolve_context: "Completar dados da importação",
+  classify_items: "Classificar itens",
   create_draft: "Gerar rascunho da NF-e",
   correct_draft: "Revisar divergências",
   generate_access_key: "Gerar chave e XML",
@@ -173,13 +176,16 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const snapshotItems = snapshots.data ?? [];
   const completedSteps = data.latest_draft
     ? data.latest_draft.xmlVersions.length
-      ? data.latest_draft.xmlVersions[0]?.xsd_valid ? 5 : 4
-      : 3
-    : data.context?.ready_for_draft ? 2 : data.latest_snapshot ? 1 : 0;
+      ? data.latest_draft.xmlVersions[0]?.xsd_valid ? 6 : 5
+      : 4
+    : data.item_classification?.ready_for_draft
+      ? 3
+      : data.context?.ready_for_draft ? 2 : data.latest_snapshot ? 1 : 0;
   const canCreateDraft = Boolean(
     data.latest_snapshot &&
     data.prerequisites.has_fiscal_profile &&
     data.prerequisites.has_active_tax_rule &&
+    data.prerequisites.item_classification_ready &&
     data.context?.ready_for_draft,
   );
   const latestDraft = draftItems[0];
@@ -189,6 +195,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     primaryActionLabel &&
     (
       data.next_action === "resolve_context" ||
+      data.next_action === "classify_items" ||
       data.next_action === "create_draft" ||
       (data.next_action === "correct_draft" && latestDraft) ||
       (["generate_access_key", "generate_xml", "validate_xml"].includes(data.next_action) && latestDraft) ||
@@ -456,6 +463,10 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   }
 
   async function continueWorkflow() {
+    if (data.next_action === "classify_items") {
+      document.getElementById("item-classification")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     if (data.next_action === "resolve_context") {
       setContextOpen(true);
       return;
@@ -511,7 +522,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         <CardHeader><CardTitle className="text-base">Progresso da emissão</CardTitle><CardDescription>O processo permanece retomável e cada rascunho conserva seus próprios XMLs.</CardDescription></CardHeader>
         <CardContent className="space-y-4">
           <Progress value={(completedSteps / steps.length) * 100} />
-          <div className="grid grid-cols-5 gap-2 text-center text-xs">
+          <div className="grid grid-cols-3 gap-2 text-center text-xs sm:grid-cols-6">
             {steps.map((step, index) => <div key={step} className={index < completedSteps ? "font-medium text-primary" : "text-muted-foreground"}>{index < completedSteps && <Check className="mx-auto mb-1 size-4" />}{step}</div>)}
           </div>
         </CardContent>
@@ -544,10 +555,21 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
             <div className="flex justify-between"><span className="text-muted-foreground">Regra tributária</span><strong>{data.prerequisites.has_active_tax_rule ? "Aplicada" : "Pendente"}</strong></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Sequência</span><strong>{data.prerequisites.has_number_sequence ? "Configurada" : "Pendente"}</strong></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Dados da importação</span><strong>{data.context?.ready_for_draft ? "Completos" : `${data.context?.missing_fields?.length || 0} pendência(s)`}</strong></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Itens classificados</span><strong>{data.item_classification ? data.item_classification.classified_count + "/" + data.item_classification.total_items : "Pendente"}</strong></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Rascunhos</span><strong>{draftItems.length}</strong></div>
           </CardContent>
         </Card>
       </div>
+
+      {data.item_classification && (
+        <NfeItemClassificationPanel
+          processId={processId}
+          state={data.item_classification}
+          onSaved={async () => {
+            await Promise.all([workflow.mutate(), drafts.mutate()]);
+          }}
+        />
+      )}
 
       <Card id="drafts-and-xmls">
         <CardHeader>
@@ -827,7 +849,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         <DialogContent>
           <DialogHeader><DialogTitle>Criar novo rascunho</DialogTitle><DialogDescription>A versão anterior e seus XMLs continuarão disponíveis.</DialogDescription></DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5"><Label htmlFor="draft-purpose">Finalidade</Label><select id="draft-purpose" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={purpose} onChange={(event) => setPurpose(event.target.value as ImportPurpose)}><option value="resale">Revenda</option><option value="industrialization">Industrialização</option><option value="fixed_asset">Ativo imobilizado</option><option value="use_consumption">Uso e consumo</option></select></div>
+            <div className="space-y-1.5"><Label htmlFor="draft-purpose">Finalidade padrão do processo</Label><select id="draft-purpose" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={purpose} onChange={(event) => setPurpose(event.target.value as ImportPurpose)}><option value="resale">Revenda</option><option value="industrialization">Industrialização</option><option value="fixed_asset">Ativo imobilizado</option><option value="use_consumption">Uso e consumo</option></select></div>
             <div className="space-y-1.5"><Label htmlFor="draft-environment">Ambiente da NF-e</Label><select id="draft-environment" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={environment} onChange={(event) => setEnvironment(event.target.value as FiscalEnvironment)}><option value="homologation">Homologação</option><option value="production">Produção</option></select></div>
             <div className="space-y-1.5"><Label htmlFor="draft-series">Série</Label><Input id="draft-series" value={series} onChange={(event) => setSeries(event.target.value)} /></div>
             {refreshDuimp && <div className="space-y-1.5"><Label htmlFor="provider-environment">Origem da DUIMP</Label><select id="provider-environment" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={providerEnvironment} onChange={(event) => setProviderEnvironment(event.target.value as FiscalEnvironment)}><option value="production">Portal Único — Produção</option><option value="homologation">Portal Único — Validação</option></select></div>}

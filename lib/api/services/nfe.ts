@@ -11,6 +11,7 @@ import type {
   ListProviderConnectionsResponse,
   NfeDraftDetailResponse,
   NfeDraftSummary,
+  NfeItemClassificationState,
   NfeNumberSequencePayload,
   NfeContextState,
   ResolveNfeContextPayload,
@@ -110,6 +111,24 @@ export const nfeApi = {
   ): Promise<NfeContextState> {
     const { data } = await http.post<NfeContextState>(
       API_ROUTES.nfe.resolveContext(processId),
+      payload,
+    );
+    return data;
+  },
+
+  async saveItemClassifications(
+    processId: string,
+    payload: {
+      duimp_snapshot_id: string;
+      items: Array<{
+        duimp_item_number: string;
+        import_purpose: ImportPurpose;
+        tax_rule_id?: string | null;
+      }>;
+    },
+  ): Promise<NfeItemClassificationState> {
+    const { data } = await http.put<NfeItemClassificationState>(
+      API_ROUTES.nfe.itemClassifications(processId),
       payload,
     );
     return data;

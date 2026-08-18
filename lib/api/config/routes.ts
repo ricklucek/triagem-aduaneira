@@ -55,6 +55,8 @@ export const API_ROUTES = {
       `/import-processes/${processId}/nfe-context`,
     resolveContext: (processId: string) =>
       `/import-processes/${processId}/nfe-context/resolve`,
+    itemClassifications: (processId: string) =>
+      `/import-processes/${processId}/item-classifications`,
     fetchDuimp: (processId: string) =>
       `/import-processes/${processId}/duimp/fetch`,
     snapshots: (processId: string) =>

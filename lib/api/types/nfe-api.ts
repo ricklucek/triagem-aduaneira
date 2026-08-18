@@ -232,6 +232,34 @@ export interface ResolveNfeContextPayload {
   overrides: Record<string, unknown>;
 }
 
+export interface NfeItemClassificationItem {
+  duimp_item_number: string;
+  product_code?: string | null;
+  description?: string | null;
+  ncm?: string | null;
+  exporter_code?: string | null;
+  import_purpose?: ImportPurpose | null;
+  cfop?: string | null;
+  cfop_source?: "tax_rule" | "purpose_default" | null;
+  tax_rule?: { id: string; name: string; active: boolean } | null;
+  status: "unclassified" | "missing_tax_rule" | "inactive_tax_rule" | "missing_cfop" | "classified";
+  classified_by?: { id: string; name: string } | null;
+  updated_at?: string | null;
+}
+
+export interface NfeItemClassificationState {
+  process_id: string;
+  snapshot_id: string;
+  items: NfeItemClassificationItem[];
+  total_items: number;
+  classified_count: number;
+  pending_count: number;
+  purpose_counts: Partial<Record<ImportPurpose, number>>;
+  has_classifications: boolean;
+  ready_for_draft: boolean;
+  latest_updated_at?: string | null;
+}
+
 export interface NfeWorkflowState {
   process: ImportProcessSummary;
   latest_snapshot: null | {
@@ -241,6 +269,7 @@ export interface NfeWorkflowState {
     fetched_at?: string | null;
   };
   context: NfeContextState | null;
+  item_classification: NfeItemClassificationState | null;
   latest_draft: null | {
     draft: Record<string, unknown> & { id: string; status: string };
     items: Array<Record<string, unknown> & { id: string }>;
@@ -250,6 +279,8 @@ export interface NfeWorkflowState {
     has_fiscal_profile: boolean;
     has_active_tax_rule: boolean;
     has_number_sequence: boolean;
+    has_item_classification: boolean;
+    item_classification_ready: boolean;
     import_purpose?: ImportPurpose | null;
     environment: FiscalEnvironment;
     series: string;
