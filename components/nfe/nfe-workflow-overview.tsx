@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 import {
   Check,
   ChevronLeft,
+  ChevronRight,
   CircleAlert,
   Download,
   FileCode2,
   FileJson,
   Loader2,
+  LockKeyhole,
   PencilLine,
   Plus,
   RefreshCw,
@@ -23,6 +25,7 @@ import type {
   NfeDraftDetailResponse,
   NfeDraftSummary,
   NfeWorkflowState,
+  NfeWorkflowStepKey,
   NfeXmlVersionSummary,
   UpdateNfeDraftPayload,
 } from "@/lib/api/types/nfe-api";
@@ -36,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { NfeItemClassificationPanel } from "@/components/nfe/nfe-item-classification-panel";
+import { NfeDuimpOverview } from "@/components/nfe/nfe-duimp-overview";
 
 const actionLabels: Record<string, string> = {
   fetch_duimp: "Capturar a DUIMP",
@@ -64,8 +68,6 @@ const draftStatusLabels: Record<string, string> = {
   rejected: "Rejeitado",
   cancelled: "Cancelado",
 };
-
-const steps = ["DUIMP", "Contexto fiscal", "Finalidades", "Rascunho", "XML", "Conferência"];
 
 const contextFieldLabels: Record<string, string> = {
   clearance_location: "Local de desembaraço",
@@ -144,6 +146,7 @@ function saveJson(value: Record<string, unknown>, filename: string) {
 }
 
 export function NfeWorkflowOverview({ processId }: { processId: string }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
   const initialPurpose = (searchParams.get("importPurpose") || "resale") as ImportPurpose;
@@ -163,6 +166,23 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const workflow = useNfeWorkflowState(processId, { import_purpose: purpose, environment, series });
   const drafts = useNfeDrafts(processId);
   const snapshots = useDuimpSnapshots(processId);
+  const requestedStep = searchParams.get("step");
+
+  useEffect(() => {
+    const workflowData = workflow.data;
+    if (!workflowData?.steps?.length) return;
+    const requested = workflowData.steps.find(
+      (step) => step.key === requestedStep && step.can_view,
+    );
+    const target = requested?.key || workflowData.current_step;
+    if (requestedStep === target) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("step", target);
+    router.replace(
+      "/nfe/processes/" + processId + "?" + params.toString(),
+      { scroll: false },
+    );
+  }, [processId, requestedStep, router, searchParams, workflow.data]);
 
   if (workflow.isLoading) {
     return <div className="flex min-h-80 items-center justify-center gap-2 text-muted-foreground"><Loader2 className="animate-spin" /> Carregando o fluxo…</div>;
@@ -174,13 +194,41 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const data = workflow.data;
   const draftItems = drafts.data?.items ?? [];
   const snapshotItems = snapshots.data ?? [];
-  const completedSteps = data.latest_draft
-    ? data.latest_draft.xmlVersions.length
-      ? data.latest_draft.xmlVersions[0]?.xsd_valid ? 6 : 5
-      : 4
-    : data.item_classification?.ready_for_draft
-      ? 3
-      : data.context?.ready_for_draft ? 2 : data.latest_snapshot ? 1 : 0;
+  const workflowSteps = data.steps;
+  const requestedWorkflowStep = workflowSteps.find(
+    (step) => step.key === requestedStep && step.can_view,
+  );
+  const activeStep = (
+    requestedWorkflowStep?.key || data.current_step
+  ) as NfeWorkflowStepKey;
+  const activeStepIndex = workflowSteps.findIndex(
+    (step) => step.key === activeStep,
+  );
+  const currentStepIndex = workflowSteps.findIndex(
+    (step) => step.key === data.current_step,
+  );
+  const previousStep = [...workflowSteps]
+    .slice(0, activeStepIndex)
+    .reverse()
+    .find((step) => step.can_view);
+  const nextStep = workflowSteps[activeStepIndex + 1];
+  const accessibleNextStep = nextStep?.can_view ? nextStep : null;
+
+  function goToStep(step: NfeWorkflowStepKey) {
+    const target = workflowSteps.find(
+      (candidate) => candidate.key === step && candidate.can_view,
+    );
+    if (!target) {
+      toast.info("Conclua a etapa atual antes de avançar.");
+      return;
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("step", target.key);
+    router.replace(
+      "/nfe/processes/" + processId + "?" + params.toString(),
+      { scroll: false },
+    );
+  }
   const canCreateDraft = Boolean(
     data.latest_snapshot &&
     data.prerequisites.has_fiscal_profile &&
@@ -519,49 +567,120 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Progresso da emissão</CardTitle><CardDescription>O processo permanece retomável e cada rascunho conserva seus próprios XMLs.</CardDescription></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Etapas da emissão</CardTitle>
+          <CardDescription>
+            Consulte etapas concluídas e avance somente quando os pré-requisitos estiverem resolvidos.
+          </CardDescription>
+        </CardHeader>
         <CardContent className="space-y-4">
-          <Progress value={(completedSteps / steps.length) * 100} />
-          <div className="grid grid-cols-3 gap-2 text-center text-xs sm:grid-cols-6">
-            {steps.map((step, index) => <div key={step} className={index < completedSteps ? "font-medium text-primary" : "text-muted-foreground"}>{index < completedSteps && <Check className="mx-auto mb-1 size-4" />}{step}</div>)}
-          </div>
+          <Progress value={((currentStepIndex + 1) / workflowSteps.length) * 100} />
+          <nav aria-label="Etapas da emissão" className="flex gap-2 overflow-x-auto pb-1">
+            {workflowSteps.map((step, index) => {
+              const selected = step.key === activeStep;
+              const completed = step.status === "completed";
+              return (
+                <button
+                  key={step.key}
+                  type="button"
+                  disabled={!step.can_view}
+                  onClick={() => goToStep(step.key)}
+                  aria-current={selected ? "step" : undefined}
+                  title={!step.can_view ? "Conclua a etapa atual para liberar esta seção." : step.label}
+                  className={[
+                    "flex min-w-[145px] items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition",
+                    selected
+                      ? "border-primary bg-primary/10 text-primary"
+                      : step.can_view
+                        ? "hover:border-primary/40 hover:bg-muted/40"
+                        : "cursor-not-allowed bg-muted/30 text-muted-foreground",
+                  ].join(" ")}
+                >
+                  <span className={[
+                    "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                    completed || selected
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground",
+                  ].join(" ")}>
+                    {completed ? <Check className="size-3.5" /> : !step.can_view ? <LockKeyhole className="size-3.5" /> : index + 1}
+                  </span>
+                  <span>
+                    <span className="block text-xs text-muted-foreground">Etapa {index + 1}</span>
+                    <strong className="whitespace-nowrap">{step.label}</strong>
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_.8fr]">
+      {activeStep === "duimp" && (
+        <NfeDuimpOverview snapshots={snapshotItems} />
+      )}
+
+      {activeStep === "context" && (
         <Card>
-          <CardHeader><CardTitle>Próxima ação</CardTitle><CardDescription>{actionLabels[data.next_action] || data.next_action}</CardDescription></CardHeader>
-          <CardContent className="space-y-4">
-            {data.next_action === "completed" ? (
-              <Alert className="border-emerald-500/30 bg-emerald-500/5"><Check /><AlertTitle>Checkpoint concluído</AlertTitle><AlertDescription>O XML não assinado foi validado. Você pode baixá-lo ou criar outro rascunho preservando o histórico.</AlertDescription></Alert>
-            ) : (
-              <Alert><CircleAlert /><AlertTitle>Próxima etapa disponível</AlertTitle><AlertDescription>Preencha ou confirme os dados solicitados para continuar o processo até o XML.</AlertDescription></Alert>
-            )}
-            {data.context?.missing_fields?.length ? <div className="flex flex-wrap gap-2">{data.context.missing_fields.map((field) => <Badge key={field} variant="outline">{contextFieldLabels[field] || field}</Badge>)}</div> : null}
-            {primaryActionSupported && (
-              <Button onClick={() => void continueWorkflow()} disabled={Boolean(busyAction)}>
-                {busyAction && <Loader2 className="animate-spin" />}
-                {primaryActionLabel}
+          <CardHeader>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle>Contexto fiscal da importação</CardTitle>
+                <CardDescription>
+                  Dados utilizados para selecionar regras e preparar os documentos fiscais.
+                </CardDescription>
+              </div>
+              <Button variant="outline" onClick={() => setContextOpen(true)}>
+                <PencilLine /> Editar dados
               </Button>
-            )}
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div><p className="text-xs text-muted-foreground">Local de desembaraço</p><strong className="text-sm">{contextValue(data.context, "clearance_location") || "Não informado"}</strong></div>
+            <div><p className="text-xs text-muted-foreground">UF do desembaraço</p><strong className="text-sm">{contextValue(data.context, "clearance_state") || "Não informada"}</strong></div>
+            <div><p className="text-xs text-muted-foreground">Data de desembaraço</p><strong className="text-sm">{contextValue(data.context, "clearance_date") || "Não informada"}</strong></div>
+            <div><p className="text-xs text-muted-foreground">Via de transporte</p><strong className="text-sm">{contextValue(data.context, "transport_mode_code") || "Não informada"}</strong></div>
+            <div><p className="text-xs text-muted-foreground">País do exportador</p><strong className="text-sm">{contextValue(data.context, "foreign_supplier.country_name") || "Não informado"}</strong></div>
+            <div><p className="text-xs text-muted-foreground">Código BACEN</p><strong className="text-sm">{contextValue(data.context, "foreign_supplier.country_code") || "Não informado"}</strong></div>
           </CardContent>
         </Card>
+      )}
 
-        <Card>
-          <CardHeader><CardTitle className="text-base">Resumo técnico</CardTitle></CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Snapshots DUIMP</span><strong>{snapshotItems.length}</strong></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Perfil fiscal</span><strong>{data.prerequisites.has_fiscal_profile ? "Configurado" : "Pendente"}</strong></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Regra tributária</span><strong>{data.prerequisites.has_active_tax_rule ? "Aplicada" : "Pendente"}</strong></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Sequência</span><strong>{data.prerequisites.has_number_sequence ? "Configurada" : "Pendente"}</strong></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Dados da importação</span><strong>{data.context?.ready_for_draft ? "Completos" : `${data.context?.missing_fields?.length || 0} pendência(s)`}</strong></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Itens classificados</span><strong>{data.item_classification ? data.item_classification.classified_count + "/" + data.item_classification.total_items : "Pendente"}</strong></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Rascunhos</span><strong>{draftItems.length}</strong></div>
-          </CardContent>
-        </Card>
-      </div>
+      {activeStep === data.current_step && (
+        <div className="grid gap-6 lg:grid-cols-[1fr_.8fr]">
+          <Card>
+            <CardHeader><CardTitle>Próxima ação</CardTitle><CardDescription>{actionLabels[data.next_action] || data.next_action}</CardDescription></CardHeader>
+            <CardContent className="space-y-4">
+              {data.next_action === "completed" ? (
+                <Alert className="border-emerald-500/30 bg-emerald-500/5"><Check /><AlertTitle>Checkpoint concluído</AlertTitle><AlertDescription>O XML não assinado foi validado. Você pode baixá-lo ou criar outro rascunho preservando o histórico.</AlertDescription></Alert>
+              ) : (
+                <Alert><CircleAlert /><AlertTitle>Próxima etapa disponível</AlertTitle><AlertDescription>Preencha ou confirme os dados solicitados para continuar o processo até o XML.</AlertDescription></Alert>
+              )}
+              {data.context?.missing_fields?.length ? <div className="flex flex-wrap gap-2">{data.context.missing_fields.map((field) => <Badge key={field} variant="outline">{contextFieldLabels[field] || field}</Badge>)}</div> : null}
+              {primaryActionSupported && (
+                <Button onClick={() => void continueWorkflow()} disabled={Boolean(busyAction)}>
+                  {busyAction && <Loader2 className="animate-spin" />}
+                  {primaryActionLabel}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+  
+          <Card>
+            <CardHeader><CardTitle className="text-base">Resumo técnico</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Snapshots DUIMP</span><strong>{snapshotItems.length}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Perfil fiscal</span><strong>{data.prerequisites.has_fiscal_profile ? "Configurado" : "Pendente"}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Regra tributária</span><strong>{data.prerequisites.has_active_tax_rule ? "Aplicada" : "Pendente"}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Sequência</span><strong>{data.prerequisites.has_number_sequence ? "Configurada" : "Pendente"}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Dados da importação</span><strong>{data.context?.ready_for_draft ? "Completos" : `${data.context?.missing_fields?.length || 0} pendência(s)`}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Itens classificados</span><strong>{data.item_classification ? data.item_classification.classified_count + "/" + data.item_classification.total_items : "Pendente"}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Rascunhos</span><strong>{draftItems.length}</strong></div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {data.item_classification && (
+      {activeStep === "purposes" && data.item_classification && (
         <NfeItemClassificationPanel
           clientId={data.process.importer_id}
           processId={processId}
@@ -572,139 +691,151 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         />
       )}
 
-      <Card id="drafts-and-xmls">
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div><CardTitle>Rascunhos e XMLs</CardTitle><CardDescription>Histórico auditável; nenhuma geração substitui um XML anterior.</CardDescription></div>
-            <Button variant="outline" onClick={() => void drafts.mutate()}><RefreshCw /> Atualizar</Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {drafts.isLoading && <p className="text-sm text-muted-foreground">Carregando rascunhos…</p>}
-          {drafts.error && <Alert variant="destructive"><CircleAlert /><AlertDescription>Não foi possível consultar o histórico de rascunhos.</AlertDescription></Alert>}
-          {draftItems.map((draft, index) => (
-            <div key={draft.id} className="rounded-xl border p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">Rascunho {draft.number ? `NF-e nº ${draft.number}` : `#${draftItems.length - index}`}</h3><Badge variant={draft.validation_errors.length ? "destructive" : "secondary"}>{draftStatusLabels[draft.status] || draft.status}</Badge></div>
-                  <p className="mt-1 text-xs text-muted-foreground">Criado em {dateLabel(draft.created_at)} · {draft.items_count} itens · Série {draft.series}</p>
-                  {draft.access_key && <p className="mt-1 break-all font-mono text-xs text-muted-foreground">Chave: {draft.access_key}</p>}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {!["signed", "transmitted", "authorized", "cancelled"].includes(draft.status) && (
-                    <Button variant={draft.validation_errors.length ? "default" : "outline"} onClick={() => void openDraftCorrection(draft)} disabled={Boolean(busyAction)}>
-                      {busyAction === `load-correction:${draft.id}` ? <Loader2 className="animate-spin" /> : <PencilLine />}
-                      {draft.validation_errors.length ? "Corrigir rascunho" : "Editar dados"}
+      {["drafts", "xml", "review"].includes(activeStep) && (
+        <Card id="drafts-and-xmls">
+          <CardHeader>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div><CardTitle>Rascunhos e XMLs</CardTitle><CardDescription>Histórico auditável; nenhuma geração substitui um XML anterior.</CardDescription></div>
+              <Button variant="outline" onClick={() => void drafts.mutate()}><RefreshCw /> Atualizar</Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {drafts.isLoading && <p className="text-sm text-muted-foreground">Carregando rascunhos…</p>}
+            {drafts.error && <Alert variant="destructive"><CircleAlert /><AlertDescription>Não foi possível consultar o histórico de rascunhos.</AlertDescription></Alert>}
+            {draftItems.map((draft, index) => (
+              <div key={draft.id} className="rounded-xl border p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">Rascunho {draft.number ? `NF-e nº ${draft.number}` : `#${draftItems.length - index}`}</h3><Badge variant={draft.validation_errors.length ? "destructive" : "secondary"}>{draftStatusLabels[draft.status] || draft.status}</Badge></div>
+                    <p className="mt-1 text-xs text-muted-foreground">Criado em {dateLabel(draft.created_at)} · {draft.items_count} itens · Série {draft.series}</p>
+                    {draft.access_key && <p className="mt-1 break-all font-mono text-xs text-muted-foreground">Chave: {draft.access_key}</p>}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {!["signed", "transmitted", "authorized", "cancelled"].includes(draft.status) && (
+                      <Button variant={draft.validation_errors.length ? "default" : "outline"} onClick={() => void openDraftCorrection(draft)} disabled={Boolean(busyAction)}>
+                        {busyAction === `load-correction:${draft.id}` ? <Loader2 className="animate-spin" /> : <PencilLine />}
+                        {draft.validation_errors.length ? "Corrigir rascunho" : "Editar dados"}
+                      </Button>
+                    )}
+                    <Button variant="outline" onClick={() => void generateDiagnosticXml(draft)} disabled={Boolean(busyAction) || draft.validation_errors.length > 0}>
+                      {busyAction === `xml:${draft.id}` ? <Loader2 className="animate-spin" /> : <FileCode2 />}
+                      {draft.xml_versions.length ? "Gerar nova versão XML" : "Gerar XML diagnóstico"}
                     </Button>
-                  )}
-                  <Button variant="outline" onClick={() => void generateDiagnosticXml(draft)} disabled={Boolean(busyAction) || draft.validation_errors.length > 0}>
-                    {busyAction === `xml:${draft.id}` ? <Loader2 className="animate-spin" /> : <FileCode2 />}
-                    {draft.xml_versions.length ? "Gerar nova versão XML" : "Gerar XML diagnóstico"}
-                  </Button>
+                  </div>
                 </div>
-              </div>
-
-              {(draft.validation_errors.length || draft.validation_warnings.length) ? (
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  {draft.validation_errors.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-destructive">Correções obrigatórias</p>
-                      {draft.validation_errors.map((issue, issueIndex) => <p key={`e-${issueIndex}`} className="rounded-md bg-destructive/5 p-2 text-xs text-destructive">{issueLabel(issue)}</p>)}
-                    </div>
-                  )}
-                  {draft.validation_warnings.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Alertas de conferência — não bloqueiam o XML diagnóstico</p>
-                      {draft.validation_warnings.slice(0, 4).map((issue, issueIndex) => <p key={`w-${issueIndex}`} className="rounded-md bg-amber-500/10 p-2 text-xs text-amber-800 dark:text-amber-300">{issueLabel(issue)}</p>)}
-                    </div>
-                  )}
-                </div>
-              ) : null}
-
-              <div className="mt-4 space-y-2">
-                {draft.xml_versions.length === 0 && <p className="text-sm text-muted-foreground">Nenhum XML gerado para este rascunho.</p>}
-                {draft.xml_versions.map((version) => {
-                  const xmlOutdated = Boolean(
-                    draft.updated_at &&
-                    version.generated_at &&
-                    new Date(draft.updated_at).getTime() > new Date(version.generated_at).getTime()
-                  );
-                  const xsdApproved = version.xsd_valid === true && !xmlOutdated;
-                  const xsdRejected = version.xsd_valid === false && !xmlOutdated;
-                  const xsdErrors = version.xsd_errors || [];
-                  return (
-                    <div id={`xml-version-${version.id}`} key={version.id} className="space-y-3 rounded-lg bg-muted/50 p-3">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <FileCode2 className="size-4" />
-                          <span className="text-sm font-medium">XML {version.xml_type === "unsigned" ? "não assinado" : version.xml_type} v{version.version_number}</span>
-                          <Badge variant={xsdApproved ? "default" : xsdRejected ? "destructive" : "outline"}>
-                            {xmlOutdated ? "Versão anterior" : xsdApproved ? "XSD válido" : xsdRejected ? "XSD inválido" : "Ainda não validado"}
-                          </Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {!xsdApproved && !xmlOutdated && (
-                            <Button size="sm" variant={xsdRejected ? "destructive" : "outline"} onClick={() => void validateExistingXml(draft.id, version)} disabled={Boolean(busyAction)}>
-                              {busyAction === `validate-xml:${version.id}` ? <Loader2 className="animate-spin" /> : <Check />}
-                              {xsdRejected ? "Validar novamente" : "Validar XML"}
-                            </Button>
-                          )}
-                          <Button size="sm" variant="ghost" onClick={() => void downloadXml(draft.id, version.id)} disabled={busyAction === `download:${version.id}`}>
-                            {busyAction === `download:${version.id}` ? <Loader2 className="animate-spin" /> : <Download />} Baixar XML
-                          </Button>
-                        </div>
+  
+                {(draft.validation_errors.length || draft.validation_warnings.length) ? (
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    {draft.validation_errors.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-destructive">Correções obrigatórias</p>
+                        {draft.validation_errors.map((issue, issueIndex) => <p key={`e-${issueIndex}`} className="rounded-md bg-destructive/5 p-2 text-xs text-destructive">{issueLabel(issue)}</p>)}
                       </div>
-                      {xmlOutdated && (
-                        <Alert>
-                          <CircleAlert />
-                          <AlertTitle>XML preservado apenas para histórico</AlertTitle>
-                          <AlertDescription>Os dados do rascunho foram alterados depois desta geração. Gere uma nova versão XML antes de validar ou assinar.</AlertDescription>
-                        </Alert>
-                      )}
-                      {xsdRejected && (
-                        <Alert variant="destructive">
-                          <CircleAlert />
-                          <AlertTitle>XML reprovado pelo XSD da NF-e 4.00</AlertTitle>
-                          <AlertDescription>
-                            {xsdErrors.length > 0 ? (
-                              <ul className="mt-2 list-disc space-y-1 pl-5">
-                                {xsdErrors.map((issue, index) => (
-                                  <li key={index}>
-                                    {issueLabel(issue)}
-                                    {issueLocation(issue) ? <span className="text-muted-foreground"> — {issueLocation(issue)}</span> : null}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              "A API marcou esta versão como inválida, mas não retornou detalhes do XSD."
+                    )}
+                    {draft.validation_warnings.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Alertas de conferência — não bloqueiam o XML diagnóstico</p>
+                        {draft.validation_warnings.slice(0, 4).map((issue, issueIndex) => <p key={`w-${issueIndex}`} className="rounded-md bg-amber-500/10 p-2 text-xs text-amber-800 dark:text-amber-300">{issueLabel(issue)}</p>)}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+  
+                <div className="mt-4 space-y-2">
+                  {draft.xml_versions.length === 0 && <p className="text-sm text-muted-foreground">Nenhum XML gerado para este rascunho.</p>}
+                  {draft.xml_versions.map((version) => {
+                    const xmlOutdated = Boolean(
+                      draft.updated_at &&
+                      version.generated_at &&
+                      new Date(draft.updated_at).getTime() > new Date(version.generated_at).getTime()
+                    );
+                    const xsdApproved = version.xsd_valid === true && !xmlOutdated;
+                    const xsdRejected = version.xsd_valid === false && !xmlOutdated;
+                    const xsdErrors = version.xsd_errors || [];
+                    return (
+                      <div id={`xml-version-${version.id}`} key={version.id} className="space-y-3 rounded-lg bg-muted/50 p-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <FileCode2 className="size-4" />
+                            <span className="text-sm font-medium">XML {version.xml_type === "unsigned" ? "não assinado" : version.xml_type} v{version.version_number}</span>
+                            <Badge variant={xsdApproved ? "default" : xsdRejected ? "destructive" : "outline"}>
+                              {xmlOutdated ? "Versão anterior" : xsdApproved ? "XSD válido" : xsdRejected ? "XSD inválido" : "Ainda não validado"}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {!xsdApproved && !xmlOutdated && (
+                              <Button size="sm" variant={xsdRejected ? "destructive" : "outline"} onClick={() => void validateExistingXml(draft.id, version)} disabled={Boolean(busyAction)}>
+                                {busyAction === `validate-xml:${version.id}` ? <Loader2 className="animate-spin" /> : <Check />}
+                                {xsdRejected ? "Validar novamente" : "Validar XML"}
+                              </Button>
                             )}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </div>
-                  );
-                })}
+                            <Button size="sm" variant="ghost" onClick={() => void downloadXml(draft.id, version.id)} disabled={busyAction === `download:${version.id}`}>
+                              {busyAction === `download:${version.id}` ? <Loader2 className="animate-spin" /> : <Download />} Baixar XML
+                            </Button>
+                          </div>
+                        </div>
+                        {xmlOutdated && (
+                          <Alert>
+                            <CircleAlert />
+                            <AlertTitle>XML preservado apenas para histórico</AlertTitle>
+                            <AlertDescription>Os dados do rascunho foram alterados depois desta geração. Gere uma nova versão XML antes de validar ou assinar.</AlertDescription>
+                          </Alert>
+                        )}
+                        {xsdRejected && (
+                          <Alert variant="destructive">
+                            <CircleAlert />
+                            <AlertTitle>XML reprovado pelo XSD da NF-e 4.00</AlertTitle>
+                            <AlertDescription>
+                              {xsdErrors.length > 0 ? (
+                                <ul className="mt-2 list-disc space-y-1 pl-5">
+                                  {xsdErrors.map((issue, index) => (
+                                    <li key={index}>
+                                      {issueLabel(issue)}
+                                      {issueLocation(issue) ? <span className="text-muted-foreground"> — {issueLocation(issue)}</span> : null}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                "A API marcou esta versão como inválida, mas não retornou detalhes do XSD."
+                              )}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-          {!drafts.isLoading && draftItems.length === 0 && <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">Ainda não há rascunhos para este processo.</p>}
-        </CardContent>
-      </Card>
+            ))}
+            {!drafts.isLoading && draftItems.length === 0 && <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">Ainda não há rascunhos para este processo.</p>}
+          </CardContent>
+        </Card>
+      )}
 
-      <Card>
-        <CardHeader><CardTitle>Documentos da origem</CardTitle><CardDescription>Baixe os dados recebidos do Portal Único para conferência e auditoria.</CardDescription></CardHeader>
-        <CardContent className="space-y-3">
-          {snapshotItems.map((snapshot, index) => (
-            <div key={snapshot.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3"><FileJson className="size-5 text-primary" /><div><p className="text-sm font-medium">Snapshot {snapshotItems.length - index} · DUIMP {snapshot.duimp_number}</p><p className="text-xs text-muted-foreground">Capturado em {dateLabel(snapshot.fetched_at || snapshot.created_at)}</p></div></div>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => saveJson(snapshot.normalized_payload, `DUIMP-${snapshot.duimp_number}-normalizado.json`)}><Download /> Normalizado</Button>
-                <Button size="sm" variant="ghost" onClick={() => saveJson(snapshot.raw_payload, `DUIMP-${snapshot.duimp_number}-original.json`)}><Download /> Original</Button>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <div className="flex flex-col-reverse gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          variant="outline"
+          disabled={!previousStep}
+          onClick={() => previousStep && goToStep(previousStep.key)}
+        >
+          <ChevronLeft /> {previousStep ? previousStep.label : "Etapa anterior"}
+        </Button>
+        <div className="text-center text-xs text-muted-foreground">
+          Visualizando {workflowSteps[activeStepIndex]?.label}
+        </div>
+        <Button
+          variant={accessibleNextStep ? "default" : "outline"}
+          disabled={!accessibleNextStep}
+          onClick={() => accessibleNextStep && goToStep(accessibleNextStep.key)}
+        >
+          {accessibleNextStep
+            ? "Avançar para " + accessibleNextStep.label
+            : nextStep
+              ? "Próxima etapa bloqueada"
+              : "Última etapa"}
+          <ChevronRight />
+        </Button>
+      </div>
 
       <Dialog open={contextOpen} onOpenChange={setContextOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
