@@ -60,6 +60,7 @@ const actionLabels: Record<string, string> = {
   select_import_purpose: "Definir finalidade",
   configure_tax_rule: "Configurar regra tributária",
   resolve_context: "Completar dados da DUIMP",
+  classify_items: "Classificar itens",
   create_draft: "Gerar rascunho",
   configure_number_sequence: "Configurar sequência",
   correct_draft: "Corrigir divergências",
