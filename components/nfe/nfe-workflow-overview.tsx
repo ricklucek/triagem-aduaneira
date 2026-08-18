@@ -11,12 +11,20 @@ import {
   FileCode2,
   FileJson,
   Loader2,
+  PencilLine,
   Plus,
   RefreshCw,
 } from "lucide-react";
 import { nfeApi } from "@/lib/api/services/nfe";
 import { useDuimpSnapshots, useNfeDrafts, useNfeWorkflowState } from "@/lib/api/hooks/use-nfe-api";
-import type { FiscalEnvironment, ImportPurpose, NfeDraftSummary, NfeWorkflowState } from "@/lib/api/types/nfe-api";
+import type {
+  FiscalEnvironment,
+  ImportPurpose,
+  NfeDraftDetailResponse,
+  NfeDraftSummary,
+  NfeWorkflowState,
+  UpdateNfeDraftPayload,
+} from "@/lib/api/types/nfe-api";
 import { useToast } from "@/components/ui/toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +69,8 @@ const contextFieldLabels: Record<string, string> = {
   clearance_state: "UF do desembaraço",
   clearance_date: "Data de desembaraço",
   transport_mode_code: "Via de transporte",
-  "foreign_supplier.country_code": "País do exportador",
+  "foreign_supplier.country_code": "Código BACEN do país do exportador",
+  "foreign_supplier.country_name": "Nome do país do exportador",
   "client.fiscal_profile": "Perfil fiscal do cliente",
   tax_configuration: "Regra tributária",
 };
@@ -97,6 +106,18 @@ function issueLabel(issue: Record<string, unknown>) {
   return String(issue.message || issue.code || issue.field || "Revisão necessária");
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function nestedText(value: unknown, ...path: string[]) {
+  let current: unknown = value;
+  for (const key of path) current = asRecord(current)[key];
+  return current === null || current === undefined ? "" : String(current);
+}
+
 function saveBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -126,6 +147,8 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const [refreshDuimp, setRefreshDuimp] = useState(false);
   const [newDraftOpen, setNewDraftOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
+  const [correctionOpen, setCorrectionOpen] = useState(false);
+  const [correctionDetail, setCorrectionDetail] = useState<NfeDraftDetailResponse | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const workflow = useNfeWorkflowState(processId, { import_purpose: purpose, environment, series });
   const drafts = useNfeDrafts(processId);
@@ -160,11 +183,14 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     (
       data.next_action === "resolve_context" ||
       data.next_action === "create_draft" ||
-      data.next_action === "correct_draft" ||
+      (data.next_action === "correct_draft" && latestDraft) ||
       (["generate_access_key", "generate_xml", "validate_xml"].includes(data.next_action) && latestDraft) ||
       (data.next_action === "completed" && latestDraft && latestXml)
     ),
   );
+  const correctionPayload = correctionDetail?.draft.fiscal_payload || {};
+  const correctionErrors = correctionDetail?.draft.validation_errors || [];
+  const correctionWarnings = correctionDetail?.draft.validation_warnings || [];
 
   async function createNewDraft() {
     if (!canCreateDraft) {
@@ -213,6 +239,83 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     }
   }
 
+  async function openDraftCorrection(draft: NfeDraftSummary) {
+    setBusyAction(`load-correction:${draft.id}`);
+    try {
+      const detail = await nfeApi.getDraft(draft.id);
+      setCorrectionDetail(detail);
+      setCorrectionOpen(true);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function saveDraftCorrections(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!correctionDetail) return;
+
+    const form = new FormData(event.currentTarget);
+    const value = (name: string) => String(form.get(name) || "").trim();
+    const address = Object.fromEntries(
+      ["street", "number", "complement", "district", "city_name"]
+        .map((field) => [field, value(`supplier_${field}`)])
+        .filter(([, fieldValue]) => fieldValue),
+    );
+    const carrier = Object.fromEntries(
+      ["tax_id", "name", "state_registration", "address", "city_name", "state"]
+        .map((field) => [field, value(`carrier_${field}`)])
+        .filter(([, fieldValue]) => fieldValue),
+    );
+    const volumeEntries: Array<[string, string | number]> = [];
+    const volumeQuantity = value("volume_quantity");
+    if (volumeQuantity) volumeEntries.push(["quantity", Number(volumeQuantity)]);
+    for (const field of ["species", "brand", "numbering", "net_weight", "gross_weight"]) {
+      const fieldValue = value(`volume_${field}`);
+      if (fieldValue) volumeEntries.push([field, fieldValue]);
+    }
+
+    const payload: UpdateNfeDraftPayload = {
+      foreign_supplier: {
+        legal_name: value("supplier_legal_name"),
+        foreign_id: value("supplier_foreign_id"),
+        country_code: value("supplier_country_code"),
+        country_name: value("supplier_country_name"),
+        country_iso_alpha_2: value("supplier_country_iso_alpha_2").toUpperCase(),
+        address,
+      },
+      transport: {
+        freight_mode: value("freight_mode"),
+        ...(Object.keys(carrier).length ? { carrier } : {}),
+        ...(volumeEntries.length ? { volume: Object.fromEntries(volumeEntries) } : {}),
+      },
+      additional_info: {
+        automatic_summary: true,
+        legal_text: value("legal_text"),
+      },
+    };
+
+    setBusyAction(`save-correction:${correctionDetail.draft.id}`);
+    try {
+      const result = await nfeApi.updateDraft(correctionDetail.draft.id, payload);
+      await Promise.all([workflow.mutate(), drafts.mutate()]);
+      if (result.validation.valid) {
+        setCorrectionOpen(false);
+        setCorrectionDetail(null);
+        toast.success("Rascunho corrigido e validado. A geração do XML foi liberada.");
+      } else {
+        const detail = await nfeApi.getDraft(correctionDetail.draft.id);
+        setCorrectionDetail(detail);
+        toast.info(`Ainda existem ${result.validation.errors?.length || 0} correção(ões) obrigatória(s).`);
+      }
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
   async function downloadXml(draftId: string, versionId: string) {
     setBusyAction(`download:${versionId}`);
     try {
@@ -245,8 +348,12 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     }
 
     const countryCode = String(form.get("foreign_supplier_country_code") || "").trim();
-    if (countryCode) {
-      overrides.foreign_supplier = { country_code: countryCode };
+    const countryName = String(form.get("foreign_supplier_country_name") || "").trim();
+    if (countryCode || countryName) {
+      overrides.foreign_supplier = {
+        ...(countryCode ? { country_code: countryCode } : {}),
+        ...(countryName ? { country_name: countryName } : {}),
+      };
     }
 
     setBusyAction("resolve-context");
@@ -306,9 +413,8 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       setNewDraftOpen(true);
       return;
     }
-    if (data.next_action === "correct_draft") {
-      document.getElementById("drafts-and-xmls")?.scrollIntoView({ behavior: "smooth" });
-      toast.info("Revise as divergências exibidas no rascunho antes de gerar o XML.");
+    if (data.next_action === "correct_draft" && latestDraft) {
+      await openDraftCorrection(latestDraft);
       return;
     }
     if (data.next_action === "validate_xml" && latestDraft && latestXml) {
@@ -419,16 +525,34 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                   <p className="mt-1 text-xs text-muted-foreground">Criado em {dateLabel(draft.created_at)} · {draft.items_count} itens · Série {draft.series}</p>
                   {draft.access_key && <p className="mt-1 break-all font-mono text-xs text-muted-foreground">Chave: {draft.access_key}</p>}
                 </div>
-                <Button variant="outline" onClick={() => void generateDiagnosticXml(draft)} disabled={Boolean(busyAction)}>
-                  {busyAction === `xml:${draft.id}` ? <Loader2 className="animate-spin" /> : <FileCode2 />}
-                  {draft.xml_versions.length ? "Gerar nova versão XML" : "Gerar XML diagnóstico"}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  {draft.validation_errors.length > 0 && (
+                    <Button variant="default" onClick={() => void openDraftCorrection(draft)} disabled={Boolean(busyAction)}>
+                      {busyAction === `load-correction:${draft.id}` ? <Loader2 className="animate-spin" /> : <PencilLine />}
+                      Corrigir rascunho
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => void generateDiagnosticXml(draft)} disabled={Boolean(busyAction) || draft.validation_errors.length > 0}>
+                    {busyAction === `xml:${draft.id}` ? <Loader2 className="animate-spin" /> : <FileCode2 />}
+                    {draft.xml_versions.length ? "Gerar nova versão XML" : "Gerar XML diagnóstico"}
+                  </Button>
+                </div>
               </div>
 
               {(draft.validation_errors.length || draft.validation_warnings.length) ? (
-                <div className="mt-4 grid gap-2 md:grid-cols-2">
-                  {draft.validation_errors.map((issue, issueIndex) => <p key={`e-${issueIndex}`} className="rounded-md bg-destructive/5 p-2 text-xs text-destructive">{issueLabel(issue)}</p>)}
-                  {draft.validation_warnings.slice(0, 4).map((issue, issueIndex) => <p key={`w-${issueIndex}`} className="rounded-md bg-amber-500/10 p-2 text-xs text-amber-800 dark:text-amber-300">{issueLabel(issue)}</p>)}
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  {draft.validation_errors.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-destructive">Correções obrigatórias</p>
+                      {draft.validation_errors.map((issue, issueIndex) => <p key={`e-${issueIndex}`} className="rounded-md bg-destructive/5 p-2 text-xs text-destructive">{issueLabel(issue)}</p>)}
+                    </div>
+                  )}
+                  {draft.validation_warnings.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Alertas de conferência — não bloqueiam o XML diagnóstico</p>
+                      {draft.validation_warnings.slice(0, 4).map((issue, issueIndex) => <p key={`w-${issueIndex}`} className="rounded-md bg-amber-500/10 p-2 text-xs text-amber-800 dark:text-amber-300">{issueLabel(issue)}</p>)}
+                    </div>
+                  )}
                 </div>
               ) : null}
 
@@ -476,7 +600,8 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               <div className="space-y-1.5"><Label htmlFor="clearance_state">UF do desembaraço</Label><Input id="clearance_state" name="clearance_state" defaultValue={contextValue(data.context, "clearance_state")} required={data.context?.missing_fields.includes("clearance_state")} maxLength={2} placeholder="SC" /></div>
               <div className="space-y-1.5"><Label htmlFor="clearance_date">Data de desembaraço</Label><Input id="clearance_date" name="clearance_date" type="date" defaultValue={contextValue(data.context, "clearance_date").slice(0, 10)} required={data.context?.missing_fields.includes("clearance_date")} /></div>
               <div className="space-y-1.5"><Label htmlFor="transport_mode_code">Código da via de transporte</Label><Input id="transport_mode_code" name="transport_mode_code" defaultValue={contextValue(data.context, "transport_mode_code")} required={data.context?.missing_fields.includes("transport_mode_code")} placeholder="Ex.: 4 para aérea" /></div>
-              <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="foreign_supplier_country_code">Código BACEN do país do exportador</Label><Input id="foreign_supplier_country_code" name="foreign_supplier_country_code" defaultValue={contextValue(data.context, "foreign_supplier.country_code")} required={data.context?.missing_fields.includes("foreign_supplier.country_code")} placeholder="Ex.: 2496 para Estados Unidos" /></div>
+              <div className="space-y-1.5"><Label htmlFor="foreign_supplier_country_code">Código BACEN do país do exportador</Label><Input id="foreign_supplier_country_code" name="foreign_supplier_country_code" defaultValue={contextValue(data.context, "foreign_supplier.country_code")} required={data.context?.missing_fields.includes("foreign_supplier.country_code")} placeholder="Ex.: 2496" /></div>
+              <div className="space-y-1.5"><Label htmlFor="foreign_supplier_country_name">Nome do país do exportador</Label><Input id="foreign_supplier_country_name" name="foreign_supplier_country_name" defaultValue={contextValue(data.context, "foreign_supplier.country_name")} required={data.context?.missing_fields.includes("foreign_supplier.country_name")} placeholder="Ex.: ESTADOS UNIDOS" /></div>
             </div>
             <Alert><CircleAlert /><AlertTitle>Origem da DUIMP: {providerEnvironment === "production" ? "Portal Único de produção" : "Portal Único de validação"}</AlertTitle><AlertDescription>A NF-e continuará no ambiente {environment === "homologation" ? "de homologação" : "de produção"}. Os ambientes são independentes.</AlertDescription></Alert>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -488,6 +613,107 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={correctionOpen} onOpenChange={(open) => {
+        setCorrectionOpen(open);
+        if (!open) setCorrectionDetail(null);
+      }}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Corrigir rascunho da NF-e</DialogTitle>
+            <DialogDescription>
+              Corrija os erros obrigatórios e, se já tiver os dados, complete os alertas de transporte. Ao salvar, a API valida novamente o rascunho.
+            </DialogDescription>
+          </DialogHeader>
+          {correctionDetail && (
+            <form className="space-y-6" onSubmit={saveDraftCorrections}>
+              {correctionErrors.length > 0 && (
+                <Alert variant="destructive">
+                  <CircleAlert />
+                  <AlertTitle>{correctionErrors.length} correção(ões) obrigatória(s)</AlertTitle>
+                  <AlertDescription>
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      {correctionErrors.map((issue, index) => <li key={index}>{issueLabel(issue)}</li>)}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <section className="space-y-3">
+                <div>
+                  <h3 className="font-semibold">Exportador estrangeiro</h3>
+                  <p className="text-xs text-muted-foreground">O código BACEN e o nome do país são obrigatórios para o XML.</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="supplier_legal_name">Nome do exportador</Label><Input id="supplier_legal_name" name="supplier_legal_name" defaultValue={nestedText(correctionPayload, "recipient", "legal_name")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="supplier_country_code">Código BACEN do país</Label><Input id="supplier_country_code" name="supplier_country_code" defaultValue={nestedText(correctionPayload, "recipient", "address", "country_code")} required /></div>
+                  <div className="space-y-1.5"><Label htmlFor="supplier_country_name">Nome do país</Label><Input id="supplier_country_name" name="supplier_country_name" defaultValue={nestedText(correctionPayload, "recipient", "address", "country_name")} required /></div>
+                  <div className="space-y-1.5"><Label htmlFor="supplier_country_iso_alpha_2">ISO do país</Label><Input id="supplier_country_iso_alpha_2" name="supplier_country_iso_alpha_2" defaultValue={nestedText(correctionPayload, "recipient", "address", "country_iso_alpha_2")} maxLength={2} placeholder="US" /></div>
+                  <div className="space-y-1.5"><Label htmlFor="supplier_foreign_id">Identificação estrangeira</Label><Input id="supplier_foreign_id" name="supplier_foreign_id" defaultValue={nestedText(correctionPayload, "recipient", "foreign_id")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="supplier_street">Endereço</Label><Input id="supplier_street" name="supplier_street" defaultValue={nestedText(correctionPayload, "recipient", "address", "street")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="supplier_number">Número</Label><Input id="supplier_number" name="supplier_number" defaultValue={nestedText(correctionPayload, "recipient", "address", "number")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="supplier_district">Bairro/distrito</Label><Input id="supplier_district" name="supplier_district" defaultValue={nestedText(correctionPayload, "recipient", "address", "district")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="supplier_city_name">Cidade</Label><Input id="supplier_city_name" name="supplier_city_name" defaultValue={nestedText(correctionPayload, "recipient", "address", "city_name")} /></div>
+                  <input type="hidden" name="supplier_complement" value={nestedText(correctionPayload, "recipient", "address", "complement")} />
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <div>
+                  <h3 className="font-semibold">Transporte e volumes</h3>
+                  <p className="text-xs text-muted-foreground">Estes campos atendem aos alertas de transportadora e volumes exibidos no rascunho.</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="freight_mode">Modalidade do frete</Label>
+                    <select id="freight_mode" name="freight_mode" className="h-10 w-full rounded-md border bg-background px-3 text-sm" defaultValue={nestedText(correctionPayload, "transport", "freight_mode") || "9"}>
+                      <option value="0">0 — Por conta do emitente</option>
+                      <option value="1">1 — Por conta do destinatário</option>
+                      <option value="2">2 — Por conta de terceiros</option>
+                      <option value="3">3 — Transporte próprio do emitente</option>
+                      <option value="4">4 — Transporte próprio do destinatário</option>
+                      <option value="9">9 — Sem ocorrência de transporte</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5"><Label htmlFor="carrier_name">Transportadora</Label><Input id="carrier_name" name="carrier_name" defaultValue={nestedText(correctionPayload, "transport", "carrier", "name")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="carrier_tax_id">CNPJ/CPF da transportadora</Label><Input id="carrier_tax_id" name="carrier_tax_id" defaultValue={nestedText(correctionPayload, "transport", "carrier", "tax_id")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="carrier_state_registration">Inscrição estadual</Label><Input id="carrier_state_registration" name="carrier_state_registration" defaultValue={nestedText(correctionPayload, "transport", "carrier", "state_registration")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="carrier_address">Endereço da transportadora</Label><Input id="carrier_address" name="carrier_address" defaultValue={nestedText(correctionPayload, "transport", "carrier", "address")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="carrier_city_name">Município</Label><Input id="carrier_city_name" name="carrier_city_name" defaultValue={nestedText(correctionPayload, "transport", "carrier", "city_name")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="carrier_state">UF</Label><Input id="carrier_state" name="carrier_state" defaultValue={nestedText(correctionPayload, "transport", "carrier", "state")} maxLength={2} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="volume_quantity">Quantidade de volumes</Label><Input id="volume_quantity" name="volume_quantity" type="number" min={1} defaultValue={nestedText(correctionPayload, "transport", "volume", "quantity")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="volume_species">Espécie</Label><Input id="volume_species" name="volume_species" defaultValue={nestedText(correctionPayload, "transport", "volume", "species")} placeholder="Ex.: CAIXA" /></div>
+                  <div className="space-y-1.5"><Label htmlFor="volume_gross_weight">Peso bruto</Label><Input id="volume_gross_weight" name="volume_gross_weight" inputMode="decimal" defaultValue={nestedText(correctionPayload, "transport", "volume", "gross_weight")} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="volume_net_weight">Peso líquido</Label><Input id="volume_net_weight" name="volume_net_weight" inputMode="decimal" defaultValue={nestedText(correctionPayload, "transport", "volume", "net_weight")} /></div>
+                  <input type="hidden" name="volume_brand" value={nestedText(correctionPayload, "transport", "volume", "brand")} />
+                  <input type="hidden" name="volume_numbering" value={nestedText(correctionPayload, "transport", "volume", "numbering")} />
+                </div>
+              </section>
+
+              <section className="space-y-2">
+                <Label htmlFor="legal_text">Fundamentação legal/TTD nas informações complementares</Label>
+                <textarea id="legal_text" name="legal_text" className="min-h-24 w-full rounded-md border bg-background px-3 py-2 text-sm" defaultValue={nestedText(correctionPayload, "additional_info", "fiscal")} />
+              </section>
+
+              {correctionWarnings.length > 0 && (
+                <Alert>
+                  <CircleAlert />
+                  <AlertTitle>Alertas de conferência</AlertTitle>
+                  <AlertDescription>Esses alertas permanecem para revisão fiscal, mas não bloqueiam a geração do XML diagnóstico quando não houver erros obrigatórios.</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" onClick={() => setCorrectionOpen(false)} disabled={Boolean(busyAction)}>Cancelar</Button>
+                <Button type="submit" disabled={Boolean(busyAction)}>
+                  {busyAction === `save-correction:${correctionDetail.draft.id}` && <Loader2 className="animate-spin" />}
+                  Salvar, validar e continuar
+                </Button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 
