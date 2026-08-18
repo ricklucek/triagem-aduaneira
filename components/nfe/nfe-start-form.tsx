@@ -309,7 +309,7 @@ export function NfeStartForm() {
         source: "portal_unico",
       });
       await nfeApi.fetchDuimp(process.id, providerEnvironment);
-      router.push(`/nfe/processes/${process.id}?importPurpose=${purpose}&environment=${environment}&series=${series}`);
+      router.push(`/nfe/processes/${process.id}?importPurpose=${purpose}&environment=${environment}&providerEnvironment=${providerEnvironment}&series=${series}`);
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
