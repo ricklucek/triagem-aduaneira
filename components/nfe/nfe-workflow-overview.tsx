@@ -23,6 +23,7 @@ import type {
   NfeDraftDetailResponse,
   NfeDraftSummary,
   NfeWorkflowState,
+  NfeXmlVersionSummary,
   UpdateNfeDraftPayload,
 } from "@/lib/api/types/nfe-api";
 import { useToast } from "@/components/ui/toast";
@@ -104,6 +105,12 @@ function dateLabel(value?: string | null) {
 
 function issueLabel(issue: Record<string, unknown>) {
   return String(issue.message || issue.code || issue.field || "Revisão necessária");
+}
+
+function issueLocation(issue: Record<string, unknown>) {
+  const line = issue.line ? `linha ${issue.line}` : "";
+  const column = issue.column ? `coluna ${issue.column}` : "";
+  return [line, column].filter(Boolean).join(", ");
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -229,9 +236,17 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       }
       if (!draft.access_key) await nfeApi.generateAccessKey(draft.id);
       const version = await nfeApi.generateXml(draft.id);
-      await nfeApi.validateXml(draft.id, version.id);
+      const xsdValidation = await nfeApi.validateXml(draft.id, version.id);
       await Promise.all([workflow.mutate(), drafts.mutate()]);
-      toast.success(`XML v${version.version_number} gerado e validado no XSD.`);
+      if (!xsdValidation.valid) {
+        const firstError = xsdValidation.errors?.[0]
+          ? issueLabel(xsdValidation.errors[0])
+          : "Consulte os erros apresentados na versão do XML.";
+        toast.error(`XML v${version.version_number} gerado, mas reprovado no XSD: ${firstError}`);
+        document.getElementById(`xml-version-${version.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      toast.success(`XML v${version.version_number} gerado e aprovado no XSD.`);
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
@@ -314,6 +329,32 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       }
     } catch (error) {
       toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function validateExistingXml(
+    draftId: string,
+    version: NfeXmlVersionSummary,
+  ) {
+    setBusyAction(`validate-xml:${version.id}`);
+    try {
+      const result = await nfeApi.validateXml(draftId, version.id);
+      await Promise.all([workflow.mutate(), drafts.mutate()]);
+      if (!result.valid) {
+        const firstError = result.errors?.[0]
+          ? issueLabel(result.errors[0])
+          : "Consulte os erros apresentados abaixo da versão do XML.";
+        toast.error(`XML reprovado no XSD: ${firstError}`);
+        document.getElementById(`xml-version-${version.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return false;
+      }
+      toast.success("XML aprovado no XSD oficial da NF-e 4.00.");
+      return true;
+    } catch (error) {
+      toast.error(errorMessage(error));
+      return false;
     } finally {
       setBusyAction(null);
     }
@@ -421,16 +462,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       return;
     }
     if (data.next_action === "validate_xml" && latestDraft && latestXml) {
-      setBusyAction(`validate-xml:${latestXml.id}`);
-      try {
-        await nfeApi.validateXml(latestDraft.id, latestXml.id);
-        await Promise.all([workflow.mutate(), drafts.mutate()]);
-        toast.success("XML validado no XSD.");
-      } catch (error) {
-        toast.error(errorMessage(error));
-      } finally {
-        setBusyAction(null);
-      }
+      await validateExistingXml(latestDraft.id, latestXml);
       return;
     }
     if (
@@ -561,14 +593,55 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
 
               <div className="mt-4 space-y-2">
                 {draft.xml_versions.length === 0 && <p className="text-sm text-muted-foreground">Nenhum XML gerado para este rascunho.</p>}
-                {draft.xml_versions.map((version) => (
-                  <div key={version.id} className="flex flex-col gap-2 rounded-lg bg-muted/50 p-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-2"><FileCode2 className="size-4" /><span className="text-sm font-medium">XML {version.xml_type} v{version.version_number}</span><Badge variant={version.xsd_valid ? "default" : "outline"}>{version.xsd_valid ? "XSD válido" : "Não validado"}</Badge></div>
-                    <Button size="sm" variant="ghost" onClick={() => void downloadXml(draft.id, version.id)} disabled={busyAction === `download:${version.id}`}>
-                      {busyAction === `download:${version.id}` ? <Loader2 className="animate-spin" /> : <Download />} Baixar XML
-                    </Button>
-                  </div>
-                ))}
+                {draft.xml_versions.map((version) => {
+                  const xsdApproved = version.xsd_valid === true;
+                  const xsdRejected = version.xsd_valid === false;
+                  const xsdErrors = version.xsd_errors || [];
+                  return (
+                    <div id={`xml-version-${version.id}`} key={version.id} className="space-y-3 rounded-lg bg-muted/50 p-3">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <FileCode2 className="size-4" />
+                          <span className="text-sm font-medium">XML {version.xml_type === "unsigned" ? "não assinado" : version.xml_type} v{version.version_number}</span>
+                          <Badge variant={xsdApproved ? "default" : xsdRejected ? "destructive" : "outline"}>
+                            {xsdApproved ? "XSD válido" : xsdRejected ? "XSD inválido" : "Ainda não validado"}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {!xsdApproved && (
+                            <Button size="sm" variant={xsdRejected ? "destructive" : "outline"} onClick={() => void validateExistingXml(draft.id, version)} disabled={Boolean(busyAction)}>
+                              {busyAction === `validate-xml:${version.id}` ? <Loader2 className="animate-spin" /> : <Check />}
+                              {xsdRejected ? "Validar novamente" : "Validar XML"}
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => void downloadXml(draft.id, version.id)} disabled={busyAction === `download:${version.id}`}>
+                            {busyAction === `download:${version.id}` ? <Loader2 className="animate-spin" /> : <Download />} Baixar XML
+                          </Button>
+                        </div>
+                      </div>
+                      {xsdRejected && (
+                        <Alert variant="destructive">
+                          <CircleAlert />
+                          <AlertTitle>XML reprovado pelo XSD da NF-e 4.00</AlertTitle>
+                          <AlertDescription>
+                            {xsdErrors.length > 0 ? (
+                              <ul className="mt-2 list-disc space-y-1 pl-5">
+                                {xsdErrors.map((issue, index) => (
+                                  <li key={index}>
+                                    {issueLabel(issue)}
+                                    {issueLocation(issue) ? <span className="text-muted-foreground"> — {issueLocation(issue)}</span> : null}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              "A API marcou esta versão como inválida, mas não retornou detalhes do XSD."
+                            )}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
