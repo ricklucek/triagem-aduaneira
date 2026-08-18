@@ -15,6 +15,7 @@ import type {
   ResolveNfeContextPayload,
   UpdateNfeDraftPayload,
   NfeWorkflowState,
+  NfeXmlValidationResult,
   NfeXmlVersionSummary,
 } from "@/lib/api/types/nfe-api";
 
@@ -158,8 +159,14 @@ export const nfeApi = {
     return data;
   },
 
-  async validateXml(draftId: string, xmlVersionId: string) {
-    const { data } = await http.post(API_ROUTES.nfe.validateXml(draftId, xmlVersionId), {});
+  async validateXml(
+    draftId: string,
+    xmlVersionId: string,
+  ): Promise<NfeXmlValidationResult> {
+    const { data } = await http.post<NfeXmlValidationResult>(
+      API_ROUTES.nfe.validateXml(draftId, xmlVersionId),
+      {},
+    );
     return data;
   },
 
