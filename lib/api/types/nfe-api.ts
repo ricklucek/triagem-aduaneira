@@ -281,6 +281,21 @@ export interface NfeItemClassificationState {
   latest_updated_at?: string | null;
 }
 
+export type NfeWorkflowStepKey =
+  | "duimp"
+  | "context"
+  | "purposes"
+  | "drafts"
+  | "xml"
+  | "review";
+
+export interface NfeWorkflowStep {
+  key: NfeWorkflowStepKey;
+  label: string;
+  status: "completed" | "current" | "blocked" | "attention";
+  can_view: boolean;
+}
+
 export interface NfeWorkflowState {
   process: ImportProcessSummary;
   latest_snapshot: null | {
@@ -307,4 +322,7 @@ export interface NfeWorkflowState {
     series: string;
   };
   next_action: string;
+  current_step: NfeWorkflowStepKey;
+  furthest_available_step: NfeWorkflowStepKey;
+  steps: NfeWorkflowStep[];
 }
