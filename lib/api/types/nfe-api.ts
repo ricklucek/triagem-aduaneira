@@ -125,6 +125,34 @@ export interface DuimpSnapshotDetail {
   normalized_payload: Record<string, unknown>;
 }
 
+export interface NfeContextField {
+  value?: unknown;
+  source?: string | null;
+  status?: string;
+}
+
+export interface NfeContextState {
+  ready_for_draft: boolean;
+  missing_fields: string[];
+  warnings?: Array<Record<string, unknown>>;
+  tax_rule?: { id: string; name: string } | null;
+  fields?: Record<string, NfeContextField>;
+  normalized?: Record<string, unknown>;
+  suggested?: {
+    duimp_overrides?: Record<string, unknown>;
+    foreign_supplier?: Record<string, unknown> | null;
+    additional_costs?: Record<string, unknown>;
+  };
+}
+
+export interface ResolveNfeContextPayload {
+  duimp_snapshot_id?: string;
+  import_purpose: ImportPurpose;
+  provider_environment?: FiscalEnvironment;
+  refresh_external?: boolean;
+  overrides: Record<string, unknown>;
+}
+
 export interface NfeWorkflowState {
   process: ImportProcessSummary;
   latest_snapshot: null | {
@@ -133,12 +161,7 @@ export interface NfeWorkflowState {
     duimp_version?: string | null;
     fetched_at?: string | null;
   };
-  context: null | {
-    ready_for_draft: boolean;
-    missing_fields: string[];
-    warnings?: Array<Record<string, unknown>>;
-    tax_rule?: { id: string; name: string } | null;
-  };
+  context: NfeContextState | null;
   latest_draft: null | {
     draft: Record<string, unknown> & { id: string; status: string };
     items: Array<Record<string, unknown> & { id: string }>;
