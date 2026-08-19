@@ -40,6 +40,7 @@ import { Progress } from "@/components/ui/progress";
 import { NfeItemClassificationPanel } from "@/components/nfe/nfe-item-classification-panel";
 import { NfeDuimpOverview } from "@/components/nfe/nfe-duimp-overview";
 import { NfeDocumentPlanPanel } from "@/components/nfe/nfe-document-plan-panel";
+import { NfeWorkflowPendingSheet } from "@/components/nfe/nfe-workflow-pending-sheet";
 
 const actionLabels: Record<string, string> = {
   fetch_duimp: "Capturar a DUIMP",
@@ -83,6 +84,9 @@ const contextFieldLabels: Record<string, string> = {
 };
 
 const primaryActionLabels: Record<string, string> = {
+  configure_fiscal_profile: "Cadastrar perfil fiscal",
+  configure_tax_rule: "Cadastrar regra tributária",
+  configure_number_sequence: "Configurar sequência numérica",
   resolve_context: "Completar dados da importação",
   classify_items: "Classificar itens",
   create_document_plan: "Gerar plano de notas",
@@ -161,6 +165,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const [newDraftOpen, setNewDraftOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const [correctionOpen, setCorrectionOpen] = useState(false);
+  const [pendingSheetOpen, setPendingSheetOpen] = useState(false);
   const [correctionDetail, setCorrectionDetail] = useState<NfeDraftDetailResponse | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const workflow = useNfeWorkflowState(processId, { import_purpose: purpose, environment, series });
@@ -245,6 +250,9 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     primaryActionLabel &&
     (
       data.next_action === "resolve_context" ||
+      data.next_action === "configure_fiscal_profile" ||
+      data.next_action === "configure_tax_rule" ||
+      data.next_action === "configure_number_sequence" ||
       data.next_action === "classify_items" ||
       data.next_action === "create_document_plan" ||
       data.next_action === "review_document_plan" ||
@@ -576,6 +584,24 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     }
   }
 
+  const sheetActions = [
+    "configure_fiscal_profile",
+    "configure_tax_rule",
+    "configure_number_sequence",
+    "resolve_context",
+    "classify_items",
+    "correct_draft",
+    "review_document_plan",
+  ];
+
+  async function triggerPrimaryAction() {
+    if (sheetActions.includes(data.next_action)) {
+      setPendingSheetOpen(true);
+      return;
+    }
+    await continueWorkflow();
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-8">
       <Button variant="ghost" asChild><Link href="/nfe/processes"><ChevronLeft /> Voltar aos processos</Link></Button>
@@ -588,7 +614,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         <div className="flex flex-wrap gap-2">
           <Badge variant={data.next_action === "completed" ? "default" : "secondary"}>{actionLabels[data.next_action] || data.next_action}</Badge>
           {primaryActionSupported && (
-            <Button onClick={() => void continueWorkflow()} disabled={Boolean(busyAction)}>
+            <Button onClick={() => void triggerPrimaryAction()} disabled={Boolean(busyAction)}>
               {busyAction && <Loader2 className="animate-spin" />}
               {primaryActionLabel}
             </Button>
@@ -690,7 +716,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               )}
               {data.context?.missing_fields?.length ? <div className="flex flex-wrap gap-2">{data.context.missing_fields.map((field) => <Badge key={field} variant="outline">{contextFieldLabels[field] || field}</Badge>)}</div> : null}
               {primaryActionSupported && (
-                <Button onClick={() => void continueWorkflow()} disabled={Boolean(busyAction)}>
+                <Button onClick={() => void triggerPrimaryAction()} disabled={Boolean(busyAction)}>
                   {busyAction && <Loader2 className="animate-spin" />}
                   {primaryActionLabel}
                 </Button>
@@ -906,6 +932,22 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <NfeWorkflowPendingSheet
+        open={pendingSheetOpen}
+        onOpenChange={setPendingSheetOpen}
+        workflow={data}
+        purpose={purpose}
+        environment={environment}
+        series={series}
+        onResolved={async () => {
+          await Promise.all([workflow.mutate(), drafts.mutate(), snapshots.mutate()]);
+        }}
+        onContinue={async () => {
+          setPendingSheetOpen(false);
+          await continueWorkflow();
+        }}
+      />
 
       <Dialog open={correctionOpen} onOpenChange={(open) => {
         setCorrectionOpen(open);
