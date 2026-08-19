@@ -154,6 +154,9 @@ export interface NfeDraftSummary {
   number?: number | null;
   access_key?: string | null;
   duimp_snapshot_id?: string | null;
+  planned_document_id?: string | null;
+  exporter_code?: string | null;
+  foreign_supplier?: Record<string, unknown> | null;
   items_count: number;
   validation_errors: Array<Record<string, unknown>>;
   validation_warnings: Array<Record<string, unknown>>;
@@ -305,6 +308,18 @@ export interface NfePlannedDocument {
   customs_value: string;
   allocated_shared_costs: Record<string, string>;
   totals: Record<string, string>;
+  draft: null | {
+    id: string;
+    status: string;
+    number?: number | null;
+    series: string;
+    access_key?: string | null;
+    validation_errors: Array<Record<string, unknown>>;
+    validation_warnings: Array<Record<string, unknown>>;
+    latest_xml: NfeXmlVersionSummary | null;
+    created_at?: string | null;
+    updated_at?: string | null;
+  };
   items: NfePlannedDocumentItem[];
 }
 
@@ -334,6 +349,15 @@ export interface NfeDocumentPlan {
     has_number: false;
     has_access_key: false;
     has_xml: false;
+  };
+  progress: {
+    documents_count: number;
+    drafts_count: number;
+    xmls_count: number;
+    xsd_valid_count: number;
+    all_drafts_created: boolean;
+    all_xmls_generated: boolean;
+    all_xmls_valid: boolean;
   };
   documents: NfePlannedDocument[];
   created_by?: { id: string; name: string } | null;

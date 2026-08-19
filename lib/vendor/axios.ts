@@ -3,6 +3,7 @@ export type AxiosRequestConfig = {
   params?: Record<string, string | number | boolean | undefined>;
   headers?: Record<string, string>;
   body?: unknown;
+  responseType?: "text" | "blob";
 };
 
 export type AxiosResponse<T> = {
@@ -54,12 +55,16 @@ async function request<T>(
   });
 
   let payload: unknown = null;
-  const text = await res.text();
-  if (text) {
-    try {
-      payload = JSON.parse(text);
-    } catch {
-      payload = text;
+  if (config?.responseType === "blob" && res.ok) {
+    payload = await res.blob();
+  } else {
+    const text = await res.text();
+    if (text) {
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        payload = text;
+      }
     }
   }
 

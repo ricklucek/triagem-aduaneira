@@ -51,9 +51,13 @@ const actionLabels: Record<string, string> = {
   classify_items: "Classificar a finalidade fiscal dos itens",
   create_document_plan: "Gerar o plano de notas por exportador",
   review_document_plan: "Revisar o plano de notas por exportador",
+  create_child_drafts: "Gerar os rascunhos das NF-e filhas",
   create_draft: "Gerar o rascunho da NF-e",
   configure_number_sequence: "Configurar a sequência numérica",
   correct_draft: "Corrigir as divergências do rascunho",
+  correct_child_drafts: "Corrigir as divergências das NF-e filhas",
+  generate_child_xmls: "Gerar e validar os XMLs das NF-e filhas",
+  validate_child_xmls: "Validar novamente os XMLs das NF-e filhas",
   generate_access_key: "Gerar a chave de acesso",
   generate_xml: "Gerar o XML não assinado",
   validate_xml: "Validar o XML no XSD",
@@ -91,8 +95,12 @@ const primaryActionLabels: Record<string, string> = {
   classify_items: "Classificar itens",
   create_document_plan: "Gerar plano de notas",
   review_document_plan: "Revisar plano de notas",
+  create_child_drafts: "Gerar rascunhos das filhas",
   create_draft: "Gerar rascunho da NF-e",
   correct_draft: "Revisar divergências",
+  correct_child_drafts: "Revisar filhas com divergências",
+  generate_child_xmls: "Gerar e validar XMLs",
+  validate_child_xmls: "Validar XMLs novamente",
   generate_access_key: "Gerar chave e XML",
   generate_xml: "Gerar XML",
   validate_xml: "Validar XML",
@@ -256,7 +264,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       data.next_action === "classify_items" ||
       data.next_action === "create_document_plan" ||
       data.next_action === "review_document_plan" ||
+      data.next_action === "create_child_drafts" ||
       data.next_action === "create_draft" ||
+      data.next_action === "correct_child_drafts" ||
+      data.next_action === "generate_child_xmls" ||
+      data.next_action === "validate_child_xmls" ||
       (data.next_action === "correct_draft" && latestDraft) ||
       (["generate_access_key", "generate_xml", "validate_xml"].includes(data.next_action) && latestDraft) ||
       (data.next_action === "completed" && latestDraft && latestXml)
@@ -542,6 +554,60 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     }
   }
 
+  async function generateChildDrafts() {
+    if (!data.latest_snapshot) return;
+    setBusyAction("child-drafts");
+    try {
+      const result = await nfeApi.generateChildDrafts(processId, {
+        duimp_snapshot_id: data.latest_snapshot.id,
+        environment,
+        series,
+      });
+      await Promise.all([workflow.mutate(), drafts.mutate()]);
+      toast.success(
+        result.created_draft_ids.length
+          ? `${result.created_draft_ids.length} rascunho(s) de NF-e filha criado(s).`
+          : "Os rascunhos das NF-e filhas já estavam disponíveis.",
+      );
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function generateChildXmls() {
+    if (!data.latest_snapshot) return;
+    setBusyAction("child-xmls");
+    try {
+      const result = await nfeApi.generateChildXmls(processId, data.latest_snapshot.id);
+      await Promise.all([workflow.mutate(), drafts.mutate()]);
+      if (result.all_valid) {
+        toast.success(`${result.results.length} XML(s) gerado(s) e aprovado(s) no XSD.`);
+        return;
+      }
+      const failures = result.results.filter((item) => !item.success);
+      toast.info(`${failures.length} NF-e filha(s) ainda exigem correção ou nova validação.`);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function downloadChildXmls() {
+    if (!data.latest_snapshot) return;
+    setBusyAction("child-download");
+    try {
+      const file = await nfeApi.downloadChildXmls(processId, data.latest_snapshot.id);
+      saveBlob(file.blob, file.filename);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
   async function continueWorkflow() {
     if (data.next_action === "classify_items") {
       document.getElementById("item-classification")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -560,12 +626,25 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       document.getElementById("document-plan")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
+    if (data.next_action === "create_child_drafts") {
+      await generateChildDrafts();
+      return;
+    }
     if (data.next_action === "create_draft") {
       setNewDraftOpen(true);
       return;
     }
     if (data.next_action === "correct_draft" && latestDraft) {
       await openDraftCorrection(latestDraft);
+      return;
+    }
+    if (data.next_action === "correct_child_drafts") {
+      const draftWithErrors = draftItems.find((draft) => draft.validation_errors.length > 0);
+      if (draftWithErrors) await openDraftCorrection(draftWithErrors);
+      return;
+    }
+    if (["generate_child_xmls", "validate_child_xmls"].includes(data.next_action)) {
+      await generateChildXmls();
       return;
     }
     if (data.next_action === "validate_xml" && latestDraft && latestXml) {
@@ -577,6 +656,10 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       latestDraft
     ) {
       await generateDiagnosticXml(latestDraft);
+      return;
+    }
+    if (data.next_action === "completed" && data.document_plan?.documents.length && data.document_plan.documents.length > 1) {
+      await downloadChildXmls();
       return;
     }
     if (data.next_action === "completed" && latestDraft && latestXml) {
@@ -751,11 +834,14 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         />
       )}
 
-      {activeStep === "planning" && (
+      {(activeStep === "planning" || (Boolean(data.document_plan?.documents.length && data.document_plan.documents.length > 1) && ["drafts", "xml", "review"].includes(activeStep))) && (
         <NfeDocumentPlanPanel
           plan={data.document_plan}
-          busy={busyAction === "document-plan"}
+          busyAction={busyAction}
           onGenerate={generateDocumentPlan}
+          onGenerateDrafts={generateChildDrafts}
+          onGenerateXmls={generateChildXmls}
+          onDownloadXmls={downloadChildXmls}
         />
       )}
 
@@ -771,11 +857,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
             {drafts.isLoading && <p className="text-sm text-muted-foreground">Carregando rascunhos…</p>}
             {drafts.error && <Alert variant="destructive"><CircleAlert /><AlertDescription>Não foi possível consultar o histórico de rascunhos.</AlertDescription></Alert>}
             {draftItems.map((draft, index) => (
-              <div key={draft.id} className="rounded-xl border p-4">
+              <div id={`draft-${draft.id}`} key={draft.id} className="rounded-xl border p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">Rascunho {draft.number ? `NF-e nº ${draft.number}` : `#${draftItems.length - index}`}</h3><Badge variant={draft.validation_errors.length ? "destructive" : "secondary"}>{draftStatusLabels[draft.status] || draft.status}</Badge></div>
-                    <p className="mt-1 text-xs text-muted-foreground">Criado em {dateLabel(draft.created_at)} · {draft.items_count} itens · Série {draft.series}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{draft.exporter_code ? `Exportador ${draft.exporter_code} · ` : ""}Criado em {dateLabel(draft.created_at)} · {draft.items_count} itens · Série {draft.series}</p>
                     {draft.access_key && <p className="mt-1 break-all font-mono text-xs text-muted-foreground">Chave: {draft.access_key}</p>}
                   </div>
                   <div className="flex flex-wrap gap-2">

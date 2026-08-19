@@ -164,6 +164,74 @@ export const nfeApi = {
     return data;
   },
 
+  async generateChildDrafts(
+    processId: string,
+    payload: {
+      duimp_snapshot_id: string;
+      environment: FiscalEnvironment;
+      series: string;
+    },
+  ): Promise<{
+    created_draft_ids: string[];
+    reused_draft_ids: string[];
+    plan: NfeDocumentPlan;
+  }> {
+    const { data } = await http.post<{
+      created_draft_ids: string[];
+      reused_draft_ids: string[];
+      plan: NfeDocumentPlan;
+    }>(API_ROUTES.nfe.generateChildDrafts(processId), payload);
+    return data;
+  },
+
+  async generateChildXmls(
+    processId: string,
+    snapshotId: string,
+  ): Promise<{
+    all_valid: boolean;
+    results: Array<{
+      planned_document_id: string;
+      draft_id?: string;
+      xml_version_id?: string;
+      success: boolean;
+      xsd_valid?: boolean;
+      xsd_errors?: Array<Record<string, unknown>>;
+      message?: string;
+    }>;
+    plan: NfeDocumentPlan;
+  }> {
+    const { data } = await http.post<{
+      all_valid: boolean;
+      results: Array<{
+        planned_document_id: string;
+        draft_id?: string;
+        xml_version_id?: string;
+        success: boolean;
+        xsd_valid?: boolean;
+        xsd_errors?: Array<Record<string, unknown>>;
+        message?: string;
+      }>;
+      plan: NfeDocumentPlan;
+    }>(API_ROUTES.nfe.generateChildXmls(processId), {
+      duimp_snapshot_id: snapshotId,
+    });
+    return data;
+  },
+
+  async downloadChildXmls(processId: string, snapshotId: string) {
+    const { data } = await http.get<Blob>(
+      API_ROUTES.nfe.downloadChildXmls(processId),
+      {
+        params: { duimp_snapshot_id: snapshotId },
+        responseType: "blob",
+      },
+    );
+    return {
+      blob: data,
+      filename: `NFe-filhas-${processId}.zip`,
+    };
+  },
+
   async listDrafts(processId: string): Promise<{ items: NfeDraftSummary[] }> {
     const { data } = await http.get<{ items: NfeDraftSummary[] }>(API_ROUTES.nfe.drafts(processId));
     return data;

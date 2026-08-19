@@ -59,6 +59,12 @@ export const API_ROUTES = {
       `/import-processes/${processId}/item-classifications`,
     documentPlan: (processId: string) =>
       `/import-processes/${processId}/nfe-document-plan`,
+    generateChildDrafts: (processId: string) =>
+      `/import-processes/${processId}/nfe-document-plan/generate-drafts`,
+    generateChildXmls: (processId: string) =>
+      `/import-processes/${processId}/nfe-document-plan/generate-xmls`,
+    downloadChildXmls: (processId: string) =>
+      `/import-processes/${processId}/nfe-document-plan/xmls/download`,
     fetchDuimp: (processId: string) =>
       `/import-processes/${processId}/duimp/fetch`,
     snapshots: (processId: string) =>
