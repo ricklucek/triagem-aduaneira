@@ -11,6 +11,7 @@ import type {
   ListProviderConnectionsResponse,
   NfeDraftDetailResponse,
   NfeDraftSummary,
+  NfeDocumentPlan,
   NfeItemClassificationState,
   NfeNumberSequencePayload,
   NfeContextState,
@@ -129,6 +130,35 @@ export const nfeApi = {
   ): Promise<NfeItemClassificationState> {
     const { data } = await http.put<NfeItemClassificationState>(
       API_ROUTES.nfe.itemClassifications(processId),
+      payload,
+    );
+    return data;
+  },
+
+  async getDocumentPlan(
+    processId: string,
+    snapshotId?: string,
+  ): Promise<{ process_id: string; snapshot_id: string; plan: NfeDocumentPlan | null }> {
+    const { data } = await http.get<{
+      process_id: string;
+      snapshot_id: string;
+      plan: NfeDocumentPlan | null;
+    }>(
+      API_ROUTES.nfe.documentPlan(processId),
+      { params: snapshotId ? { duimp_snapshot_id: snapshotId } : undefined },
+    );
+    return data;
+  },
+
+  async createDocumentPlan(
+    processId: string,
+    payload: {
+      duimp_snapshot_id?: string;
+      additional_costs?: Partial<Record<"afrmm" | "siscomex_fee" | "thc" | "other", string>>;
+    },
+  ): Promise<NfeDocumentPlan> {
+    const { data } = await http.post<NfeDocumentPlan>(
+      API_ROUTES.nfe.documentPlan(processId),
       payload,
     );
     return data;

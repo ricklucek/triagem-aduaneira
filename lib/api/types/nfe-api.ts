@@ -281,10 +281,71 @@ export interface NfeItemClassificationState {
   latest_updated_at?: string | null;
 }
 
+export interface NfePlannedDocumentItem {
+  id: string;
+  duimp_item_number: string;
+  exporter_code?: string | null;
+  import_purpose: ImportPurpose;
+  cfop: string;
+  customs_value: string;
+  allocated_shared_costs: Record<string, string>;
+}
+
+export interface NfePlannedDocument {
+  id: string;
+  ordinal: number;
+  status: string;
+  exporter_key: string;
+  exporter_code?: string | null;
+  foreign_supplier?: Record<string, unknown> | null;
+  operation_nature: string;
+  item_purposes: ImportPurpose[];
+  mixed_import_purposes: boolean;
+  items_count: number;
+  customs_value: string;
+  allocated_shared_costs: Record<string, string>;
+  totals: Record<string, string>;
+  items: NfePlannedDocumentItem[];
+}
+
+export interface NfeDocumentPlan {
+  id: string;
+  process_id: string;
+  snapshot_id: string;
+  version_number: number;
+  status: string;
+  allocation_basis: "customs_value";
+  shared_costs: Record<string, string>;
+  totals: Record<string, string | number>;
+  reconciliation: {
+    balanced: boolean;
+    unassigned_items: number;
+    checks: Array<{
+      name: string;
+      expected: string;
+      allocated: string;
+      difference: string;
+      balanced: boolean;
+    }>;
+  };
+  master: {
+    type: "managerial";
+    is_fiscal_document: false;
+    has_number: false;
+    has_access_key: false;
+    has_xml: false;
+  };
+  documents: NfePlannedDocument[];
+  created_by?: { id: string; name: string } | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export type NfeWorkflowStepKey =
   | "duimp"
   | "context"
   | "purposes"
+  | "planning"
   | "drafts"
   | "xml"
   | "review";
@@ -306,6 +367,7 @@ export interface NfeWorkflowState {
   };
   context: NfeContextState | null;
   item_classification: NfeItemClassificationState | null;
+  document_plan: NfeDocumentPlan | null;
   latest_draft: null | {
     draft: Record<string, unknown> & { id: string; status: string };
     items: Array<Record<string, unknown> & { id: string }>;
@@ -317,6 +379,8 @@ export interface NfeWorkflowState {
     has_number_sequence: boolean;
     has_item_classification: boolean;
     item_classification_ready: boolean;
+    has_document_plan: boolean;
+    planned_documents_count: number;
     import_purpose?: ImportPurpose | null;
     environment: FiscalEnvironment;
     series: string;

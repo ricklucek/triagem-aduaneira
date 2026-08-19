@@ -39,6 +39,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { NfeItemClassificationPanel } from "@/components/nfe/nfe-item-classification-panel";
 import { NfeDuimpOverview } from "@/components/nfe/nfe-duimp-overview";
+import { NfeDocumentPlanPanel } from "@/components/nfe/nfe-document-plan-panel";
 
 const actionLabels: Record<string, string> = {
   fetch_duimp: "Capturar a DUIMP",
@@ -47,6 +48,8 @@ const actionLabels: Record<string, string> = {
   configure_tax_rule: "Cadastrar a regra tributária",
   resolve_context: "Completar os dados da DUIMP",
   classify_items: "Classificar a finalidade fiscal dos itens",
+  create_document_plan: "Gerar o plano de notas por exportador",
+  review_document_plan: "Revisar o plano de notas por exportador",
   create_draft: "Gerar o rascunho da NF-e",
   configure_number_sequence: "Configurar a sequência numérica",
   correct_draft: "Corrigir as divergências do rascunho",
@@ -82,6 +85,8 @@ const contextFieldLabels: Record<string, string> = {
 const primaryActionLabels: Record<string, string> = {
   resolve_context: "Completar dados da importação",
   classify_items: "Classificar itens",
+  create_document_plan: "Gerar plano de notas",
+  review_document_plan: "Revisar plano de notas",
   create_draft: "Gerar rascunho da NF-e",
   correct_draft: "Revisar divergências",
   generate_access_key: "Gerar chave e XML",
@@ -229,6 +234,8 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     data.prerequisites.has_fiscal_profile &&
     data.prerequisites.has_active_tax_rule &&
     data.prerequisites.item_classification_ready &&
+    data.prerequisites.has_document_plan &&
+    data.prerequisites.planned_documents_count === 1 &&
     data.context?.ready_for_draft,
   );
   const latestDraft = draftItems[0];
@@ -239,6 +246,8 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     (
       data.next_action === "resolve_context" ||
       data.next_action === "classify_items" ||
+      data.next_action === "create_document_plan" ||
+      data.next_action === "review_document_plan" ||
       data.next_action === "create_draft" ||
       (data.next_action === "correct_draft" && latestDraft) ||
       (["generate_access_key", "generate_xml", "validate_xml"].includes(data.next_action) && latestDraft) ||
@@ -505,6 +514,26 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     }
   }
 
+  async function generateDocumentPlan() {
+    if (!data.latest_snapshot) return;
+    setBusyAction("document-plan");
+    try {
+      const plan = await nfeApi.createDocumentPlan(processId, {
+        duimp_snapshot_id: data.latest_snapshot.id,
+      });
+      await workflow.mutate();
+      toast.success(
+        plan.documents.length > 1
+          ? `Plano criado com ${plan.documents.length} NF-e filhas, uma por exportador.`
+          : "Plano criado. A geração do rascunho da NF-e foi liberada.",
+      );
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
   async function continueWorkflow() {
     if (data.next_action === "classify_items") {
       document.getElementById("item-classification")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -512,6 +541,15 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     }
     if (data.next_action === "resolve_context") {
       setContextOpen(true);
+      return;
+    }
+    if (data.next_action === "create_document_plan") {
+      await generateDocumentPlan();
+      return;
+    }
+    if (data.next_action === "review_document_plan") {
+      goToStep("planning");
+      document.getElementById("document-plan")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
     if (data.next_action === "create_draft") {
@@ -669,6 +707,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               <div className="flex justify-between"><span className="text-muted-foreground">Sequência</span><strong>{data.prerequisites.has_number_sequence ? "Configurada" : "Pendente"}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Dados da importação</span><strong>{data.context?.ready_for_draft ? "Completos" : `${data.context?.missing_fields?.length || 0} pendência(s)`}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Itens classificados</span><strong>{data.item_classification ? data.item_classification.classified_count + "/" + data.item_classification.total_items : "Pendente"}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">NF-e filhas planejadas</span><strong>{data.prerequisites.planned_documents_count || 0}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Rascunhos</span><strong>{draftItems.length}</strong></div>
             </CardContent>
           </Card>
@@ -683,6 +722,14 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
           onSaved={async () => {
             await Promise.all([workflow.mutate(), drafts.mutate()]);
           }}
+        />
+      )}
+
+      {activeStep === "planning" && (
+        <NfeDocumentPlanPanel
+          plan={data.document_plan}
+          busy={busyAction === "document-plan"}
+          onGenerate={generateDocumentPlan}
         />
       )}
 
