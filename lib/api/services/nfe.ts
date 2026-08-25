@@ -5,6 +5,7 @@ import type {
   FiscalEnvironment,
   FiscalProfilePayload,
   ImportPurpose,
+  ImportTaxRuleDiagnostics,
   ImportTaxRulePayload,
   ListImportProcessClientGroupsResponse,
   ListImportProcessesResponse,
@@ -349,6 +350,15 @@ export const nfeApi = {
     return data;
   },
 
+  async getTaxRuleDiagnostics(
+    clientId: string,
+  ): Promise<ImportTaxRuleDiagnostics> {
+    const { data } = await http.get<ImportTaxRuleDiagnostics>(
+      API_ROUTES.clients.importTaxRuleDiagnostics(clientId),
+    );
+    return data;
+  },
+
   async updateTaxRule(
     clientId: string,
     ruleId: string,
@@ -364,6 +374,10 @@ export const nfeApi = {
   async createTaxRule(clientId: string, payload: ImportTaxRulePayload) {
     const { data } = await http.post(API_ROUTES.clients.importTaxRules(clientId), payload);
     return data;
+  },
+
+  async deactivateTaxRule(clientId: string, ruleId: string) {
+    await http.delete(`${API_ROUTES.clients.importTaxRules(clientId)}/${ruleId}`);
   },
 
   async listNumberSequences(clientId: string): Promise<Array<Record<string, unknown>>> {

@@ -41,6 +41,8 @@ export const API_ROUTES = {
     scopes: (clientId: string) => `/clients/${clientId}/scopes`,
     fiscalProfile: (clientId: string) => `/clients/${clientId}/fiscal-profile`,
     importTaxRules: (clientId: string) => `/clients/${clientId}/import-tax-rules`,
+    importTaxRuleDiagnostics: (clientId: string) =>
+      `/clients/${clientId}/import-tax-rules/diagnostics`,
     nfeNumberSequences: (clientId: string) =>
       `/clients/${clientId}/nfe-number-sequences`,
   },

@@ -105,12 +105,48 @@ export interface ImportTaxRulePayload {
   import_purpose: ImportPurpose;
   import_modality?: "direct" | "on_behalf" | "by_order" | null;
   tax_regime?: "1" | "2" | "3" | null;
+  ncm_pattern?: string | null;
   priority?: number;
   effective_from?: string | null;
+  effective_until?: string | null;
   configuration_json: Record<string, unknown>;
+  additional_cost_defaults?: Record<string, unknown> | null;
   transport_defaults?: Record<string, unknown> | null;
   payment_defaults?: Record<string, unknown> | null;
   active?: boolean;
+}
+
+export interface ImportTaxRule extends ImportTaxRulePayload {
+  id: string;
+  issuer_state: string;
+  priority: number;
+  active: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+  has_conflicts: boolean;
+  conflicts: Array<{
+    id: string | null;
+    name: string;
+    issuer_state: string;
+    import_purpose: ImportPurpose;
+    import_modality?: "direct" | "on_behalf" | "by_order" | null;
+    tax_regime?: "1" | "2" | "3" | null;
+    ncm_pattern?: string | null;
+    priority: number;
+    effective_from?: string | null;
+    effective_until?: string | null;
+  }>;
+}
+
+export interface ImportTaxRuleDiagnostics {
+  items: ImportTaxRule[];
+  conflicts: Array<{ rules: ImportTaxRule["conflicts"] }>;
+  summary: {
+    total: number;
+    active: number;
+    inactive: number;
+    conflict_count: number;
+  };
 }
 
 export interface NfeNumberSequencePayload {
@@ -404,6 +440,8 @@ export interface NfeWorkflowState {
   prerequisites: {
     has_fiscal_profile: boolean;
     has_active_tax_rule: boolean;
+    active_tax_rule_count: number;
+    tax_rule_conflict_count: number;
     has_number_sequence: boolean;
     has_provider_connection: boolean;
     has_item_classification: boolean;

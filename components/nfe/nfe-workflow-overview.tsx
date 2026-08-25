@@ -38,6 +38,7 @@ import { Progress } from "@/components/ui/progress";
 import { NfeItemClassificationPanel } from "@/components/nfe/nfe-item-classification-panel";
 import { NfeDuimpOverview } from "@/components/nfe/nfe-duimp-overview";
 import { NfeDocumentPlanPanel } from "@/components/nfe/nfe-document-plan-panel";
+import { NfeClientFiscalCenter } from "@/components/nfe/nfe-client-fiscal-center";
 import { NfeWorkflowPendingSheet } from "@/components/nfe/nfe-workflow-pending-sheet";
 
 const actionLabels: Record<string, string> = {
@@ -777,24 +778,32 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       </Card>
 
       {activeStep === "client" && (
-        <Card>
-          <CardHeader><CardTitle>Configuração do cliente</CardTitle><CardDescription>Revise os cadastros reutilizados nas notas deste cliente antes de importar a DUIMP.</CardDescription></CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            {[
-              ["Perfil fiscal", data.prerequisites.has_fiscal_profile, "configure_fiscal_profile"],
-              ["Regra tributária", data.prerequisites.has_active_tax_rule, "configure_tax_rule"],
-              ["Sequência numérica", data.prerequisites.has_number_sequence, "configure_number_sequence"],
-            ].map(([label, ready, action]) => (
-              <div key={String(label)} className="flex items-center justify-between rounded-lg border p-4">
-                <div><span className="block text-sm font-medium">{label}</span><span className={`text-xs font-medium ${ready ? "text-emerald-700" : "text-amber-700"}`}>{ready ? "Configurado" : "Pendente"}</span></div>
-                <Button type="button" size="sm" variant="outline" onClick={() => { setSetupAction(String(action)); setPendingSheetOpen(true); }}>{ready ? "Revisar" : "Configurar"}</Button>
-              </div>
-            ))}
-            {data.current_step === "client" && primaryActionSupported && (
-              <Button className="sm:col-span-2" onClick={() => void triggerPrimaryAction()} disabled={Boolean(busyAction)}>{primaryActionLabel}</Button>
-            )}
-          </CardContent>
-        </Card>
+        <div className="space-y-3">
+          <NfeClientFiscalCenter
+            clientId={data.process.importer_id}
+            hasFiscalProfile={data.prerequisites.has_fiscal_profile}
+            hasNumberSequence={data.prerequisites.has_number_sequence}
+            onConfigureProfile={() => {
+              setSetupAction("configure_fiscal_profile");
+              setPendingSheetOpen(true);
+            }}
+            onConfigureSequence={() => {
+              setSetupAction("configure_number_sequence");
+              setPendingSheetOpen(true);
+            }}
+            onChanged={async () => {
+              await Promise.all([workflow.mutate(), drafts.mutate(), snapshots.mutate()]);
+            }}
+          />
+          {data.current_step === "client" && primaryActionSupported && (
+            <div className="flex justify-end rounded-xl border bg-card p-4">
+              <Button onClick={() => void triggerPrimaryAction()} disabled={Boolean(busyAction)}>
+                {busyAction && <Loader2 className="animate-spin" />}
+                {primaryActionLabel}
+              </Button>
+            </div>
+          )}
+        </div>
       )}
 
       {activeStep === "duimp" && (
