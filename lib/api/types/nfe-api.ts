@@ -8,6 +8,9 @@ export interface ProviderConnectionSummary {
   environment: FiscalEnvironment;
   status: string;
   credentials_ref?: string | null;
+  last_healthcheck_at?: string | null;
+  last_error?: string | null;
+  updated_at?: string | null;
 }
 
 export interface ListProviderConnectionsResponse {

@@ -49,7 +49,6 @@ const actionTitles: Record<string, string> = {
   configure_fiscal_profile: "Cadastrar perfil fiscal",
   configure_tax_rule: "Cadastrar regra tributária",
   configure_number_sequence: "Configurar sequência numérica",
-  configure_provider_connection: "Configurar conexão com o Portal Único",
   resolve_context: "Completar dados da importação",
   classify_items: "Classificar finalidades dos itens",
   create_document_plan: "Gerar plano de notas",
@@ -269,31 +268,6 @@ export function NfeWorkflowPendingSheet({
     }
   }
 
-  async function submitProviderConnection(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    setBusy(true);
-    try {
-      const scope = String(form.get("connection_scope") || "organization");
-      await nfeApi.saveProviderConnection({
-        importer_id: scope === "client" ? workflow.process.importer_id : null,
-        provider: "portal_unico",
-        environment: "production",
-        auth_type: "api_key",
-        status: "active",
-        credentials_ref: String(form.get("credentials_ref") || "gcp:PORTAL_UNICO"),
-        config_json: { role_type: "IMPEXP" },
-      });
-      await onResolved();
-      onOpenChange(false);
-      toast.success("Conexão do Portal Único configurada. O processo foi reavaliado.");
-    } catch (error) {
-      toast.error(errorMessage(error));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const formKey = [action, profile?.state, profile?.tax_regime, workflow.process.importer_id].join(":");
   const pendingItems = workflow.item_classification?.pending_count || 0;
   const draftErrors = workflow.latest_draft?.draft.validation_errors;
@@ -438,16 +412,7 @@ export function NfeWorkflowPendingSheet({
             </form>
           )}
 
-          {action === "configure_provider_connection" && (
-            <form className="grid gap-4" onSubmit={submitProviderConnection}>
-              <div className="space-y-1.5"><Label>Escopo</Label><Select name="connection_scope" defaultValue="organization"><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="organization">Toda a organização</SelectItem><SelectItem value="client">Somente este cliente</SelectItem></SelectContent></Select></div>
-              <Field label="Referência das credenciais" name="credentials_ref" defaultValue="gcp:PORTAL_UNICO" />
-              <Alert><CircleAlert /><AlertDescription>A referência aponta para credenciais mantidas no gerenciador de segredos; nenhuma chave será salva no banco.</AlertDescription></Alert>
-              <Button disabled={busy}>{busy ? <Loader2 className="animate-spin" /> : <Check />} Salvar conexão e reavaliar</Button>
-            </form>
-          )}
-
-          {!["configure_fiscal_profile", "configure_tax_rule", "configure_number_sequence", "configure_provider_connection"].includes(action) && (
+          {!["configure_fiscal_profile", "configure_tax_rule", "configure_number_sequence"].includes(action) && (
             <div className="space-y-4">
               {action === "resolve_context" && (
                 <div className="space-y-2">

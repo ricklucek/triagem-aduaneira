@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Building2, ShieldCheck, UserCog, UsersRound } from "lucide-react";
+import { ArrowRight, Building2, PlugZap, ShieldCheck, UserCog, UsersRound } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const settingsSections = [
@@ -20,6 +20,12 @@ const settingsSections = [
     description: "Configure as informações globais da sua organização",
     href: "/settings/organization",
     icon: Building2,
+  },
+  {
+    title: "Integrações",
+    description: "Configure conexões compartilhadas, como o acesso ao Portal Único",
+    href: "/settings/integrations",
+    icon: PlugZap,
   },
   {
     title: "Acesso as ferramentas",

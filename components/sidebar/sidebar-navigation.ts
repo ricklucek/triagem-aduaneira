@@ -5,6 +5,7 @@ import {
     Info,
     LayoutDashboard,
     MessageSquare,
+    PlugZap,
     ShieldCheck,
     FileCode2,
     User2,
@@ -80,6 +81,11 @@ export const settingsSidebarNavigation: SidebarNavigation = {
             title: "Minha organização",
             url: "/settings/organization",
             icon: Building2,
+        },
+        {
+            title: "Integrações",
+            url: "/settings/integrations",
+            icon: PlugZap,
         },
         {
             title: "Controle de acesso",

@@ -52,7 +52,7 @@ const actionLabels: Record<string, string> = {
   create_child_drafts: "Gerar os rascunhos das NF-e filhas",
   create_draft: "Gerar o rascunho da NF-e",
   configure_number_sequence: "Configurar a sequência numérica",
-  configure_provider_connection: "Configurar o Portal Único",
+  configure_provider_connection: "Configurar a integração da organização com o Portal Único",
   correct_draft: "Corrigir as divergências do rascunho",
   correct_child_drafts: "Corrigir as divergências das NF-e filhas",
   generate_child_xmls: "Gerar e validar os XMLs das NF-e filhas",
@@ -91,7 +91,7 @@ const primaryActionLabels: Record<string, string> = {
   configure_fiscal_profile: "Cadastrar perfil fiscal",
   configure_tax_rule: "Cadastrar regra tributária",
   configure_number_sequence: "Configurar sequência numérica",
-  configure_provider_connection: "Configurar Portal Único",
+  configure_provider_connection: "Abrir integrações",
   resolve_context: "Completar dados da importação",
   classify_items: "Classificar itens",
   create_document_plan: "Gerar plano de notas",
@@ -684,7 +684,6 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     "configure_fiscal_profile",
     "configure_tax_rule",
     "configure_number_sequence",
-    "configure_provider_connection",
     "resolve_context",
     "classify_items",
     "correct_draft",
@@ -692,6 +691,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   ];
 
   async function triggerPrimaryAction() {
+    if (data.next_action === "configure_provider_connection") {
+      const returnTo = `/nfe/processes/${processId}?step=duimp`;
+      router.push(`/settings/integrations?returnTo=${encodeURIComponent(returnTo)}`);
+      return;
+    }
     if (sheetActions.includes(data.next_action)) {
       setSetupAction(null);
       setPendingSheetOpen(true);
@@ -780,7 +784,6 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               ["Perfil fiscal", data.prerequisites.has_fiscal_profile, "configure_fiscal_profile"],
               ["Regra tributária", data.prerequisites.has_active_tax_rule, "configure_tax_rule"],
               ["Sequência numérica", data.prerequisites.has_number_sequence, "configure_number_sequence"],
-              ["Portal Único", data.prerequisites.has_provider_connection, "configure_provider_connection"],
             ].map(([label, ready, action]) => (
               <div key={String(label)} className="flex items-center justify-between rounded-lg border p-4">
                 <div><span className="block text-sm font-medium">{label}</span><span className={`text-xs font-medium ${ready ? "text-emerald-700" : "text-amber-700"}`}>{ready ? "Configurado" : "Pendente"}</span></div>
@@ -798,11 +801,24 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         data.latest_snapshot ? <NfeDuimpOverview snapshots={snapshotItems} /> : (
           <Card id="duimp-import">
             <CardHeader><CardTitle>Importar DUIMP do Portal Único</CardTitle><CardDescription>Informe o número da declaração para capturar e normalizar os dados que alimentarão as próximas etapas.</CardDescription></CardHeader>
-            <CardContent>
-              <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={captureDuimp}>
-                <div className="flex-1 space-y-1.5"><Label htmlFor="duimp_number">Número da DUIMP</Label><Input id="duimp_number" name="duimp_number" defaultValue={data.process.duimp_number || ""} placeholder="26BR0000000000-1" required /></div>
-                <Button disabled={Boolean(busyAction)}>{busyAction === "fetch-duimp" && <Loader2 className="animate-spin" />} Importar DUIMP</Button>
-              </form>
+            <CardContent className="space-y-4">
+              {!data.prerequisites.has_provider_connection ? (
+                <Alert>
+                  <CircleAlert />
+                  <AlertTitle>Integração da organização não configurada</AlertTitle>
+                  <AlertDescription>
+                    Um administrador precisa configurar as credenciais do Portal Único nas configurações da organização antes de importar a DUIMP.
+                  </AlertDescription>
+                  <Button className="mt-4" type="button" onClick={() => void triggerPrimaryAction()}>
+                    Abrir integrações
+                  </Button>
+                </Alert>
+              ) : (
+                <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={captureDuimp}>
+                  <div className="flex-1 space-y-1.5"><Label htmlFor="duimp_number">Número da DUIMP</Label><Input id="duimp_number" name="duimp_number" defaultValue={data.process.duimp_number || ""} placeholder="26BR0000000000-1" required /></div>
+                  <Button disabled={Boolean(busyAction)}>{busyAction === "fetch-duimp" && <Loader2 className="animate-spin" />} Importar DUIMP</Button>
+                </form>
+              )}
             </CardContent>
           </Card>
         )
