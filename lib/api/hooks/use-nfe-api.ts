@@ -32,7 +32,7 @@ export function useNfeProcesses(params: {
 
 export function useNfeWorkflowState(
   processId: string | null,
-  params: { import_purpose?: ImportPurpose; environment: FiscalEnvironment; series: string },
+  params: { import_purpose?: ImportPurpose; environment?: FiscalEnvironment; series?: string } = {},
 ) {
   return useSWR(
     processId ? `nfe-workflow:${processId}:${JSON.stringify(params)}` : null,

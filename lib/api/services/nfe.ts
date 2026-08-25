@@ -82,25 +82,30 @@ export const nfeApi = {
 
   async createProcess(payload: {
     importer_id: string;
-    reference_code: string;
-    duimp_number: string;
+    reference_code?: string;
+    duimp_number?: string;
     source: "portal_unico";
   }) {
     const { data } = await http.post<{ id: string }>(API_ROUTES.nfe.processes, payload);
     return data;
   },
 
-  async fetchDuimp(processId: string, providerEnvironment: FiscalEnvironment) {
+  async updateProcess(processId: string, payload: { duimp_number?: string }) {
+    const { data } = await http.put(API_ROUTES.nfe.process(processId), payload);
+    return data;
+  },
+
+  async fetchDuimp(processId: string) {
     const { data } = await http.post<{ snapshot: DuimpSnapshotDetail }>(
       API_ROUTES.nfe.fetchDuimp(processId),
-      { provider_environment: providerEnvironment, source_provider: "portal_unico", enrich_catalog: true },
+      { source_provider: "portal_unico", enrich_catalog: true },
     );
     return data;
   },
 
   async getWorkflowState(
     processId: string,
-    params: { import_purpose?: ImportPurpose; environment: FiscalEnvironment; series: string },
+    params: { import_purpose?: ImportPurpose; environment?: FiscalEnvironment; series?: string } = {},
   ): Promise<NfeWorkflowState> {
     const { data } = await http.get<NfeWorkflowState>(API_ROUTES.nfe.workflowState(processId), { params });
     return data;
@@ -168,8 +173,8 @@ export const nfeApi = {
     processId: string,
     payload: {
       duimp_snapshot_id: string;
-      environment: FiscalEnvironment;
-      series: string;
+      environment?: FiscalEnvironment;
+      series?: string;
     },
   ): Promise<{
     created_draft_ids: string[];
@@ -243,9 +248,9 @@ export const nfeApi = {
   },
 
   async createDraft(processId: string, payload: {
-    environment: FiscalEnvironment;
-    series: string;
-    import_purpose: ImportPurpose;
+    environment?: FiscalEnvironment;
+    series?: string;
+    import_purpose?: ImportPurpose;
     duimp_snapshot_id?: string;
   }) {
     const { data } = await http.post<{ draft: { id: string }; validation: { valid: boolean } }>(

@@ -19,8 +19,6 @@ import {
 import { nfeApi } from "@/lib/api/services/nfe";
 import { useDuimpSnapshots, useNfeDrafts, useNfeWorkflowState } from "@/lib/api/hooks/use-nfe-api";
 import type {
-  FiscalEnvironment,
-  ImportPurpose,
   NfeDraftDetailResponse,
   NfeDraftSummary,
   NfeWorkflowState,
@@ -54,6 +52,7 @@ const actionLabels: Record<string, string> = {
   create_child_drafts: "Gerar os rascunhos das NF-e filhas",
   create_draft: "Gerar o rascunho da NF-e",
   configure_number_sequence: "Configurar a sequência numérica",
+  configure_provider_connection: "Configurar o Portal Único",
   correct_draft: "Corrigir as divergências do rascunho",
   correct_child_drafts: "Corrigir as divergências das NF-e filhas",
   generate_child_xmls: "Gerar e validar os XMLs das NF-e filhas",
@@ -88,9 +87,11 @@ const contextFieldLabels: Record<string, string> = {
 };
 
 const primaryActionLabels: Record<string, string> = {
+  fetch_duimp: "Importar DUIMP",
   configure_fiscal_profile: "Cadastrar perfil fiscal",
   configure_tax_rule: "Cadastrar regra tributária",
   configure_number_sequence: "Configurar sequência numérica",
+  configure_provider_connection: "Configurar Portal Único",
   resolve_context: "Completar dados da importação",
   classify_items: "Classificar itens",
   create_document_plan: "Gerar plano de notas",
@@ -161,22 +162,16 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
-  const initialPurpose = (searchParams.get("importPurpose") || "resale") as ImportPurpose;
-  const initialEnvironment = (searchParams.get("environment") || "homologation") as FiscalEnvironment;
-  const initialProviderEnvironment = (searchParams.get("providerEnvironment") || "production") as FiscalEnvironment;
-  const initialSeries = searchParams.get("series") || "1";
-  const [purpose, setPurpose] = useState<ImportPurpose>(initialPurpose);
-  const [environment, setEnvironment] = useState<FiscalEnvironment>(initialEnvironment);
-  const [providerEnvironment, setProviderEnvironment] = useState<FiscalEnvironment>(initialProviderEnvironment);
-  const [series, setSeries] = useState(initialSeries);
+  const series = "1";
   const [refreshDuimp, setRefreshDuimp] = useState(false);
   const [newDraftOpen, setNewDraftOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const [correctionOpen, setCorrectionOpen] = useState(false);
   const [pendingSheetOpen, setPendingSheetOpen] = useState(false);
+  const [setupAction, setSetupAction] = useState<string | null>(null);
   const [correctionDetail, setCorrectionDetail] = useState<NfeDraftDetailResponse | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
-  const workflow = useNfeWorkflowState(processId, { import_purpose: purpose, environment, series });
+  const workflow = useNfeWorkflowState(processId);
   const drafts = useNfeDrafts(processId);
   const snapshots = useDuimpSnapshots(processId);
   const requestedStep = searchParams.get("step");
@@ -258,9 +253,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     primaryActionLabel &&
     (
       data.next_action === "resolve_context" ||
+      data.next_action === "fetch_duimp" ||
       data.next_action === "configure_fiscal_profile" ||
       data.next_action === "configure_tax_rule" ||
       data.next_action === "configure_number_sequence" ||
+      data.next_action === "configure_provider_connection" ||
       data.next_action === "classify_items" ||
       data.next_action === "create_document_plan" ||
       data.next_action === "review_document_plan" ||
@@ -278,6 +275,24 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const correctionErrors = correctionDetail?.draft.validation_errors || [];
   const correctionWarnings = correctionDetail?.draft.validation_warnings || [];
 
+  async function captureDuimp(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const duimpNumber = String(form.get("duimp_number") || "").replace(/\s/g, "").toUpperCase();
+    if (!duimpNumber) return;
+    setBusyAction("fetch-duimp");
+    try {
+      await nfeApi.updateProcess(processId, { duimp_number: duimpNumber });
+      await nfeApi.fetchDuimp(processId);
+      await Promise.all([workflow.mutate(), snapshots.mutate(), drafts.mutate()]);
+      toast.success("DUIMP importada do Portal Único. O contexto fiscal foi liberado.");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
   async function createNewDraft() {
     if (!canCreateDraft) {
       toast.info("Resolva os pré-requisitos e pendências fiscais antes de criar outro rascunho.");
@@ -287,13 +302,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     try {
       let snapshotId = data.latest_snapshot?.id;
       if (refreshDuimp) {
-        const refreshed = await nfeApi.fetchDuimp(processId, providerEnvironment);
+        const refreshed = await nfeApi.fetchDuimp(processId);
         snapshotId = refreshed.snapshot.id;
       }
       await nfeApi.createDraft(processId, {
-        environment,
         series,
-        import_purpose: purpose,
         duimp_snapshot_id: snapshotId,
       });
       await Promise.all([workflow.mutate(), drafts.mutate(), snapshots.mutate()]);
@@ -490,8 +503,6 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     try {
       const result = await nfeApi.resolveContext(processId, {
         duimp_snapshot_id: data.latest_snapshot.id,
-        import_purpose: purpose,
-        provider_environment: providerEnvironment,
         refresh_external: true,
         overrides,
       });
@@ -515,8 +526,6 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     try {
       const result = await nfeApi.resolveContext(processId, {
         duimp_snapshot_id: data.latest_snapshot.id,
-        import_purpose: purpose,
-        provider_environment: providerEnvironment,
         refresh_external: true,
         overrides: {},
       });
@@ -560,7 +569,6 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     try {
       const result = await nfeApi.generateChildDrafts(processId, {
         duimp_snapshot_id: data.latest_snapshot.id,
-        environment,
         series,
       });
       await Promise.all([workflow.mutate(), drafts.mutate()]);
@@ -609,6 +617,11 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   }
 
   async function continueWorkflow() {
+    if (data.next_action === "fetch_duimp") {
+      goToStep("duimp");
+      document.getElementById("duimp-import")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     if (data.next_action === "classify_items") {
       document.getElementById("item-classification")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
@@ -671,6 +684,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     "configure_fiscal_profile",
     "configure_tax_rule",
     "configure_number_sequence",
+    "configure_provider_connection",
     "resolve_context",
     "classify_items",
     "correct_draft",
@@ -679,6 +693,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
 
   async function triggerPrimaryAction() {
     if (sheetActions.includes(data.next_action)) {
+      setSetupAction(null);
       setPendingSheetOpen(true);
       return;
     }
@@ -691,8 +706,8 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-medium text-primary">{data.process.reference_code}</p>
-          <h1 className="text-2xl font-semibold">DUIMP {data.process.duimp_number}</h1>
-          <p className="text-sm text-muted-foreground">Ambiente {environment === "homologation" ? "de homologação" : "de produção"} · Série {series}</p>
+          <h1 className="text-2xl font-semibold">{data.process.duimp_number ? `DUIMP ${data.process.duimp_number}` : (data.process.importer?.name || data.process.importer?.legal_name || "Processo de NF-e")}</h1>
+          <p className="text-sm text-muted-foreground">{data.process.importer?.cnpj}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge variant={data.next_action === "completed" ? "default" : "secondary"}>{actionLabels[data.next_action] || data.next_action}</Badge>
@@ -757,8 +772,40 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         </CardContent>
       </Card>
 
+      {activeStep === "client" && (
+        <Card>
+          <CardHeader><CardTitle>Configuração do cliente</CardTitle><CardDescription>Revise os cadastros reutilizados nas notas deste cliente antes de importar a DUIMP.</CardDescription></CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            {[
+              ["Perfil fiscal", data.prerequisites.has_fiscal_profile, "configure_fiscal_profile"],
+              ["Regra tributária", data.prerequisites.has_active_tax_rule, "configure_tax_rule"],
+              ["Sequência numérica", data.prerequisites.has_number_sequence, "configure_number_sequence"],
+              ["Portal Único", data.prerequisites.has_provider_connection, "configure_provider_connection"],
+            ].map(([label, ready, action]) => (
+              <div key={String(label)} className="flex items-center justify-between rounded-lg border p-4">
+                <div><span className="block text-sm font-medium">{label}</span><span className={`text-xs font-medium ${ready ? "text-emerald-700" : "text-amber-700"}`}>{ready ? "Configurado" : "Pendente"}</span></div>
+                <Button type="button" size="sm" variant="outline" onClick={() => { setSetupAction(String(action)); setPendingSheetOpen(true); }}>{ready ? "Revisar" : "Configurar"}</Button>
+              </div>
+            ))}
+            {data.current_step === "client" && primaryActionSupported && (
+              <Button className="sm:col-span-2" onClick={() => void triggerPrimaryAction()} disabled={Boolean(busyAction)}>{primaryActionLabel}</Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {activeStep === "duimp" && (
-        <NfeDuimpOverview snapshots={snapshotItems} />
+        data.latest_snapshot ? <NfeDuimpOverview snapshots={snapshotItems} /> : (
+          <Card id="duimp-import">
+            <CardHeader><CardTitle>Importar DUIMP do Portal Único</CardTitle><CardDescription>Informe o número da declaração para capturar e normalizar os dados que alimentarão as próximas etapas.</CardDescription></CardHeader>
+            <CardContent>
+              <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={captureDuimp}>
+                <div className="flex-1 space-y-1.5"><Label htmlFor="duimp_number">Número da DUIMP</Label><Input id="duimp_number" name="duimp_number" defaultValue={data.process.duimp_number || ""} placeholder="26BR0000000000-1" required /></div>
+                <Button disabled={Boolean(busyAction)}>{busyAction === "fetch-duimp" && <Loader2 className="animate-spin" />} Importar DUIMP</Button>
+              </form>
+            </CardContent>
+          </Card>
+        )
       )}
 
       {activeStep === "context" && (
@@ -1006,7 +1053,6 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               <div className="space-y-1.5"><Label htmlFor="foreign_supplier_country_code">Código BACEN do país do exportador</Label><Input id="foreign_supplier_country_code" name="foreign_supplier_country_code" defaultValue={contextValue(data.context, "foreign_supplier.country_code")} required={data.context?.missing_fields.includes("foreign_supplier.country_code")} placeholder="Ex.: 2496" /></div>
               <div className="space-y-1.5"><Label htmlFor="foreign_supplier_country_name">Nome do país do exportador</Label><Input id="foreign_supplier_country_name" name="foreign_supplier_country_name" defaultValue={contextValue(data.context, "foreign_supplier.country_name")} required={data.context?.missing_fields.includes("foreign_supplier.country_name")} placeholder="Ex.: ESTADOS UNIDOS" /></div>
             </div>
-            <Alert><CircleAlert /><AlertTitle>Origem da DUIMP: {providerEnvironment === "production" ? "Portal Único de produção" : "Portal Único de validação"}</AlertTitle><AlertDescription>A NF-e continuará no ambiente {environment === "homologation" ? "de homologação" : "de produção"}. Os ambientes são independentes.</AlertDescription></Alert>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={() => void retryAutomaticContext()} disabled={Boolean(busyAction)}>
                 {busyAction === "refresh-context" && <Loader2 className="animate-spin" />} Consultar novamente
@@ -1021,10 +1067,9 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
 
       <NfeWorkflowPendingSheet
         open={pendingSheetOpen}
-        onOpenChange={setPendingSheetOpen}
+        onOpenChange={(open) => { setPendingSheetOpen(open); if (!open) setSetupAction(null); }}
         workflow={data}
-        purpose={purpose}
-        environment={environment}
+        actionOverride={setupAction}
         series={series}
         onResolved={async () => {
           await Promise.all([workflow.mutate(), drafts.mutate(), snapshots.mutate()]);
@@ -1150,12 +1195,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       <Dialog open={newDraftOpen} onOpenChange={setNewDraftOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Criar novo rascunho</DialogTitle><DialogDescription>A versão anterior e seus XMLs continuarão disponíveis.</DialogDescription></DialogHeader>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5"><Label htmlFor="draft-purpose">Finalidade padrão do processo</Label><select id="draft-purpose" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={purpose} onChange={(event) => setPurpose(event.target.value as ImportPurpose)}><option value="resale">Revenda</option><option value="industrialization">Industrialização</option><option value="fixed_asset">Ativo imobilizado</option><option value="use_consumption">Uso e consumo</option></select></div>
-            <div className="space-y-1.5"><Label htmlFor="draft-environment">Ambiente da NF-e</Label><select id="draft-environment" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={environment} onChange={(event) => setEnvironment(event.target.value as FiscalEnvironment)}><option value="homologation">Homologação</option><option value="production">Produção</option></select></div>
-            <div className="space-y-1.5"><Label htmlFor="draft-series">Série</Label><Input id="draft-series" value={series} onChange={(event) => setSeries(event.target.value)} /></div>
-            {refreshDuimp && <div className="space-y-1.5"><Label htmlFor="provider-environment">Origem da DUIMP</Label><select id="provider-environment" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={providerEnvironment} onChange={(event) => setProviderEnvironment(event.target.value as FiscalEnvironment)}><option value="production">Portal Único — Produção</option><option value="homologation">Portal Único — Validação</option></select></div>}
-          </div>
+          <p className="text-sm text-muted-foreground">As finalidades e os CFOPs serão reaproveitados da classificação item a item já salva.</p>
           <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm"><input className="mt-1" type="checkbox" checked={refreshDuimp} onChange={(event) => setRefreshDuimp(event.target.checked)} /><span><strong className="block">Atualizar a DUIMP antes de criar</strong><span className="text-muted-foreground">Use somente quando precisar recapturar. Um novo snapshot poderá exigir nova conferência dos dados da importação.</span></span></label>
           <Alert><CircleAlert /><AlertDescription>A numeração da NF-e só será reservada quando a chave de acesso for gerada.</AlertDescription></Alert>
           <Button onClick={() => void createNewDraft()} disabled={busyAction === "new-draft"}>{busyAction === "new-draft" && <Loader2 className="animate-spin" />} Criar novo rascunho</Button>

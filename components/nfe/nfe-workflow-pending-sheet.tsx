@@ -49,6 +49,7 @@ const actionTitles: Record<string, string> = {
   configure_fiscal_profile: "Cadastrar perfil fiscal",
   configure_tax_rule: "Cadastrar regra tributária",
   configure_number_sequence: "Configurar sequência numérica",
+  configure_provider_connection: "Configurar conexão com o Portal Único",
   resolve_context: "Completar dados da importação",
   classify_items: "Classificar finalidades dos itens",
   create_document_plan: "Gerar plano de notas",
@@ -122,8 +123,7 @@ export function NfeWorkflowPendingSheet({
   open,
   onOpenChange,
   workflow,
-  purpose,
-  environment,
+  actionOverride,
   series,
   onResolved,
   onContinue,
@@ -131,8 +131,7 @@ export function NfeWorkflowPendingSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workflow: NfeWorkflowState;
-  purpose: ImportPurpose;
-  environment: "homologation" | "production";
+  actionOverride?: string | null;
   series: string;
   onResolved: () => Promise<void>;
   onContinue: () => Promise<void> | void;
@@ -140,7 +139,8 @@ export function NfeWorkflowPendingSheet({
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [profile, setProfile] = useState<FiscalProfilePayload | null>(null);
-  const action = workflow.next_action;
+  const [rulePurpose, setRulePurpose] = useState<ImportPurpose>("resale");
+  const action = actionOverride || workflow.next_action;
   const importer = workflow.process.importer;
 
   useEffect(() => {
@@ -203,7 +203,7 @@ export function NfeWorkflowPendingSheet({
     }
     const rate = String(form.get("icms_rate") || "").trim();
     const configuration: Record<string, unknown> = {
-      cfop: purposeCfops[purpose],
+      cfop: purposeCfops[rulePurpose],
       icms_origin: "1",
       icms_cst: cst,
       ipi_cst: "00",
@@ -211,7 +211,7 @@ export function NfeWorkflowPendingSheet({
       pis_cst: "99",
       cofins_cst: "99",
       document_defaults: {
-        operation_nature: operationNatures[purpose],
+        operation_nature: operationNatures[rulePurpose],
         presence_indicator: "9",
         intermediary_indicator: "0",
       },
@@ -225,7 +225,7 @@ export function NfeWorkflowPendingSheet({
       await nfeApi.createTaxRule(workflow.process.importer_id, {
         name: String(form.get("name")),
         issuer_state: String(form.get("issuer_state")).toUpperCase(),
-        import_purpose: purpose,
+        import_purpose: rulePurpose,
         import_modality: String(form.get("import_modality")) as "direct" | "on_behalf" | "by_order",
         tax_regime: String(form.get("tax_regime")) as "1" | "2" | "3",
         priority: Number(form.get("priority") || 100),
@@ -251,7 +251,7 @@ export function NfeWorkflowPendingSheet({
     setBusy(true);
     try {
       await nfeApi.saveNumberSequence(workflow.process.importer_id, {
-        environment,
+        environment: "production",
         model: "55",
         series,
         current_number: Number(form.get("current_number") || 0),
@@ -262,6 +262,31 @@ export function NfeWorkflowPendingSheet({
       await onResolved();
       onOpenChange(false);
       toast.success("Sequência numérica configurada. O processo foi reavaliado.");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitProviderConnection(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setBusy(true);
+    try {
+      const scope = String(form.get("connection_scope") || "organization");
+      await nfeApi.saveProviderConnection({
+        importer_id: scope === "client" ? workflow.process.importer_id : null,
+        provider: "portal_unico",
+        environment: "production",
+        auth_type: "api_key",
+        status: "active",
+        credentials_ref: String(form.get("credentials_ref") || "gcp:PORTAL_UNICO"),
+        config_json: { role_type: "IMPEXP" },
+      });
+      await onResolved();
+      onOpenChange(false);
+      toast.success("Conexão do Portal Único configurada. O processo foi reavaliado.");
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
@@ -338,15 +363,20 @@ export function NfeWorkflowPendingSheet({
                   A regra será reutilizada em outros processos compatíveis. Confirme CST e alíquota com a equipe fiscal antes de uma futura autorização.
                 </AlertDescription>
               </Alert>
-              <Field label="Nome da regra" name="name" defaultValue={`Importação ${purposeLabels[purpose]} - padrão`} />
+              <Field label="Nome da regra" name="name" defaultValue="Regra tributária de importação" />
               <Field label="UF do emitente" name="issuer_state" defaultValue={profile?.state} placeholder="PR" />
               <div className="space-y-1.5">
                 <Label>Finalidade atendida</Label>
-                <Input value={purposeLabels[purpose]} disabled />
+                <Select value={rulePurpose} onValueChange={(value) => setRulePurpose(value as ImportPurpose)}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(purposeLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>CFOP dos itens</Label>
-                <Input value={purposeCfops[purpose]} disabled />
+                <Input value={purposeCfops[rulePurpose]} disabled />
               </div>
               <div className="space-y-1.5">
                 <Label>Modalidade</Label>
@@ -397,7 +427,7 @@ export function NfeWorkflowPendingSheet({
             <form className="grid gap-4" onSubmit={submitSequence}>
               <Alert>
                 <Settings2 />
-                <AlertTitle>Ambiente {environment === "homologation" ? "de homologação" : "de produção"}</AlertTitle>
+                <AlertTitle>Sequência da NF-e</AlertTitle>
                 <AlertDescription>Modelo 55, série {series}. Informe o último número já utilizado para evitar duplicidade.</AlertDescription>
               </Alert>
               <Field label="Último número utilizado" name="current_number" type="number" defaultValue="0" />
@@ -408,7 +438,16 @@ export function NfeWorkflowPendingSheet({
             </form>
           )}
 
-          {!["configure_fiscal_profile", "configure_tax_rule", "configure_number_sequence"].includes(action) && (
+          {action === "configure_provider_connection" && (
+            <form className="grid gap-4" onSubmit={submitProviderConnection}>
+              <div className="space-y-1.5"><Label>Escopo</Label><Select name="connection_scope" defaultValue="organization"><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="organization">Toda a organização</SelectItem><SelectItem value="client">Somente este cliente</SelectItem></SelectContent></Select></div>
+              <Field label="Referência das credenciais" name="credentials_ref" defaultValue="gcp:PORTAL_UNICO" />
+              <Alert><CircleAlert /><AlertDescription>A referência aponta para credenciais mantidas no gerenciador de segredos; nenhuma chave será salva no banco.</AlertDescription></Alert>
+              <Button disabled={busy}>{busy ? <Loader2 className="animate-spin" /> : <Check />} Salvar conexão e reavaliar</Button>
+            </form>
+          )}
+
+          {!["configure_fiscal_profile", "configure_tax_rule", "configure_number_sequence", "configure_provider_connection"].includes(action) && (
             <div className="space-y-4">
               {action === "resolve_context" && (
                 <div className="space-y-2">

@@ -229,7 +229,7 @@ export interface NfeContextState {
 
 export interface ResolveNfeContextPayload {
   duimp_snapshot_id?: string;
-  import_purpose: ImportPurpose;
+  import_purpose?: ImportPurpose;
   provider_environment?: FiscalEnvironment;
   refresh_external?: boolean;
   overrides: Record<string, unknown>;
@@ -366,6 +366,7 @@ export interface NfeDocumentPlan {
 }
 
 export type NfeWorkflowStepKey =
+  | "client"
   | "duimp"
   | "context"
   | "purposes"
@@ -401,6 +402,7 @@ export interface NfeWorkflowState {
     has_fiscal_profile: boolean;
     has_active_tax_rule: boolean;
     has_number_sequence: boolean;
+    has_provider_connection: boolean;
     has_item_classification: boolean;
     item_classification_ready: boolean;
     has_document_plan: boolean;
