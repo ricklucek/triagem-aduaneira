@@ -15,6 +15,8 @@ export interface ClientContactApi {
 export interface ClientApi {
   id: string;
   organization_id: string;
+  scope_id?: string | null;
+  has_scope?: boolean;
   cnpj: string;
   razao_social: string;
   nome_resumido?: string | null;
