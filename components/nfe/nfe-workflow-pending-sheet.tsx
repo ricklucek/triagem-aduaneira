@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Check, CircleAlert, Loader2, Settings2 } from "lucide-react";
 import { nfeApi } from "@/lib/api/services/nfe";
+import { MunicipalityReferenceSearch } from "@/components/nfe/fiscal-reference-search";
 import { getSessionRole } from "@/lib/api/hooks/use-auth";
 import type {
   FiscalProfilePayload,
@@ -269,9 +270,13 @@ export function NfeWorkflowPendingSheet({
               <Field label="Número" name="number" defaultValue={profile?.number} />
               <Field label="Complemento" name="complement" defaultValue={profile?.complement || ""} required={false} />
               <Field label="Bairro" name="district" defaultValue={profile?.district} />
-              <Field label="Código IBGE" name="city_code" defaultValue={profile?.city_code} placeholder="4106902" />
-              <Field label="Município" name="city_name" defaultValue={profile?.city_name} />
-              <Field label="UF" name="state" defaultValue={profile?.state} placeholder="PR" />
+              <MunicipalityReferenceSearch
+                key={profile?.city_code || "new-municipality"}
+                initialCode={profile?.city_code}
+                initialName={profile?.city_name}
+                initialState={profile?.state}
+                disabled={!isAdmin}
+              />
               <Field label="CEP" name="zip_code" defaultValue={profile?.zip_code} />
               <Field label="Telefone" name="phone" defaultValue={profile?.phone || ""} required={false} />
               <Field label="E-mail" name="email" defaultValue={profile?.email || ""} type="email" required={false} />

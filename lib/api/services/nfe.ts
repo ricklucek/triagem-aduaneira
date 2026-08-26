@@ -4,6 +4,9 @@ import type {
   DuimpSnapshotDetail,
   FiscalEnvironment,
   FiscalProfilePayload,
+  FiscalCountryReference,
+  FiscalMunicipalityReference,
+  FiscalReferenceListResponse,
   ImportPurpose,
   ImportTaxRuleDiagnostics,
   ImportTaxRulePayload,
@@ -25,6 +28,28 @@ import type {
 } from "@/lib/api/types/nfe-api";
 
 export const nfeApi = {
+  async searchMunicipalities(params: {
+    q: string;
+    state?: string;
+    limit?: number;
+  }): Promise<FiscalReferenceListResponse<FiscalMunicipalityReference> & { state?: string | null }> {
+    const { data } = await http.get<
+      FiscalReferenceListResponse<FiscalMunicipalityReference> & { state?: string | null }
+    >(API_ROUTES.fiscalReference.municipalities, { params });
+    return data;
+  },
+
+  async searchCountries(params: {
+    q: string;
+    active_on: string;
+    limit?: number;
+  }): Promise<FiscalReferenceListResponse<FiscalCountryReference> & { active_on: string }> {
+    const { data } = await http.get<
+      FiscalReferenceListResponse<FiscalCountryReference> & { active_on: string }
+    >(API_ROUTES.fiscalReference.countries, { params });
+    return data;
+  },
+
   async listProviderConnections(params: {
     provider: "portal_unico";
     environment: FiscalEnvironment;

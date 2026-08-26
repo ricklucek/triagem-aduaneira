@@ -17,6 +17,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { nfeApi } from "@/lib/api/services/nfe";
+import { CountryReferenceSearch } from "@/components/nfe/fiscal-reference-search";
 import { useDuimpSnapshots, useNfeDrafts, useNfeWorkflowState } from "@/lib/api/hooks/use-nfe-api";
 import type {
   NfeDraftDetailResponse,
@@ -1075,8 +1076,13 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               <div className="space-y-1.5"><Label htmlFor="clearance_state">UF do desembaraço</Label><Input id="clearance_state" name="clearance_state" defaultValue={contextValue(data.context, "clearance_state")} required={data.context?.missing_fields.includes("clearance_state")} maxLength={2} placeholder="SC" /></div>
               <div className="space-y-1.5"><Label htmlFor="clearance_date">Data de desembaraço</Label><Input id="clearance_date" name="clearance_date" type="date" defaultValue={contextValue(data.context, "clearance_date").slice(0, 10)} required={data.context?.missing_fields.includes("clearance_date")} /></div>
               <div className="space-y-1.5"><Label htmlFor="transport_mode_code">Código da via de transporte</Label><Input id="transport_mode_code" name="transport_mode_code" defaultValue={contextValue(data.context, "transport_mode_code")} required={data.context?.missing_fields.includes("transport_mode_code")} placeholder="Ex.: 4 para aérea" /></div>
-              <div className="space-y-1.5"><Label htmlFor="foreign_supplier_country_code">Código BACEN do país do exportador</Label><Input id="foreign_supplier_country_code" name="foreign_supplier_country_code" defaultValue={contextValue(data.context, "foreign_supplier.country_code")} required={data.context?.missing_fields.includes("foreign_supplier.country_code")} placeholder="Ex.: 2496" /></div>
-              <div className="space-y-1.5"><Label htmlFor="foreign_supplier_country_name">Nome do país do exportador</Label><Input id="foreign_supplier_country_name" name="foreign_supplier_country_name" defaultValue={contextValue(data.context, "foreign_supplier.country_name")} required={data.context?.missing_fields.includes("foreign_supplier.country_name")} placeholder="Ex.: ESTADOS UNIDOS" /></div>
+              <CountryReferenceSearch
+                initialBacenCode={contextValue(data.context, "foreign_supplier.country_code")}
+                initialName={contextValue(data.context, "foreign_supplier.country_name")}
+                bacenCodeName="foreign_supplier_country_code"
+                countryName="foreign_supplier_country_name"
+                isoAlpha2Name="foreign_supplier_country_iso_alpha_2"
+              />
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={() => void retryAutomaticContext()} disabled={Boolean(busyAction)}>
@@ -1148,9 +1154,15 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="supplier_legal_name">Nome do exportador</Label><Input id="supplier_legal_name" name="supplier_legal_name" defaultValue={nestedText(correctionPayload, "recipient", "legal_name")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="supplier_country_code">Código BACEN do país</Label><Input id="supplier_country_code" name="supplier_country_code" defaultValue={nestedText(correctionPayload, "recipient", "address", "country_code")} required /></div>
-                  <div className="space-y-1.5"><Label htmlFor="supplier_country_name">Nome do país</Label><Input id="supplier_country_name" name="supplier_country_name" defaultValue={nestedText(correctionPayload, "recipient", "address", "country_name")} required /></div>
-                  <div className="space-y-1.5"><Label htmlFor="supplier_country_iso_alpha_2">ISO do país</Label><Input id="supplier_country_iso_alpha_2" name="supplier_country_iso_alpha_2" defaultValue={nestedText(correctionPayload, "recipient", "address", "country_iso_alpha_2")} maxLength={2} placeholder="US" /></div>
+                  <CountryReferenceSearch
+                    initialBacenCode={nestedText(correctionPayload, "recipient", "address", "country_code")}
+                    initialName={nestedText(correctionPayload, "recipient", "address", "country_name")}
+                    initialIsoAlpha2={nestedText(correctionPayload, "recipient", "address", "country_iso_alpha_2")}
+                    bacenCodeName="supplier_country_code"
+                    countryName="supplier_country_name"
+                    isoAlpha2Name="supplier_country_iso_alpha_2"
+                    activeOn={nestedText(correctionPayload, "document", "issue_datetime").slice(0, 10) || undefined}
+                  />
                   <div className="space-y-1.5"><Label htmlFor="supplier_foreign_id">Identificador estrangeiro</Label><Input id="supplier_foreign_id" name="supplier_foreign_id" defaultValue={nestedText(correctionPayload, "recipient", "foreign_id")} placeholder="Deixe em branco quando não existir" /><p className="text-xs text-muted-foreground">Ao deixar em branco, o campo idEstrangeiro será removido do próximo XML.</p></div>
                   <div className="space-y-1.5"><Label htmlFor="supplier_street">Endereço</Label><Input id="supplier_street" name="supplier_street" defaultValue={nestedText(correctionPayload, "recipient", "address", "street")} /></div>
                   <div className="space-y-1.5"><Label htmlFor="supplier_number">Número</Label><Input id="supplier_number" name="supplier_number" defaultValue={nestedText(correctionPayload, "recipient", "address", "number")} /></div>

@@ -79,6 +79,32 @@ export interface ListImportProcessClientGroupsResponse {
   created_by_me: boolean;
 }
 
+export interface FiscalMunicipalityReference {
+  code: string;
+  name: string;
+  state: string;
+  active: boolean;
+  updated_at: string;
+}
+
+export interface FiscalCountryReference {
+  bacen_code: string;
+  iso_alpha_2?: string | null;
+  iso_alpha_3?: string | null;
+  name: string;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  active: boolean;
+  updated_at: string;
+}
+
+export interface FiscalReferenceListResponse<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  q: string;
+}
+
 export interface FiscalProfilePayload {
   legal_name: string;
   trade_name?: string | null;

@@ -87,6 +87,10 @@ export const API_ROUTES = {
     downloadXml: (draftId: string, xmlVersionId: string) =>
       `/nfe-drafts/${draftId}/xml-versions/${xmlVersionId}/download`,
   },
+  fiscalReference: {
+    municipalities: "/fiscal-reference/municipalities",
+    countries: "/fiscal-reference/countries",
+  },
   dashboards: {
     admin: "/dashboards/admin",
     adminMetrics: "/dashboards/admin/metrics",
