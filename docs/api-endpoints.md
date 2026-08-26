@@ -286,3 +286,46 @@
 
 - Exclui usuário pelo `id`.
 - **Response 204** sem conteúdo.
+
+
+## NF-e de importação — Checkpoint 4B
+
+Novos processos operam com configuração fixa:
+
+- NF-e: `production`;
+- Portal Único: `production`;
+- modelo: `55`;
+- série operacional padrão: `1`.
+
+A criação começa somente pelo cliente:
+
+```http
+POST /import-processes
+```
+
+```json
+{
+  "importer_id": "UUID_DO_CLIENTE",
+  "source": "portal_unico"
+}
+```
+
+O número da DUIMP é informado na etapa seguinte e capturado por
+`POST /import-processes/{process_id}/duimp/fetch`. Enviar `environment` ou
+`provider_environment` diferente de `production` retorna
+`environment_not_allowed`.
+
+A Central Fiscal usa:
+
+- `GET/PUT /clients/{client_id}/fiscal-profile`;
+- `GET/PUT /clients/{client_id}/nfe-number-sequences`;
+- `GET/POST /clients/{client_id}/import-tax-rules`;
+- `GET /clients/{client_id}/import-tax-rules/diagnostics`.
+
+As leituras exigem autenticação. Alterações de perfil, sequência, regras e
+conexão com o Portal Único exigem usuário `admin`.
+
+Ao atualizar uma sequência existente, o frontend não envia
+`current_number`. A API preserva o progresso e rejeita regressões com
+`nfe_sequence_regression`. A ausência de regra não bloqueia a captura da
+DUIMP; bloqueia apenas a classificação dos itens sem regra/CFOP aplicável.

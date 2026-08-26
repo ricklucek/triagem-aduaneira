@@ -149,7 +149,8 @@ export interface ImportTaxRuleDiagnostics {
   };
 }
 
-export interface NfeNumberSequencePayload {
+export interface NfeNumberSequence {
+  id: string;
   environment: FiscalEnvironment;
   model: "55";
   series: string;
@@ -157,6 +158,20 @@ export interface NfeNumberSequencePayload {
   initial_number: number;
   max_number: number;
   status: "active" | "inactive";
+  last_reserved_number?: number | null;
+  last_reserved_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface NfeNumberSequencePayload {
+  environment: "production";
+  model: "55";
+  series: string;
+  current_number?: number;
+  initial_number?: number;
+  max_number?: number;
+  status?: "active" | "inactive";
 }
 
 export interface NfeXmlVersionSummary {

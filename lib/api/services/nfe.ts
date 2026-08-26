@@ -14,6 +14,7 @@ import type {
   NfeDraftSummary,
   NfeDocumentPlan,
   NfeItemClassificationState,
+  NfeNumberSequence,
   NfeNumberSequencePayload,
   NfeContextState,
   ResolveNfeContextPayload,
@@ -380,8 +381,10 @@ export const nfeApi = {
     await http.delete(`${API_ROUTES.clients.importTaxRules(clientId)}/${ruleId}`);
   },
 
-  async listNumberSequences(clientId: string): Promise<Array<Record<string, unknown>>> {
-    const { data } = await http.get<Array<Record<string, unknown>>>(API_ROUTES.clients.nfeNumberSequences(clientId));
+  async listNumberSequences(clientId: string): Promise<NfeNumberSequence[]> {
+    const { data } = await http.get<NfeNumberSequence[]>(
+      API_ROUTES.clients.nfeNumberSequences(clientId),
+    );
     return data;
   },
 

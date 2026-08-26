@@ -6,17 +6,21 @@ import {
   CircleAlert,
   FilePenLine,
   Loader2,
+  LockKeyhole,
   Plus,
   Power,
   RefreshCw,
   Settings2,
 } from "lucide-react";
 import { nfeApi } from "@/lib/api/services/nfe";
+import { getSessionRole } from "@/lib/api/hooks/use-auth";
 import type {
+  FiscalProfilePayload,
   ImportPurpose,
   ImportTaxRule,
   ImportTaxRuleDiagnostics,
   ImportTaxRulePayload,
+  NfeNumberSequence,
 } from "@/lib/api/types/nfe-api";
 import { useToast } from "@/components/ui/toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -154,46 +158,67 @@ export function NfeClientFiscalCenter({
   const [editingRule, setEditingRule] = useState<ImportTaxRule | null>(null);
   const [purpose, setPurpose] = useState<ImportPurpose>("resale");
   const [saveConflicts, setSaveConflicts] = useState<ImportTaxRule["conflicts"]>([]);
+  const [fiscalProfile, setFiscalProfile] = useState<FiscalProfilePayload | null>(null);
+  const [numberSequence, setNumberSequence] = useState<NfeNumberSequence | null>(null);
+  const [ruleSearch, setRuleSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "conflict">("all");
+  const [icmsCst, setIcmsCst] = useState("90");
+  const [icmsTreatment, setIcmsTreatment] = useState<"nominal" | "deferment" | "reduction">("nominal");
+  const isAdmin = getSessionRole() === "admin";
 
   const loadRules = useCallback(async () => {
     setLoading(true);
-    try {
-      setDiagnostics(await nfeApi.getTaxRuleDiagnostics(clientId));
-    } catch (error) {
-      toast.error(apiError(error).message);
-    } finally {
-      setLoading(false);
+    const [rulesResult, profileResult, sequencesResult] = await Promise.allSettled([
+      nfeApi.getTaxRuleDiagnostics(clientId),
+      nfeApi.getFiscalProfile(clientId),
+      nfeApi.listNumberSequences(clientId),
+    ]);
+    if (rulesResult.status === "fulfilled") {
+      setDiagnostics(rulesResult.value);
+    } else {
+      toast.error(apiError(rulesResult.reason).message);
     }
+    setFiscalProfile(profileResult.status === "fulfilled" ? profileResult.value : null);
+    if (sequencesResult.status === "fulfilled") {
+      setNumberSequence(
+        sequencesResult.value.find(
+          (item) => item.environment === "production" && item.model === "55" && item.series === "1",
+        ) || null,
+      );
+    } else {
+      setNumberSequence(null);
+    }
+    setLoading(false);
   }, [clientId, toast]);
 
   useEffect(() => {
-    let active = true;
-    void nfeApi
-      .getTaxRuleDiagnostics(clientId)
-      .then((result) => {
-        if (active) setDiagnostics(result);
-      })
-      .catch((error) => {
-        if (active) toast.error(apiError(error).message);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [clientId, toast]);
+    void loadRules();
+  }, [loadRules]);
 
   function openNewRule() {
+    if (!isAdmin) return;
     setEditingRule(null);
     setPurpose("resale");
+    setIcmsCst("90");
+    setIcmsTreatment("nominal");
     setSaveConflicts([]);
     setSheetOpen(true);
   }
 
   function openRule(rule: ImportTaxRule) {
+    if (!isAdmin) return;
+    const configuration = rule.configuration_json || {};
+    const cst = asText(configuration.icms_cst) || "90";
     setEditingRule(rule);
     setPurpose(rule.import_purpose);
+    setIcmsCst(cst);
+    setIcmsTreatment(
+      cst === "51" && asText(configuration.icms_deferment_rate) === "100"
+        ? "deferment"
+        : cst === "51" && asText(configuration.icms_base_reduction_rate) === "100"
+          ? "reduction"
+          : "nominal",
+    );
     setSaveConflicts(rule.conflicts || []);
     setSheetOpen(true);
   }
@@ -202,33 +227,42 @@ export function NfeClientFiscalCenter({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const text = (name: string) => String(form.get(name) || "").trim();
-    const cst = text("icms_cst");
     const rate = text("icms_rate");
     const existingConfiguration = editingRule?.configuration_json || {};
+    const existingDocument = (existingConfiguration.document_defaults as Record<string, unknown>) || {};
+    const existingItems = (existingConfiguration.item_defaults as Record<string, unknown>) || {};
     const configuration: Record<string, unknown> = {
       ...existingConfiguration,
       cfop: text("cfop") || purposeCfops[purpose],
-      icms_origin: text("icms_origin") || "1",
-      icms_cst: cst,
-      ipi_cst: asText(existingConfiguration.ipi_cst) || "00",
-      ipi_zero_rate_cst: asText(existingConfiguration.ipi_zero_rate_cst) || "01",
-      pis_cst: asText(existingConfiguration.pis_cst) || "99",
-      cofins_cst: asText(existingConfiguration.cofins_cst) || "99",
+      icms_origin: text("icms_origin"),
+      icms_cst: icmsCst,
+      icms_tax_treatment_confirmed: true,
+      ipi_cst: text("ipi_cst"),
+      ipi_zero_rate_cst: text("ipi_zero_rate_cst"),
+      pis_cst: text("pis_cst"),
+      cofins_cst: text("cofins_cst"),
       document_defaults: {
-        ...((existingConfiguration.document_defaults as Record<string, unknown>) || {}),
-        operation_nature: operationNatures[purpose],
-        presence_indicator: "9",
-        intermediary_indicator: "0",
+        ...existingDocument,
+        operation_nature: text("operation_nature"),
+        presence_indicator: text("presence_indicator"),
+        intermediary_indicator: text("intermediary_indicator"),
       },
       item_defaults: {
-        ...((existingConfiguration.item_defaults as Record<string, unknown>) || {}),
-        commercial_unit: "UN",
-        taxable_unit: "UN",
+        ...existingItems,
+        commercial_unit: text("commercial_unit"),
+        taxable_unit: text("taxable_unit"),
       },
     };
-    if (rate) configuration.icms_rate = rate;
-    else delete configuration.icms_rate;
-    if (cst === "51" && !rate) configuration.icms_base_reduction_rate = "100";
+    delete configuration.icms_rate;
+    delete configuration.icms_base_reduction_rate;
+    delete configuration.icms_deferment_rate;
+    if (icmsCst === "51" && icmsTreatment === "deferment") {
+      configuration.icms_deferment_rate = "100";
+    } else if (icmsCst === "51" && icmsTreatment === "reduction") {
+      configuration.icms_base_reduction_rate = "100";
+    } else if (["00", "51", "90"].includes(icmsCst) && rate) {
+      configuration.icms_rate = rate;
+    }
 
     const modality = text("import_modality");
     const regime = text("tax_regime");
@@ -243,8 +277,15 @@ export function NfeClientFiscalCenter({
       effective_from: text("effective_from") || null,
       effective_until: text("effective_until") || null,
       configuration_json: configuration,
-      transport_defaults: editingRule?.transport_defaults || { freight_mode: "1" },
-      payment_defaults: editingRule?.payment_defaults || { method: "90", value: "0.00" },
+      transport_defaults: {
+        ...(editingRule?.transport_defaults || {}),
+        freight_mode: text("freight_mode"),
+      },
+      payment_defaults: {
+        ...(editingRule?.payment_defaults || {}),
+        method: text("payment_method"),
+        value: text("payment_value"),
+      },
       active: text("active") !== "false",
     };
 
@@ -284,7 +325,27 @@ export function NfeClientFiscalCenter({
 
   const rules = diagnostics?.items || [];
   const configuration = editingRule?.configuration_json || {};
+  const documentDefaults = (configuration.document_defaults as Record<string, unknown>) || {};
+  const itemDefaults = (configuration.item_defaults as Record<string, unknown>) || {};
+  const transportDefaults = editingRule?.transport_defaults || {};
+  const paymentDefaults = editingRule?.payment_defaults || {};
   const conflictCount = diagnostics?.summary.conflict_count || 0;
+  const normalizedSearch = ruleSearch.trim().toLocaleLowerCase("pt-BR");
+  const visibleRules = rules.filter((rule) => {
+    const matchesText = !normalizedSearch || [
+      rule.name,
+      rule.issuer_state,
+      rule.ncm_pattern || "",
+      purposeLabels[rule.import_purpose],
+    ].some((value) => value.toLocaleLowerCase("pt-BR").includes(normalizedSearch));
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && rule.active && !rule.has_conflicts) ||
+      (statusFilter === "inactive" && !rule.active) ||
+      (statusFilter === "conflict" && rule.has_conflicts);
+    return matchesText && matchesStatus;
+  });
+  const sequenceNextNumber = numberSequence ? numberSequence.current_number + 1 : null;
 
   return (
     <Card>
@@ -302,6 +363,23 @@ export function NfeClientFiscalCenter({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline">Ambiente fiscal: Produção</Badge>
+          <Badge variant="outline">Portal Único: Produção</Badge>
+          <Badge variant="outline">Modelo: 55</Badge>
+          <Badge variant="outline">Série: 1</Badge>
+        </div>
+
+        {!isAdmin && (
+          <Alert>
+            <LockKeyhole />
+            <AlertTitle>Central fiscal em modo de consulta</AlertTitle>
+            <AlertDescription>
+              Perfil, sequência, integração e regras tributárias só podem ser alterados por administradores. A operação e a classificação dos itens continuam disponíveis no processo.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex items-center justify-between gap-3 rounded-lg border p-4">
             <div>
@@ -309,8 +387,13 @@ export function NfeClientFiscalCenter({
               <p className={`text-xs font-medium ${hasFiscalProfile ? "text-emerald-700" : "text-amber-700"}`}>
                 {hasFiscalProfile ? "Configurado" : "Pendente"}
               </p>
+              {fiscalProfile && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {fiscalProfile.city_name}/{fiscalProfile.state} · CRT {fiscalProfile.tax_regime}
+                </p>
+              )}
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={onConfigureProfile}>
+            <Button type="button" size="sm" variant="outline" onClick={onConfigureProfile} disabled={!isAdmin}>
               <Settings2 /> {hasFiscalProfile ? "Revisar" : "Configurar"}
             </Button>
           </div>
@@ -320,8 +403,13 @@ export function NfeClientFiscalCenter({
               <p className={`text-xs font-medium ${hasNumberSequence ? "text-emerald-700" : "text-amber-700"}`}>
                 {hasNumberSequence ? "Configurada" : "Pendente"}
               </p>
+              {numberSequence && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Atual {numberSequence.current_number} · Próximo {sequenceNextNumber} · {numberSequence.status === "active" ? "Ativa" : "Inativa"}
+                </p>
+              )}
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={onConfigureSequence}>
+            <Button type="button" size="sm" variant="outline" onClick={onConfigureSequence} disabled={!isAdmin}>
               <Settings2 /> {hasNumberSequence ? "Revisar" : "Configurar"}
             </Button>
           </div>
@@ -347,7 +435,24 @@ export function NfeClientFiscalCenter({
                   : "Carregando regras cadastradas…"}
               </p>
             </div>
-            <Button onClick={openNewRule}><Plus /> Nova regra</Button>
+            <Button onClick={openNewRule} disabled={!isAdmin}><Plus /> Nova regra</Button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-[1fr_220px]">
+            <Input
+              value={ruleSearch}
+              onChange={(event) => setRuleSearch(event.target.value)}
+              placeholder="Pesquisar por nome, UF, finalidade ou NCM"
+            />
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="active">Ativas sem conflito</SelectItem>
+                <SelectItem value="inactive">Inativas</SelectItem>
+                <SelectItem value="conflict">Com conflito</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {!loading && rules.length === 0 ? (
@@ -375,7 +480,7 @@ export function NfeClientFiscalCenter({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rules.map((rule) => (
+                  {visibleRules.map((rule) => (
                     <TableRow key={rule.id} className={rule.has_conflicts ? "bg-destructive/5" : undefined}>
                       <TableCell className="max-w-56 whitespace-normal">
                         <strong>{rule.name}</strong>
@@ -398,11 +503,11 @@ export function NfeClientFiscalCenter({
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => openRule(rule)}>
+                          <Button variant="ghost" size="sm" onClick={() => openRule(rule)} disabled={!isAdmin}>
                             <FilePenLine /> Editar
                           </Button>
                           {rule.active && (
-                            <Button variant="ghost" size="sm" onClick={() => void deactivateRule(rule)} disabled={busy}>
+                            <Button variant="ghost" size="sm" onClick={() => void deactivateRule(rule)} disabled={busy || !isAdmin}>
                               <Power /> Desativar
                             </Button>
                           )}
@@ -499,7 +604,10 @@ export function NfeClientFiscalCenter({
 
             <div className="space-y-1.5">
               <Label>CST do ICMS</Label>
-              <Select name="icms_cst" defaultValue={asText(configuration.icms_cst) || "90"}>
+              <Select value={icmsCst} onValueChange={(value) => {
+                setIcmsCst(value);
+                if (value !== "51") setIcmsTreatment("nominal");
+              }}>
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="00">00 — Tributada integralmente</SelectItem>
@@ -511,7 +619,80 @@ export function NfeClientFiscalCenter({
                 </SelectContent>
               </Select>
             </div>
-            <FormField label="Alíquota do ICMS" name="icms_rate" defaultValue={asText(configuration.icms_rate)} required={false} placeholder="Ex.: 12" />
+
+            {icmsCst === "51" ? (
+              <div className="space-y-1.5">
+                <Label>Tratamento do CST 51</Label>
+                <Select value={icmsTreatment} onValueChange={(value) => setIcmsTreatment(value as typeof icmsTreatment)}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nominal">Alíquota nominal</SelectItem>
+                    <SelectItem value="deferment">Diferimento integral (100%)</SelectItem>
+                    <SelectItem value="reduction">Redução integral da base (100%)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label>Tratamento do ICMS</Label>
+                <Input value={["40", "41", "50"].includes(icmsCst) ? "Sem alíquota nominal" : "Alíquota nominal"} disabled />
+              </div>
+            )}
+
+            {["00", "90"].includes(icmsCst) || (icmsCst === "51" && icmsTreatment === "nominal") ? (
+              <FormField label="Alíquota do ICMS" name="icms_rate" defaultValue={asText(configuration.icms_rate)} placeholder="Ex.: 12" />
+            ) : (
+              <input type="hidden" name="icms_rate" value="" />
+            )}
+
+            <FormField label="CST do IPI" name="ipi_cst" defaultValue={asText(configuration.ipi_cst) || "00"} />
+            <FormField label="CST IPI com alíquota zero" name="ipi_zero_rate_cst" defaultValue={asText(configuration.ipi_zero_rate_cst) || "01"} />
+            <FormField label="CST do PIS" name="pis_cst" defaultValue={asText(configuration.pis_cst) || "99"} />
+            <FormField label="CST da COFINS" name="cofins_cst" defaultValue={asText(configuration.cofins_cst) || "99"} />
+
+            <FormField
+              label="Natureza da operação"
+              name="operation_nature"
+              defaultValue={asText(documentDefaults.operation_nature) || operationNatures[purpose]}
+            />
+            <div className="space-y-1.5">
+              <Label>Indicador de presença</Label>
+              <Select name="presence_indicator" defaultValue={asText(documentDefaults.presence_indicator) || "9"}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">0 — Não se aplica</SelectItem>
+                  <SelectItem value="9">9 — Operação não presencial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Intermediador</Label>
+              <Select name="intermediary_indicator" defaultValue={asText(documentDefaults.intermediary_indicator) || "0"}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">0 — Sem intermediador</SelectItem>
+                  <SelectItem value="1">1 — Com intermediador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <FormField label="Unidade comercial padrão" name="commercial_unit" defaultValue={asText(itemDefaults.commercial_unit) || "UN"} />
+            <FormField label="Unidade tributável padrão" name="taxable_unit" defaultValue={asText(itemDefaults.taxable_unit) || "UN"} />
+
+            <div className="space-y-1.5">
+              <Label>Modalidade de frete padrão</Label>
+              <Select name="freight_mode" defaultValue={asText(transportDefaults.freight_mode) || "1"}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">0 — Emitente</SelectItem>
+                  <SelectItem value="1">1 — Destinatário</SelectItem>
+                  <SelectItem value="2">2 — Terceiros</SelectItem>
+                  <SelectItem value="9">9 — Sem transporte</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <FormField label="Meio de pagamento padrão" name="payment_method" defaultValue={asText(paymentDefaults.method) || "90"} />
+            <FormField label="Valor de pagamento padrão" name="payment_value" defaultValue={asText(paymentDefaults.value) || "0.00"} />
 
             <Alert className="sm:col-span-2">
               <CircleAlert />

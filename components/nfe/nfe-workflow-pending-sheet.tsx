@@ -3,9 +3,10 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Check, CircleAlert, Loader2, Settings2 } from "lucide-react";
 import { nfeApi } from "@/lib/api/services/nfe";
+import { getSessionRole } from "@/lib/api/hooks/use-auth";
 import type {
   FiscalProfilePayload,
-  ImportPurpose,
+  NfeNumberSequence,
   NfeWorkflowState,
 } from "@/lib/api/types/nfe-api";
 import { useToast } from "@/components/ui/toast";
@@ -23,27 +24,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-
-const purposeLabels: Record<ImportPurpose, string> = {
-  resale: "Revenda",
-  industrialization: "Industrialização",
-  fixed_asset: "Ativo imobilizado",
-  use_consumption: "Uso e consumo",
-};
-
-const purposeCfops: Record<ImportPurpose, string> = {
-  resale: "3102",
-  industrialization: "3101",
-  fixed_asset: "3127",
-  use_consumption: "3556",
-};
-
-const operationNatures: Record<ImportPurpose, string> = {
-  resale: "Compra para comercialização",
-  industrialization: "Compra para industrialização",
-  fixed_asset: "Compra para o ativo imobilizado",
-  use_consumption: "Compra para uso ou consumo",
-};
 
 const actionTitles: Record<string, string> = {
   configure_fiscal_profile: "Cadastrar perfil fiscal",
@@ -138,28 +118,42 @@ export function NfeWorkflowPendingSheet({
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [profile, setProfile] = useState<FiscalProfilePayload | null>(null);
-  const [rulePurpose, setRulePurpose] = useState<ImportPurpose>("resale");
+  const [numberSequence, setNumberSequence] = useState<NfeNumberSequence | null>(null);
   const action = actionOverride || workflow.next_action;
+  const isAdmin = getSessionRole() === "admin";
   const importer = workflow.process.importer;
 
   useEffect(() => {
     if (!open || !workflow.process.importer_id) return;
     let active = true;
-    void nfeApi
-      .getFiscalProfile(workflow.process.importer_id)
-      .then((value) => {
-        if (active) setProfile(value);
-      })
-      .catch(() => {
-        if (active) setProfile(null);
-      });
+    void Promise.allSettled([
+      nfeApi.getFiscalProfile(workflow.process.importer_id),
+      nfeApi.listNumberSequences(workflow.process.importer_id),
+    ]).then(([profileResult, sequencesResult]) => {
+      if (!active) return;
+      setProfile(profileResult.status === "fulfilled" ? profileResult.value : null);
+      setNumberSequence(
+        sequencesResult.status === "fulfilled"
+          ? sequencesResult.value.find(
+              (item) =>
+                item.environment === "production" &&
+                item.model === "55" &&
+                item.series === series,
+            ) || null
+          : null,
+      );
+    });
     return () => {
       active = false;
     };
-  }, [open, workflow.process.importer_id]);
+  }, [open, series, workflow.process.importer_id]);
 
   async function submitProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isAdmin) {
+      toast.error("Somente administradores podem alterar o perfil fiscal.");
+      return;
+    }
     const form = new FormData(event.currentTarget);
     setBusy(true);
     try {
@@ -192,75 +186,34 @@ export function NfeWorkflowPendingSheet({
     }
   }
 
-  async function submitTaxRule(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const cst = String(form.get("icms_cst") || "");
-    if (!cst) {
-      toast.info("Selecione o CST de ICMS confirmado para esta operação.");
-      return;
-    }
-    const rate = String(form.get("icms_rate") || "").trim();
-    const configuration: Record<string, unknown> = {
-      cfop: purposeCfops[rulePurpose],
-      icms_origin: "1",
-      icms_cst: cst,
-      ipi_cst: "00",
-      ipi_zero_rate_cst: "01",
-      pis_cst: "99",
-      cofins_cst: "99",
-      document_defaults: {
-        operation_nature: operationNatures[rulePurpose],
-        presence_indicator: "9",
-        intermediary_indicator: "0",
-      },
-      item_defaults: { commercial_unit: "UN", taxable_unit: "UN" },
-    };
-    if (rate) configuration.icms_rate = rate;
-    if (cst === "51" && !rate) configuration.icms_base_reduction_rate = "100";
-
-    setBusy(true);
-    try {
-      await nfeApi.createTaxRule(workflow.process.importer_id, {
-        name: String(form.get("name")),
-        issuer_state: String(form.get("issuer_state")).toUpperCase(),
-        import_purpose: rulePurpose,
-        import_modality: String(form.get("import_modality")) as "direct" | "on_behalf" | "by_order",
-        tax_regime: String(form.get("tax_regime")) as "1" | "2" | "3",
-        priority: Number(form.get("priority") || 100),
-        effective_from: String(form.get("effective_from") || "").trim() || null,
-        configuration_json: configuration,
-        payment_defaults: { method: "90", value: "0.00" },
-        transport_defaults: { freight_mode: "1" },
-        active: true,
-      });
-      await onResolved();
-      onOpenChange(false);
-      toast.success("Regra tributária criada e aplicada à reavaliação do processo.");
-    } catch (error) {
-      toast.error(errorMessage(error));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function submitSequence(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isAdmin) {
+      toast.error("Somente administradores podem alterar a sequência fiscal.");
+      return;
+    }
     const form = new FormData(event.currentTarget);
     setBusy(true);
     try {
-      await nfeApi.saveNumberSequence(workflow.process.importer_id, {
-        environment: "production",
-        model: "55",
+      const payload = {
+        environment: "production" as const,
+        model: "55" as const,
         series,
-        current_number: Number(form.get("current_number") || 0),
-        initial_number: Number(form.get("initial_number") || 1),
-        max_number: 999999999,
-        status: "active",
-      });
+        initial_number: Number(form.get("initial_number") || numberSequence?.initial_number || 1),
+        max_number: Number(form.get("max_number") || numberSequence?.max_number || 999999999),
+        status: String(form.get("status") || numberSequence?.status || "active") as "active" | "inactive",
+        ...(numberSequence
+          ? {}
+          : { current_number: Number(form.get("current_number") || 0) }),
+      };
+      await nfeApi.saveNumberSequence(workflow.process.importer_id, payload);
       await onResolved();
       onOpenChange(false);
-      toast.success("Sequência numérica configurada. O processo foi reavaliado.");
+      toast.success(
+        numberSequence
+          ? "Sequência atualizada sem alterar o progresso numérico."
+          : "Sequência numérica configurada. O processo foi reavaliado.",
+      );
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
@@ -322,79 +275,20 @@ export function NfeWorkflowPendingSheet({
               <Field label="CEP" name="zip_code" defaultValue={profile?.zip_code} />
               <Field label="Telefone" name="phone" defaultValue={profile?.phone || ""} required={false} />
               <Field label="E-mail" name="email" defaultValue={profile?.email || ""} type="email" required={false} />
-              <Button className="sm:col-span-2" disabled={busy}>
+              <Button className="sm:col-span-2" disabled={busy || !isAdmin}>
                 {busy ? <Loader2 className="animate-spin" /> : <Check />} Salvar perfil e reavaliar
               </Button>
             </form>
           )}
 
           {action === "configure_tax_rule" && (
-            <form key={formKey} className="grid gap-4 sm:grid-cols-2" onSubmit={submitTaxRule}>
-              <Alert className="sm:col-span-2">
-                <CircleAlert />
-                <AlertTitle>Confirmação fiscal necessária</AlertTitle>
-                <AlertDescription>
-                  A regra será reutilizada em outros processos compatíveis. Confirme CST e alíquota com a equipe fiscal antes de uma futura autorização.
-                </AlertDescription>
-              </Alert>
-              <Field label="Nome da regra" name="name" defaultValue="Regra tributária de importação" />
-              <Field label="UF do emitente" name="issuer_state" defaultValue={profile?.state} placeholder="PR" />
-              <div className="space-y-1.5">
-                <Label>Finalidade atendida</Label>
-                <Select value={rulePurpose} onValueChange={(value) => setRulePurpose(value as ImportPurpose)}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(purposeLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>CFOP dos itens</Label>
-                <Input value={purposeCfops[rulePurpose]} disabled />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Modalidade</Label>
-                <Select name="import_modality" defaultValue={String(workflow.context?.normalized?.import_modality || "direct")}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="direct">Importação própria</SelectItem>
-                    <SelectItem value="on_behalf">Por conta e ordem</SelectItem>
-                    <SelectItem value="by_order">Por encomenda</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Regime tributário</Label>
-                <Select name="tax_regime" defaultValue={profile?.tax_regime || "3"}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 — Simples Nacional</SelectItem>
-                    <SelectItem value="2">2 — Excesso sublimite</SelectItem>
-                    <SelectItem value="3">3 — Regime normal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>ICMS CST confirmado</Label>
-                <Select name="icms_cst">
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Selecione o tratamento" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="00">00 — Tributada integralmente</SelectItem>
-                    <SelectItem value="40">40 — Isenta</SelectItem>
-                    <SelectItem value="41">41 — Não tributada</SelectItem>
-                    <SelectItem value="50">50 — Suspensão</SelectItem>
-                    <SelectItem value="51">51 — Diferimento</SelectItem>
-                    <SelectItem value="90">90 — Outras</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Field label="Alíquota ICMS (quando aplicável)" name="icms_rate" required={false} placeholder="Ex.: 12" />
-              <Field label="Prioridade" name="priority" type="number" defaultValue="100" />
-              <Field label="Vigência inicial (opcional)" name="effective_from" type="date" required={false} />
-              <Button className="sm:col-span-2" disabled={busy}>
-                {busy ? <Loader2 className="animate-spin" /> : <Check />} Salvar regra e reavaliar
-              </Button>
-            </form>
+            <Alert>
+              <Settings2 />
+              <AlertTitle>Regra tributária na Central Fiscal</AlertTitle>
+              <AlertDescription>
+                Feche esta pendência e use a tabela de regras na etapa Cliente. O formulário rápido foi removido para evitar configurações fiscais incompletas ou defaults silenciosos.
+              </AlertDescription>
+            </Alert>
           )}
 
           {action === "configure_number_sequence" && (
@@ -402,12 +296,66 @@ export function NfeWorkflowPendingSheet({
               <Alert>
                 <Settings2 />
                 <AlertTitle>Sequência da NF-e</AlertTitle>
-                <AlertDescription>Modelo 55, série {series}. Informe o último número já utilizado para evitar duplicidade.</AlertDescription>
+                <AlertDescription>
+                  Produção · modelo 55 · série {series}. O progresso existente nunca será reduzido por esta tela.
+                </AlertDescription>
               </Alert>
-              <Field label="Último número utilizado" name="current_number" type="number" defaultValue="0" />
-              <Field label="Primeiro número permitido" name="initial_number" type="number" defaultValue="1" />
-              <Button disabled={busy}>
-                {busy ? <Loader2 className="animate-spin" /> : <Check />} Salvar sequência e reavaliar
+
+              {numberSequence ? (
+                <div className="grid gap-3 rounded-lg border bg-muted/30 p-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Número atual</p>
+                    <strong>{numberSequence.current_number}</strong>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Próximo número</p>
+                    <strong>{numberSequence.current_number + 1}</strong>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Último reservado</p>
+                    <strong>{numberSequence.last_reserved_number ?? "Nenhum"}</strong>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Última reserva</p>
+                    <strong>
+                      {numberSequence.last_reserved_at
+                        ? new Intl.DateTimeFormat("pt-BR", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          }).format(new Date(numberSequence.last_reserved_at))
+                        : "Nenhuma"}
+                    </strong>
+                  </div>
+                </div>
+              ) : (
+                <Field label="Último número já utilizado" name="current_number" type="number" defaultValue="0" />
+              )}
+
+              <Field
+                label="Primeiro número permitido"
+                name="initial_number"
+                type="number"
+                defaultValue={String(numberSequence?.initial_number ?? 1)}
+              />
+              <Field
+                label="Número máximo"
+                name="max_number"
+                type="number"
+                defaultValue={String(numberSequence?.max_number ?? 999999999)}
+              />
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select name="status" defaultValue={numberSequence?.status || "active"}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativa</SelectItem>
+                    <SelectItem value="inactive">Inativa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button disabled={busy || !isAdmin}>
+                {busy ? <Loader2 className="animate-spin" /> : <Check />}
+                {numberSequence ? "Salvar sem alterar numeração" : "Cadastrar sequência"}
               </Button>
             </form>
           )}
