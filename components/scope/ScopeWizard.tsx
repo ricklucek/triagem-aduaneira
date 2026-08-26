@@ -1,6 +1,13 @@
 "use client";
 
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Sheet,
   SheetContent,
@@ -30,8 +37,17 @@ import {
   Toolbar,
 } from "@/components/ui/form-layout";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { toast } from "@/components/ui/toast";
+import ExistingClientScopeDialog from "./ExistingClientScopeDialog";
+import { clientsApi } from "@/lib/api/services/clients";
+import type { ClientApi } from "@/lib/api/types/client-api";
+import { AxiosError } from "@/lib/vendor/axios";
 
 function buildEtapas(data: EscopoForm): EtapaFormulario[] {
   const etapas: EtapaFormulario[] = ["SOBRE_EMPRESA", "CONTATOS", "OPERACAO"];
@@ -106,7 +122,7 @@ const STEP_LABELS: Record<EtapaFormulario, string> = {
 
 type Props = {
   form: EscopoForm;
-  setForm: Dispatch<SetStateAction<EscopoForm>>
+  setForm: Dispatch<SetStateAction<EscopoForm>>;
   responsaveis?: ScopeResponsible[];
   onSave?: (data: EscopoForm) => Promise<void> | void;
   onPublish?: () => Promise<void> | void;
@@ -123,13 +139,16 @@ export default function ScopeWizard({
   onPublish,
   title = "Escopos",
 }: Props) {
-  
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState("Não salvo");
   const [errorSheetOpen, setErrorSheetOpen] = useState(false);
+  const [existingScopeClient, setExistingScopeClient] =
+    useState<ClientApi | null>(null);
+  const [existingScopeDialogOpen, setExistingScopeDialogOpen] = useState(false);
 
   const router = useRouter();
+  const { scopeId = "" } = useParams<{ scopeId?: string }>();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -144,6 +163,38 @@ export default function ScopeWizard({
   const isLastStep = etapaAtualIndex === etapas.length - 1;
   const isFirstStep = etapaAtualIndex === 0;
   const fieldFromUrl = searchParams.get("field");
+
+  const handleExistingScopeChange = useCallback((client: ClientApi | null) => {
+    setExistingScopeClient(client);
+    setExistingScopeDialogOpen(Boolean(client?.scope_id));
+  }, []);
+
+  const showConflictFromCnpj = useCallback(
+    async (data: EscopoForm): Promise<boolean> => {
+      const cnpj = data.sobreEmpresa.cnpj;
+      if (cnpj.length !== 14) return false;
+
+      try {
+        const response = await clientsApi.listClients({
+          cnpj,
+          limit: 2,
+          offset: 0,
+        });
+        const client =
+          response.items.find(
+            (item) => Boolean(item.scope_id) && item.scope_id !== scopeId,
+          ) ?? null;
+
+        if (!client) return false;
+
+        handleExistingScopeChange(client);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [handleExistingScopeChange, scopeId],
+  );
 
   useEffect(() => {
     if (!fieldFromUrl) return;
@@ -188,14 +239,26 @@ export default function ScopeWizard({
         await onSave(data);
         setSavedMessage(silent ? "Salvo automaticamente" : "Salvo");
         return true;
-      } catch {
+      } catch (error) {
         setSavedMessage("Erro ao salvar");
+        if (error instanceof AxiosError && error.status === 409) {
+          const conflictShown = await showConflictFromCnpj(data);
+          if (!conflictShown) {
+            toast.error("Este cliente já possui um escopo.");
+          }
+        } else {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível salvar o escopo.",
+          );
+        }
         return false;
       } finally {
         setSaving(false);
       }
     },
-    [onSave],
+    [onSave, showConflictFromCnpj],
   );
 
   const navigateToStep = useCallback(
@@ -228,7 +291,8 @@ export default function ScopeWizard({
     if (!nextStep) return;
 
     setErrors({});
-    await persist(form, true);
+    const saved = await persist(form, true);
+    if (!saved) return;
     navigateToStep(nextStep, "push");
   }
 
@@ -264,14 +328,32 @@ export default function ScopeWizard({
       return;
     }
 
-    await persist(form, true);
+    const saved = await persist(form, true);
+    if (!saved) return;
 
     if (onPublish) {
-      await onPublish();
-      setSavedMessage("Publicado");
-      toast.success("Escopo publicado com sucesso.");
+      try {
+        await onPublish();
+        setSavedMessage("Publicado");
+        toast.success("Escopo publicado com sucesso.");
+      } catch (error) {
+        setSavedMessage("Erro ao publicar");
+        if (error instanceof AxiosError && error.status === 409) {
+          const conflictShown = await showConflictFromCnpj(form);
+          if (!conflictShown) {
+            toast.error("Este cliente já possui um escopo.");
+          }
+        } else {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível publicar o escopo.",
+          );
+        }
+        return;
+      }
     }
-    router.replace('/scope/list');
+    router.replace("/scope/list");
   }
 
   function focusErrorAt(path: string) {
@@ -317,6 +399,8 @@ export default function ScopeWizard({
             errors={scopedErrors}
             onChange={setForm}
             responsaveis={responsaveis}
+            currentScopeId={scopeId}
+            onExistingScopeChange={handleExistingScopeChange}
           />
         );
 
@@ -371,7 +455,11 @@ export default function ScopeWizard({
 
       case "FINANCEIRO":
         return (
-          <StepFinanceiro form={form} errors={scopedErrors} onChange={setForm} />
+          <StepFinanceiro
+            form={form}
+            errors={scopedErrors}
+            onChange={setForm}
+          />
         );
 
       default:
@@ -430,6 +518,15 @@ export default function ScopeWizard({
           </div>
         </SheetContent>
       </Sheet>
+
+      <ExistingClientScopeDialog
+        client={existingScopeClient}
+        open={existingScopeDialogOpen}
+        onOpenChange={setExistingScopeDialogOpen}
+        onOpenScope={(existingScopeId) =>
+          router.push(`/scope/view/${existingScopeId}`)
+        }
+      />
 
       <Toolbar
         left={

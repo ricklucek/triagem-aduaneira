@@ -6,7 +6,9 @@ import { Field, Select, TextInput } from "@/components/ui/form-fields";
 import { Grid } from "@/components/ui/form-layout";
 import { ResponsiblePicker } from "@/components/scope/ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+import type { ClientApi } from "@/lib/api/types/client-api";
 import { formatCNPJ } from "@/utils/format";
+import { clientsApi } from "@/lib/api/services/clients";
 import { publicApi } from "@/lib/api/services/public";
 
 type Props = {
@@ -14,6 +16,8 @@ type Props = {
   errors: Record<string, string>;
   onChange: (next: EscopoForm) => void;
   responsaveis: ScopeResponsible[];
+  currentScopeId?: string;
+  onExistingScopeChange?: (client: ClientApi | null) => void;
 };
 
 export default function StepSobreEmpresa({
@@ -21,11 +25,17 @@ export default function StepSobreEmpresa({
   errors,
   onChange,
   responsaveis,
+  currentScopeId,
+  onExistingScopeChange,
 }: Props) {
   const s = form.sobreEmpresa;
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
+  const [checkingScope, setCheckingScope] = useState(false);
+  const [scopeLookupError, setScopeLookupError] = useState<string | null>(null);
+  const [existingScopeId, setExistingScopeId] = useState<string | null>(null);
   const lastFetchedRef = useRef<string>("");
+  const lastScopeCheckedRef = useRef<string>("");
 
   function patch(patchData: Partial<typeof s>) {
     onChange({ ...form, sobreEmpresa: { ...s, ...patchData } });
@@ -68,7 +78,56 @@ export default function StepSobreEmpresa({
       }
     }
     void lookup();
-  }, [s.cnpj]);
+  }, [form, onChange, s.cnpj]);
+
+  useEffect(() => {
+    if (!onExistingScopeChange) return;
+    const notifyExistingScopeChange = onExistingScopeChange;
+
+    if (s.cnpj.length !== 14) return;
+
+    if (lastScopeCheckedRef.current === s.cnpj) return;
+
+    let cancelled = false;
+
+    async function checkExistingScope() {
+      setCheckingScope(true);
+      setScopeLookupError(null);
+
+      try {
+        const response = await clientsApi.listClients({
+          cnpj: s.cnpj,
+          limit: 2,
+          offset: 0,
+        });
+
+        if (cancelled) return;
+
+        lastScopeCheckedRef.current = s.cnpj;
+        const clientWithAnotherScope =
+          response.items.find(
+            (client) =>
+              Boolean(client.scope_id) && client.scope_id !== currentScopeId,
+          ) ?? null;
+
+        setExistingScopeId(clientWithAnotherScope?.scope_id ?? null);
+        notifyExistingScopeChange(clientWithAnotherScope);
+      } catch {
+        if (cancelled) return;
+        setScopeLookupError(
+          "Não foi possível verificar se este CNPJ já possui escopo.",
+        );
+      } finally {
+        if (!cancelled) setCheckingScope(false);
+      }
+    }
+
+    void checkExistingScope();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentScopeId, onExistingScopeChange, s.cnpj]);
 
   return (
     <main className="flex flex-col gap-5">
@@ -89,28 +148,41 @@ export default function StepSobreEmpresa({
         <Field
           label="CNPJ"
           required
-          error={errors["cnpj"]}
+          error={
+            errors["cnpj"] ??
+            (existingScopeId
+              ? "Este CNPJ já está vinculado a outro escopo."
+              : undefined)
+          }
           hint={
-            loadingCnpj
-              ? "Consultando Receita Federal..."
-              : (lookupError ??
-                "Ao concluir 14 dígitos, os dados serão buscados automaticamente.")
+            checkingScope
+              ? "Verificando se o cliente já possui escopo..."
+              : scopeLookupError
+                ? scopeLookupError
+                : loadingCnpj
+                  ? "Consultando Receita Federal..."
+                  : (lookupError ??
+                    "Ao concluir 14 dígitos, os dados serão buscados automaticamente.")
           }
         >
           <TextInput
-            invalid={Boolean(errors["cnpj"])}
+            invalid={Boolean(errors["cnpj"] || existingScopeId)}
             value={formatCNPJ(s.cnpj)}
             onChange={(e) => {
               const raw = e.target.value.replace(/\D/g, "");
-              if (raw.length < 14) lastFetchedRef.current = "";
+              if (raw !== s.cnpj) {
+                lastFetchedRef.current = "";
+                lastScopeCheckedRef.current = "";
+                setCheckingScope(false);
+                setScopeLookupError(null);
+                setExistingScopeId(null);
+                onExistingScopeChange?.(null);
+              }
               patch({ cnpj: raw });
             }}
           />
         </Field>
-        <Field
-          label="Inscrição Estadual"
-          error={errors["inscricaoEstadual"]}
-        >
+        <Field label="Inscrição Estadual" error={errors["inscricaoEstadual"]}>
           <TextInput
             invalid={Boolean(errors["inscricaoEstadual"])}
             value={s.inscricaoEstadual ?? ""}
@@ -175,15 +247,27 @@ export default function StepSobreEmpresa({
             <option value="LUCRO_REAL">Lucro Real</option>
           </Select>
         </Field>
-        <Field label="Modalidade Radar" required error={errors["modalidadeRadar"]}>
+        <Field
+          label="Modalidade Radar"
+          required
+          error={errors["modalidadeRadar"]}
+        >
           <Select
             value={s.modalidadeRadar ?? ""}
-            onChange={(e) => patch({ modalidadeRadar: e.target.value as typeof s.modalidadeRadar })}
+            onChange={(e) =>
+              patch({
+                modalidadeRadar: e.target.value as typeof s.modalidadeRadar,
+              })
+            }
           >
             <option value="">Selecione</option>
             <option value="RADAR_INATIVO">RADAR inativo</option>
-            <option value="RADAR_LIMITADO_50K">RADAR Limitado U$50.000,00 CIF</option>
-            <option value="RADAR_LIMITADO_150K">RADAR Limitado U$150.000,00 CIF</option>
+            <option value="RADAR_LIMITADO_50K">
+              RADAR Limitado U$50.000,00 CIF
+            </option>
+            <option value="RADAR_LIMITADO_150K">
+              RADAR Limitado U$150.000,00 CIF
+            </option>
             <option value="RADAR_ILIMITADO">RADAR ILIMITADO</option>
           </Select>
         </Field>
