@@ -25,7 +25,6 @@ import type {
   NfeWorkflowState,
   NfeWorkflowStepKey,
   NfeXmlVersionSummary,
-  UpdateNfeDraftPayload,
 } from "@/lib/api/types/nfe-api";
 import { useToast } from "@/components/ui/toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -41,7 +40,7 @@ import { NfeDuimpOverview } from "@/components/nfe/nfe-duimp-overview";
 import { NfeDocumentPlanPanel } from "@/components/nfe/nfe-document-plan-panel";
 import { NfeClientFiscalCenter } from "@/components/nfe/nfe-client-fiscal-center";
 import { NfeWorkflowPendingSheet } from "@/components/nfe/nfe-workflow-pending-sheet";
-import { NfeCarrierSelector } from "@/components/nfe/nfe-carrier-selector";
+import { NfeDraftEditor } from "@/components/nfe/nfe-draft-editor";
 
 const actionLabels: Record<string, string> = {
   fetch_duimp: "Capturar a DUIMP",
@@ -138,18 +137,6 @@ function issueLocation(issue: Record<string, unknown>) {
   return [line, column].filter(Boolean).join(", ");
 }
 
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-}
-
-function nestedText(value: unknown, ...path: string[]) {
-  let current: unknown = value;
-  for (const key of path) current = asRecord(current)[key];
-  return current === null || current === undefined ? "" : String(current);
-}
-
 function saveBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -204,6 +191,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
 
   const data = workflow.data;
   const draftItems = drafts.data?.items ?? [];
+  const activeDraftItems = draftItems.filter((draft) => !draft.deleted_at);
   const snapshotItems = snapshots.data ?? [];
   const workflowSteps = data.steps;
   const requestedWorkflowStep = workflowSteps.find(
@@ -249,7 +237,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     data.prerequisites.planned_documents_count === 1 &&
     data.context?.ready_for_draft,
   );
-  const latestDraft = draftItems[0];
+  const latestDraft = activeDraftItems[0];
   const latestXml = latestDraft?.xml_versions[0];
   const primaryActionLabel = primaryActionLabels[data.next_action];
   const primaryActionSupported = Boolean(
@@ -274,10 +262,6 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       (data.next_action === "completed" && latestDraft && latestXml)
     ),
   );
-  const correctionPayload = correctionDetail?.draft.fiscal_payload || {};
-  const correctionErrors = correctionDetail?.draft.validation_errors || [];
-  const correctionWarnings = correctionDetail?.draft.validation_warnings || [];
-
   async function captureDuimp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -355,91 +339,6 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       const detail = await nfeApi.getDraft(draft.id);
       setCorrectionDetail(detail);
       setCorrectionOpen(true);
-    } catch (error) {
-      toast.error(errorMessage(error));
-    } finally {
-      setBusyAction(null);
-    }
-  }
-
-  async function saveDraftCorrections(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!correctionDetail) return;
-
-    const form = new FormData(event.currentTarget);
-    const value = (name: string) => String(form.get(name) || "").trim();
-    const address = Object.fromEntries(
-      ["street", "number", "complement", "district", "city_name"]
-        .map((field) => [field, value(`supplier_${field}`)])
-        .filter(([, fieldValue]) => fieldValue),
-    );
-    const carrierMode = value("carrier_mode");
-    const registeredCarrierId = value("registered_carrier_id");
-    const carrier = carrierMode === "manual" ? Object.fromEntries(
-      ["tax_id", "name", "state_registration", "address", "city_name", "state"]
-        .map((field) => [field, value(`carrier_${field}`)])
-        .filter(([, fieldValue]) => fieldValue),
-    ) : {};
-    const volumeEntries: Array<[string, string | number]> = [];
-    const volumeQuantity = value("volume_quantity");
-    if (volumeQuantity) volumeEntries.push(["quantity", Number(volumeQuantity)]);
-    for (const field of ["species", "brand", "numbering", "net_weight", "gross_weight"]) {
-      const fieldValue = value(`volume_${field}`);
-      if (fieldValue) volumeEntries.push([field, fieldValue]);
-    }
-
-    const supplierLegalName = value("supplier_legal_name");
-    const supplierForeignId = value("supplier_foreign_id");
-    const supplierCountryIso = value("supplier_country_iso_alpha_2").toUpperCase();
-    if (carrierMode === "registered" && !registeredCarrierId) {
-      toast.info("Selecione uma transportadora cadastrada antes de salvar.");
-      return;
-    }
-    const payload: UpdateNfeDraftPayload = {
-      issuer: {
-        state_registration: value("issuer_state_registration"),
-      },
-      foreign_supplier: {
-        ...(supplierLegalName ? { legal_name: supplierLegalName } : {}),
-        foreign_id: supplierForeignId || null,
-        country_code: value("supplier_country_code"),
-        country_name: value("supplier_country_name"),
-        ...(supplierCountryIso ? { country_iso_alpha_2: supplierCountryIso } : {}),
-        ...(Object.keys(address).length ? { address } : {}),
-      },
-      transport: {
-        freight_mode: value("freight_mode"),
-        ...(carrierMode === "registered" && registeredCarrierId
-          ? { carrier_id: registeredCarrierId }
-          : {}),
-        ...(carrierMode === "manual"
-          ? { carrier: Object.keys(carrier).length ? carrier : null }
-          : {}),
-        ...(volumeEntries.length ? { volume: Object.fromEntries(volumeEntries) } : {}),
-      },
-      additional_info: {
-        automatic_summary: true,
-        legal_text: value("legal_text"),
-      },
-    };
-
-    setBusyAction(`save-correction:${correctionDetail.draft.id}`);
-    try {
-      const result = await nfeApi.updateDraft(correctionDetail.draft.id, payload);
-      await Promise.all([workflow.mutate(), drafts.mutate()]);
-      if (result.validation.valid) {
-        setCorrectionOpen(false);
-        setCorrectionDetail(null);
-        toast.success(
-          result.requires_new_xml
-            ? "Dados atualizados. A versão XML anterior foi preservada; gere uma nova versão."
-            : "Rascunho corrigido e validado. A geração do XML foi liberada.",
-        );
-      } else {
-        const detail = await nfeApi.getDraft(correctionDetail.draft.id);
-        setCorrectionDetail(detail);
-        toast.info(`Ainda existem ${result.validation.errors?.length || 0} correção(ões) obrigatória(s).`);
-      }
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
@@ -945,21 +844,21 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               <div id={`draft-${draft.id}`} key={draft.id} className="rounded-xl border p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">Rascunho {draft.number ? `NF-e nº ${draft.number}` : `#${draftItems.length - index}`}</h3><Badge variant={draft.validation_errors.length ? "destructive" : "secondary"}>{draftStatusLabels[draft.status] || draft.status}</Badge></div>
+                    <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">Rascunho {draft.number ? `NF-e nº ${draft.number}` : `#${draftItems.length - index}`}</h3><Badge variant={draft.deletion_mode ? "outline" : draft.validation_errors.length ? "destructive" : "secondary"}>{draft.deletion_mode === "archived" ? "Arquivado" : draft.deletion_mode === "deleted" ? "Excluído" : draftStatusLabels[draft.status] || draft.status}</Badge>{draft.requires_inutilization_review && <Badge variant="destructive">Revisar inutilização</Badge>}</div>
                     <p className="mt-1 text-xs text-muted-foreground">{draft.exporter_code ? `Exportador ${draft.exporter_code} · ` : ""}Criado em {dateLabel(draft.created_at)} · {draft.items_count} itens · Série {draft.series}</p>
                     {draft.access_key && <p className="mt-1 break-all font-mono text-xs text-muted-foreground">Chave: {draft.access_key}</p>}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {!["signed", "transmitted", "authorized", "cancelled"].includes(draft.status) && (
+                    {!draft.deleted_at && !["signed", "transmitted", "authorized", "cancelled"].includes(draft.status) && (
                       <Button variant={draft.validation_errors.length ? "default" : "outline"} onClick={() => void openDraftCorrection(draft)} disabled={Boolean(busyAction)}>
                         {busyAction === `load-correction:${draft.id}` ? <Loader2 className="animate-spin" /> : <PencilLine />}
                         {draft.validation_errors.length ? "Corrigir rascunho" : "Editar dados"}
                       </Button>
                     )}
-                    <Button variant="outline" onClick={() => void generateDiagnosticXml(draft)} disabled={Boolean(busyAction) || draft.validation_errors.length > 0}>
+                    {!draft.deleted_at && <Button variant="outline" onClick={() => void generateDiagnosticXml(draft)} disabled={Boolean(busyAction) || draft.validation_errors.length > 0}>
                       {busyAction === `xml:${draft.id}` ? <Loader2 className="animate-spin" /> : <FileCode2 />}
                       {draft.xml_versions.length ? "Gerar nova versão XML" : "Gerar XML diagnóstico"}
-                    </Button>
+                    </Button>}
                   </div>
                 </div>
   
@@ -1127,7 +1026,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         setCorrectionOpen(open);
         if (!open) setCorrectionDetail(null);
       }}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="max-h-[94vh] overflow-y-auto sm:max-w-6xl">
           <DialogHeader>
             <DialogTitle>Corrigir rascunho da NF-e</DialogTitle>
             <DialogDescription>
@@ -1135,106 +1034,17 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
             </DialogDescription>
           </DialogHeader>
           {correctionDetail && (
-            <form className="space-y-6" onSubmit={saveDraftCorrections}>
-              {correctionErrors.length > 0 && (
-                <Alert variant="destructive">
-                  <CircleAlert />
-                  <AlertTitle>{correctionErrors.length} correção(ões) obrigatória(s)</AlertTitle>
-                  <AlertDescription>
-                    <ul className="mt-2 list-disc space-y-1 pl-5">
-                      {correctionErrors.map((issue, index) => <li key={index}>{issueLabel(issue)}</li>)}
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <section className="space-y-3">
-                <div>
-                  <h3 className="font-semibold">Emitente da NF-e</h3>
-                  <p className="text-xs text-muted-foreground">A inscrição estadual não deve receber o CNPJ. Informe ISENTO ou de 2 a 14 dígitos, conforme o cadastro fiscal do emitente.</p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5"><Label htmlFor="issuer_cnpj">CNPJ do emitente</Label><Input id="issuer_cnpj" value={nestedText(correctionPayload, "issuer", "cnpj")} disabled /></div>
-                  <div className="space-y-1.5"><Label htmlFor="issuer_state_registration">Inscrição estadual do emitente</Label><Input id="issuer_state_registration" name="issuer_state_registration" defaultValue={nestedText(correctionPayload, "issuer", "state_registration")} required placeholder="Somente números ou ISENTO" /></div>
-                </div>
-              </section>
-
-              <section className="space-y-3">
-                <div>
-                  <h3 className="font-semibold">Exportador estrangeiro</h3>
-                  <p className="text-xs text-muted-foreground">O código BACEN e o nome do país são obrigatórios para o XML.</p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="supplier_legal_name">Nome do exportador</Label><Input id="supplier_legal_name" name="supplier_legal_name" defaultValue={nestedText(correctionPayload, "recipient", "legal_name")} /></div>
-                  <CountryReferenceSearch
-                    initialBacenCode={nestedText(correctionPayload, "recipient", "address", "country_code")}
-                    initialName={nestedText(correctionPayload, "recipient", "address", "country_name")}
-                    initialIsoAlpha2={nestedText(correctionPayload, "recipient", "address", "country_iso_alpha_2")}
-                    bacenCodeName="supplier_country_code"
-                    countryName="supplier_country_name"
-                    isoAlpha2Name="supplier_country_iso_alpha_2"
-                    activeOn={nestedText(correctionPayload, "document", "issue_datetime").slice(0, 10) || undefined}
-                  />
-                  <div className="space-y-1.5"><Label htmlFor="supplier_foreign_id">Identificador estrangeiro</Label><Input id="supplier_foreign_id" name="supplier_foreign_id" defaultValue={nestedText(correctionPayload, "recipient", "foreign_id")} placeholder="Deixe em branco quando não existir" /><p className="text-xs text-muted-foreground">Ao deixar em branco, o campo idEstrangeiro será removido do próximo XML.</p></div>
-                  <div className="space-y-1.5"><Label htmlFor="supplier_street">Endereço</Label><Input id="supplier_street" name="supplier_street" defaultValue={nestedText(correctionPayload, "recipient", "address", "street")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="supplier_number">Número</Label><Input id="supplier_number" name="supplier_number" defaultValue={nestedText(correctionPayload, "recipient", "address", "number")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="supplier_district">Bairro/distrito</Label><Input id="supplier_district" name="supplier_district" defaultValue={nestedText(correctionPayload, "recipient", "address", "district")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="supplier_city_name">Cidade</Label><Input id="supplier_city_name" name="supplier_city_name" defaultValue={nestedText(correctionPayload, "recipient", "address", "city_name")} /></div>
-                  <input type="hidden" name="supplier_complement" value={nestedText(correctionPayload, "recipient", "address", "complement")} />
-                </div>
-              </section>
-
-              <section className="space-y-3">
-                <div>
-                  <h3 className="font-semibold">Transporte e volumes</h3>
-                  <p className="text-xs text-muted-foreground">Estes campos atendem aos alertas de transportadora e volumes exibidos no rascunho.</p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="freight_mode">Modalidade do frete</Label>
-                    <select id="freight_mode" name="freight_mode" className="h-10 w-full rounded-md border bg-background px-3 text-sm" defaultValue={nestedText(correctionPayload, "transport", "freight_mode") || "9"}>
-                      <option value="0">0 — Por conta do emitente</option>
-                      <option value="1">1 — Por conta do destinatário</option>
-                      <option value="2">2 — Por conta de terceiros</option>
-                      <option value="3">3 — Transporte próprio do emitente</option>
-                      <option value="4">4 — Transporte próprio do destinatário</option>
-                      <option value="9">9 — Sem ocorrência de transporte</option>
-                    </select>
-                  </div>
-                  <NfeCarrierSelector
-                    key={correctionDetail.draft.id}
-                    initialCarrier={asRecord(asRecord(correctionPayload.transport).carrier)}
-                  />
-                  <div className="space-y-1.5"><Label htmlFor="volume_quantity">Quantidade de volumes</Label><Input id="volume_quantity" name="volume_quantity" type="number" min={1} defaultValue={nestedText(correctionPayload, "transport", "volume", "quantity")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="volume_species">Espécie</Label><Input id="volume_species" name="volume_species" defaultValue={nestedText(correctionPayload, "transport", "volume", "species")} placeholder="Ex.: CAIXA" /></div>
-                  <div className="space-y-1.5"><Label htmlFor="volume_gross_weight">Peso bruto</Label><Input id="volume_gross_weight" name="volume_gross_weight" inputMode="decimal" defaultValue={nestedText(correctionPayload, "transport", "volume", "gross_weight")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="volume_net_weight">Peso líquido</Label><Input id="volume_net_weight" name="volume_net_weight" inputMode="decimal" defaultValue={nestedText(correctionPayload, "transport", "volume", "net_weight")} /></div>
-                  <input type="hidden" name="volume_brand" value={nestedText(correctionPayload, "transport", "volume", "brand")} />
-                  <input type="hidden" name="volume_numbering" value={nestedText(correctionPayload, "transport", "volume", "numbering")} />
-                </div>
-              </section>
-
-              <section className="space-y-2">
-                <Label htmlFor="legal_text">Fundamentação legal/TTD nas informações complementares</Label>
-                <textarea id="legal_text" name="legal_text" className="min-h-24 w-full rounded-md border bg-background px-3 py-2 text-sm" defaultValue={nestedText(correctionPayload, "additional_info", "fiscal")} />
-              </section>
-
-              {correctionWarnings.length > 0 && (
-                <Alert>
-                  <CircleAlert />
-                  <AlertTitle>Alertas de conferência</AlertTitle>
-                  <AlertDescription>Esses alertas permanecem para revisão fiscal, mas não bloqueiam a geração do XML diagnóstico quando não houver erros obrigatórios.</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button type="button" variant="outline" onClick={() => setCorrectionOpen(false)} disabled={Boolean(busyAction)}>Cancelar</Button>
-                <Button type="submit" disabled={Boolean(busyAction)}>
-                  {busyAction === `save-correction:${correctionDetail.draft.id}` && <Loader2 className="animate-spin" />}
-                  Salvar, validar e continuar
-                </Button>
-              </div>
-            </form>
+            <NfeDraftEditor
+              initialDetail={correctionDetail}
+              onChanged={async () => {
+                await Promise.all([workflow.mutate(), drafts.mutate()]);
+              }}
+              onRemoved={async () => {
+                setCorrectionOpen(false);
+                setCorrectionDetail(null);
+                await Promise.all([workflow.mutate(), drafts.mutate()]);
+              }}
+            />
           )}
         </DialogContent>
       </Dialog>

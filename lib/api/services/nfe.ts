@@ -25,6 +25,7 @@ import type {
   NfeContextState,
   ResolveNfeContextPayload,
   UpdateNfeDraftPayload,
+  NfeDraftTaxAdjustmentPayload,
   NfeWorkflowState,
   NfeXmlValidationResult,
   NfeXmlVersionSummary,
@@ -347,6 +348,43 @@ export const nfeApi = {
       };
       requires_new_xml: boolean;
     }>(API_ROUTES.nfe.draft(draftId), payload);
+    return data;
+  },
+
+  async adjustDraftItemTax(
+    draftId: string,
+    itemId: string,
+    payload: NfeDraftTaxAdjustmentPayload,
+  ) {
+    const { data } = await http.patch<{
+      draft: NfeDraftDetailResponse["draft"];
+      item: NfeDraftDetailResponse["items"][number];
+      validation: { valid: boolean; errors?: Array<Record<string, unknown>> };
+      audit: Record<string, unknown>;
+      requires_new_xml: boolean;
+    }>(API_ROUTES.nfe.draftItemTaxAdjustment(draftId, itemId), payload);
+    return data;
+  },
+
+  async updateDraftItem(
+    draftId: string,
+    itemId: string,
+    payload: Record<string, unknown>,
+  ) {
+    const { data } = await http.patch<NfeDraftDetailResponse["items"][number]>(
+      API_ROUTES.nfe.draftItem(draftId, itemId),
+      payload,
+    );
+    return data;
+  },
+
+  async removeDraft(draftId: string, reason: string) {
+    const { data } = await http.post<{
+      draft_id: string;
+      deletion_mode: "deleted" | "archived";
+      message: string;
+      requires_inutilization_review: boolean;
+    }>(API_ROUTES.nfe.removeDraft(draftId), { reason });
     return data;
   },
 

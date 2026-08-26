@@ -269,6 +269,10 @@ export interface NfeDraftSummary {
   series: string;
   number?: number | null;
   access_key?: string | null;
+  deleted_at?: string | null;
+  deletion_reason?: string | null;
+  deletion_mode?: "deleted" | "archived" | null;
+  requires_inutilization_review?: boolean;
   duimp_snapshot_id?: string | null;
   planned_document_id?: string | null;
   exporter_code?: string | null;
@@ -287,6 +291,20 @@ export interface NfeDraftDetailResponse {
   };
   items: Array<Record<string, unknown> & { id: string }>;
   xmlVersions: NfeXmlVersionSummary[];
+  auditTrail: NfeDraftAuditEvent[];
+}
+
+export interface NfeDraftAuditEvent {
+  section: string;
+  reason: string;
+  source?: "manual_adjustment" | "tax_rule" | string;
+  previous?: Record<string, unknown>;
+  current?: Record<string, unknown>;
+  changed_by_user_id?: string | null;
+  changed_by_name?: string | null;
+  changed_at: string;
+  item_id?: string;
+  item_number?: number;
 }
 
 export interface UpdateNfeDraftPayload {
@@ -311,6 +329,20 @@ export interface UpdateNfeDraftPayload {
   };
   payment?: Record<string, unknown>;
   additional_info?: Record<string, unknown>;
+  additional_costs?: Partial<Record<"afrmm" | "siscomex_fee" | "thc" | "other", string>>;
+}
+
+export interface NfeDraftTaxAdjustmentPayload {
+  source: "manual_adjustment" | "tax_rule";
+  reason: string;
+  cfop?: string;
+  icms?: {
+    cst: string;
+    base: string;
+    rate?: string | null;
+    reduction_rate?: string | null;
+    deferment_rate?: string | null;
+  };
 }
 
 export interface DuimpSnapshotDetail {
