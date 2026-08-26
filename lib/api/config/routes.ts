@@ -6,7 +6,13 @@ export const API_ROUTES = {
     me: "/auth/me",
   },
   scopes: {
-    create: (templateId?: string | number) => (templateId ? `/scopes?templateId=${templateId}` : `/scopes`),
+    create: (options?: { templateId?: string | number; clientId?: string }) => {
+      const params = new URLSearchParams();
+      if (options?.templateId) params.set("templateId", String(options.templateId));
+      if (options?.clientId) params.set("clientId", options.clientId);
+      const query = params.toString();
+      return query ? `/scopes?${query}` : "/scopes";
+    },
     list: "/scopes",
     metadata: "/scopes/metadata",
     detail: (scopeId: string) => `/scopes/${scopeId}`,

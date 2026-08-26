@@ -15,6 +15,7 @@ import type {
   BulkAssignmentSummaryResponse,
   BulkAssignmentUpdatePayload,
   BulkAssignmentUpdateResponse,
+  CreateScopeOptions,
   CreateScopeResponse,
   SaveScopeDraftPayload,
   ScopeApiClient,
@@ -87,10 +88,10 @@ function normalizeScopeListResponse(
 export const scopeApi: ScopeApiClient = {
   async createScope(
     initial?: Partial<EscopoForm>,
-    templateId?: number | string,
+    options?: CreateScopeOptions,
   ): Promise<CreateScopeResponse> {
     const { data } = await http.post<CreateScopeResponse>(
-      API_ROUTES.scopes.create(templateId),
+      API_ROUTES.scopes.create(options),
       initial ?? {},
     );
     return data;
