@@ -17,6 +17,7 @@ import { ResponsibleShow } from "@/components/ResponsibleShow";
 import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
 import { ScopeViewTabs } from "./view/ScopeViewTabs";
 import { HighlightField } from "./view/HighlightField";
+import { TaxRegimeStatus } from "./view/TaxRegimeStatus";
 
 const text = (v: unknown) =>
   v == null || v === "" || (Array.isArray(v) && v.length === 0)
@@ -96,12 +97,6 @@ const account = (
 const contaPagamentoLabel = (v?: string | null) => {
   if (v === "CASCO") return "CASCO";
   if (v === "CLIENTE") return "Cliente";
-  return text(v);
-};
-
-const regimeTributoLabel = (v?: string | null) => {
-  if (v === "INTEGRAL") return "Integral";
-  if (v === "BENEFICIO") return "Benefício";
   return text(v);
 };
 
@@ -424,17 +419,10 @@ function FederalTaxItem({
   return (
     <Card className="gap-3 p-3">
       <h6 className="text-sm font-semibold">{title}</h6>
-
-      <Grid>
-        <Field label="Regime" value={regimeTributoLabel(tax.regime)} />
-
-        {tax.regime === "BENEFICIO" ? (
-          <HighlightField
-            label="Detalhe do benefício"
-            value={text(tax.detalheBeneficio)}
-          />
-        ) : null}
-      </Grid>
+      <TaxRegimeStatus
+        regime={tax.regime}
+        description={text(tax.detalheBeneficio)}
+      />
     </Card>
   );
 }
@@ -527,14 +515,10 @@ function AfrmmView({
           dadosContaCliente={afrmm.dadosContaCliente}
         />
 
-        <Field label="Regime" value={regimeTributoLabel(afrmm.regime)} />
-
-        {afrmm.regime === "BENEFICIO" ? (
-          <HighlightField
-            label="Detalhe do benefício"
-            value={text(afrmm.detalheBeneficio)}
-          />
-        ) : null}
+        <TaxRegimeStatus
+          regime={afrmm.regime}
+          description={text(afrmm.detalheBeneficio)}
+        />
 
         <HighlightField
           label="Observações AFRMM"
@@ -1284,6 +1268,75 @@ function ScopeDetails({
       ),
     },
     {
+      id: "tributos",
+      label: "Tributos",
+      content:
+        showImport && importacao ? (
+          <ViewCard title="Tributos da importação">
+            <FederalTaxesView impostosFederais={importacao.impostosFederais} />
+            <AfrmmView afrmm={importacao.afrmm} />
+
+            <Separator className="my-2" />
+            <h5 className="text-sm font-semibold">ICMS</h5>
+            <Grid>
+              <PaymentAccountFields
+                subject="do ICMS"
+                contaPagamento={importacao.icms?.contaPagamento}
+                dadosContaCliente={importacao.icms?.dadosContaCliente}
+              />
+              <TaxRegimeStatus
+                label="Regime geral"
+                regime={importacao.icms?.regime}
+                description={text(importacao.icms?.observacao)}
+              />
+              {importacao.icms?.regime !== "BENEFICIO" ? (
+                <HighlightField
+                  label="Observações ICMS"
+                  value={text(importacao.icms?.observacao)}
+                />
+              ) : null}
+            </Grid>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {Object.entries(importacao.icms?.porDestinacao ?? {})
+                .filter(
+                  ([destinacao, detalhe]) =>
+                    detalhe && importacao.destinacao.includes(destinacao),
+                )
+                .map(([destinacao, detalhe]) => (
+                  <Card key={destinacao} className="gap-3 p-3">
+                    <h6 className="text-sm font-semibold">
+                      {ICMS_DESTINACAO_LABEL[destinacao] ?? destinacao}
+                    </h6>
+                    <div className="grid gap-3">
+                      <TaxRegimeStatus
+                        regime={detalhe?.regime}
+                        showDescription={false}
+                      />
+                      <Grid>
+                        <Field
+                          label="Alíquota base"
+                          value={text(detalhe?.recolhida)}
+                        />
+                        <Field
+                          label="Alíquota efetiva"
+                          value={text(detalhe?.efetiva)}
+                        />
+                      </Grid>
+                    </div>
+                  </Card>
+                ))}
+            </div>
+          </ViewCard>
+        ) : (
+          <ViewCard title="Tributos da importação">
+            <EmptyState>
+              Este escopo não possui operação de importação cadastrada.
+            </EmptyState>
+          </ViewCard>
+        ),
+    },
+    {
       id: "comercial-casco",
       label: "Comercial CASCO",
       content: (
@@ -1447,62 +1500,6 @@ function ScopeDetails({
               />
             </Grid>
           </ViewCard>
-
-          {showImport && importacao ? (
-            <ViewCard title="Tributos da importação">
-              <FederalTaxesView
-                impostosFederais={importacao.impostosFederais}
-              />
-              <AfrmmView afrmm={importacao.afrmm} />
-
-              <Separator className="my-2" />
-              <h5 className="text-sm font-semibold">ICMS</h5>
-              <Grid>
-                <PaymentAccountFields
-                  subject="do ICMS"
-                  contaPagamento={importacao.icms?.contaPagamento}
-                  dadosContaCliente={importacao.icms?.dadosContaCliente}
-                />
-                <Field
-                  label="Regime geral"
-                  value={regimeTributoLabel(importacao.icms?.regime)}
-                />
-                <HighlightField
-                  label="Observações ICMS"
-                  value={text(importacao.icms?.observacao)}
-                />
-              </Grid>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                {Object.entries(importacao.icms?.porDestinacao ?? {})
-                  .filter(
-                    ([destinacao, detalhe]) =>
-                      detalhe && importacao.destinacao.includes(destinacao),
-                  )
-                  .map(([destinacao, detalhe]) => (
-                    <Card key={destinacao} className="gap-3 p-3">
-                      <h6 className="text-sm font-semibold">
-                        {ICMS_DESTINACAO_LABEL[destinacao] ?? destinacao}
-                      </h6>
-                      <Grid>
-                        <Field
-                          label="Regime"
-                          value={regimeTributoLabel(detalhe?.regime)}
-                        />
-                        <Field
-                          label="Alíquota base"
-                          value={text(detalhe?.recolhida)}
-                        />
-                        <Field
-                          label="Alíquota efetiva"
-                          value={text(detalhe?.efetiva)}
-                        />
-                      </Grid>
-                    </Card>
-                  ))}
-              </div>
-            </ViewCard>
-          ) : null}
 
           <ViewCard title="Devolução de saldo ao cliente">
             <Grid>
