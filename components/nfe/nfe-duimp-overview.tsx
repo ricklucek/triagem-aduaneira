@@ -14,6 +14,7 @@ import {
   Weight,
 } from "lucide-react";
 import type { DuimpSnapshotDetail } from "@/lib/api/types/nfe-api";
+import { nfeTransportModeLabel } from "@/lib/nfe/transport-modes";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -339,10 +340,12 @@ export function NfeDuimpOverview({
           <dl className="grid gap-4 sm:grid-cols-2">
             <Info
               label="Via de transporte"
-              value={pick(
-                normalized,
-                ["transport_mode_code"],
-                ["transport", "mode"],
+              value={nfeTransportModeLabel(
+                pick(
+                  normalized,
+                  ["transport_mode_code"],
+                  ["transport", "mode"],
+                ),
               )}
             />
             <Info

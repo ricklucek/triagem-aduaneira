@@ -17,6 +17,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { nfeApi } from "@/lib/api/services/nfe";
+import { NFE_TRANSPORT_MODES, nfeTransportModeLabel } from "@/lib/nfe/transport-modes";
 import { CountryReferenceSearch } from "@/components/nfe/fiscal-reference-search";
 import { useDuimpSnapshots, useNfeDrafts, useNfeWorkflowState } from "@/lib/api/hooks/use-nfe-api";
 import type {
@@ -764,7 +765,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
             <div><p className="text-xs text-muted-foreground">Local de desembaraço</p><strong className="text-sm">{contextValue(data.context, "clearance_location") || "Não informado"}</strong></div>
             <div><p className="text-xs text-muted-foreground">UF do desembaraço</p><strong className="text-sm">{contextValue(data.context, "clearance_state") || "Não informada"}</strong></div>
             <div><p className="text-xs text-muted-foreground">Data de desembaraço</p><strong className="text-sm">{contextValue(data.context, "clearance_date") || "Não informada"}</strong></div>
-            <div><p className="text-xs text-muted-foreground">Via de transporte</p><strong className="text-sm">{contextValue(data.context, "transport_mode_code") || "Não informada"}</strong></div>
+            <div><p className="text-xs text-muted-foreground">Via de transporte</p><strong className="text-sm">{nfeTransportModeLabel(contextValue(data.context, "transport_mode_code")) || "Não informada"}</strong></div>
             <div><p className="text-xs text-muted-foreground">País do exportador</p><strong className="text-sm">{contextValue(data.context, "foreign_supplier.country_name") || "Não informado"}</strong></div>
             <div><p className="text-xs text-muted-foreground">Código BACEN</p><strong className="text-sm">{contextValue(data.context, "foreign_supplier.country_code") || "Não informado"}</strong></div>
           </CardContent>
@@ -986,7 +987,26 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               <div className="space-y-1.5"><Label htmlFor="clearance_location">Local de desembaraço</Label><Input id="clearance_location" name="clearance_location" defaultValue={contextValue(data.context, "clearance_location")} required={data.context?.missing_fields.includes("clearance_location")} placeholder="Ex.: ALF/PORTO DE ITAJAI" /></div>
               <div className="space-y-1.5"><Label htmlFor="clearance_state">UF do desembaraço</Label><Input id="clearance_state" name="clearance_state" defaultValue={contextValue(data.context, "clearance_state")} required={data.context?.missing_fields.includes("clearance_state")} maxLength={2} placeholder="SC" /></div>
               <div className="space-y-1.5"><Label htmlFor="clearance_date">Data de desembaraço</Label><Input id="clearance_date" name="clearance_date" type="date" defaultValue={contextValue(data.context, "clearance_date").slice(0, 10)} required={data.context?.missing_fields.includes("clearance_date")} /></div>
-              <div className="space-y-1.5"><Label htmlFor="transport_mode_code">Código da via de transporte</Label><Input id="transport_mode_code" name="transport_mode_code" defaultValue={contextValue(data.context, "transport_mode_code")} required={data.context?.missing_fields.includes("transport_mode_code")} placeholder="Ex.: 4 para aérea" /></div>
+              <div className="space-y-1.5">
+                <Label htmlFor="transport_mode_code">Via de transporte</Label>
+                <select
+                  id="transport_mode_code"
+                  name="transport_mode_code"
+                  defaultValue={contextValue(data.context, "transport_mode_code")}
+                  required={data.context?.missing_fields.includes("transport_mode_code")}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                  <option value="">Selecione o modal de transporte</option>
+                  {NFE_TRANSPORT_MODES.map((transportMode) => (
+                    <option key={transportMode.code} value={transportMode.code}>
+                      {transportMode.code} — {transportMode.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Código utilizado no campo tpViaTransp da NF-e.
+                </p>
+              </div>
               <CountryReferenceSearch
                 initialBacenCode={contextValue(data.context, "foreign_supplier.country_code")}
                 initialName={contextValue(data.context, "foreign_supplier.country_name")}
