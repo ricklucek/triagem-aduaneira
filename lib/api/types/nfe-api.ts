@@ -105,6 +105,42 @@ export interface FiscalReferenceListResponse<T> {
   q: string;
 }
 
+export interface NfeCarrier {
+  id: string;
+  organization_id: string;
+  legal_name: string;
+  trade_name?: string | null;
+  tax_id: string;
+  state_registration?: string | null;
+  street: string;
+  number: string;
+  complement?: string | null;
+  district: string;
+  municipality_code: string;
+  municipality_name: string;
+  state: string;
+  zip_code: string;
+  phone?: string | null;
+  email?: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type NfeCarrierPayload = Omit<
+  NfeCarrier,
+  "id" | "organization_id" | "municipality_name" | "state" | "created_at" | "updated_at"
+>;
+
+export interface ListNfeCarriersResponse {
+  items: NfeCarrier[];
+  total: number;
+  limit: number;
+  offset: number;
+  q: string;
+  active?: boolean | null;
+}
+
 export interface FiscalProfilePayload {
   legal_name: string;
   trade_name?: string | null;
@@ -269,7 +305,8 @@ export interface UpdateNfeDraftPayload {
   item_defaults?: Record<string, unknown>;
   transport?: {
     freight_mode?: string;
-    carrier?: Record<string, string>;
+    carrier_id?: string;
+    carrier?: Record<string, string> | null;
     volume?: Record<string, string | number>;
   };
   payment?: Record<string, unknown>;

@@ -13,12 +13,15 @@ import type {
   ListImportProcessClientGroupsResponse,
   ListImportProcessesResponse,
   ListProviderConnectionsResponse,
+  ListNfeCarriersResponse,
   NfeDraftDetailResponse,
   NfeDraftSummary,
   NfeDocumentPlan,
   NfeItemClassificationState,
   NfeNumberSequence,
   NfeNumberSequencePayload,
+  NfeCarrier,
+  NfeCarrierPayload,
   NfeContextState,
   ResolveNfeContextPayload,
   UpdateNfeDraftPayload,
@@ -28,6 +31,45 @@ import type {
 } from "@/lib/api/types/nfe-api";
 
 export const nfeApi = {
+  async listCarriers(params: {
+    q?: string;
+    active?: boolean;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<ListNfeCarriersResponse> {
+    const { data } = await http.get<ListNfeCarriersResponse>(
+      API_ROUTES.nfeCarriers.list,
+      { params },
+    );
+    return data;
+  },
+
+  async createCarrier(payload: NfeCarrierPayload): Promise<NfeCarrier> {
+    const { data } = await http.post<NfeCarrier>(
+      API_ROUTES.nfeCarriers.list,
+      payload,
+    );
+    return data;
+  },
+
+  async updateCarrier(
+    carrierId: string,
+    payload: Partial<NfeCarrierPayload>,
+  ): Promise<NfeCarrier> {
+    const { data } = await http.patch<NfeCarrier>(
+      API_ROUTES.nfeCarriers.detail(carrierId),
+      payload,
+    );
+    return data;
+  },
+
+  async deactivateCarrier(carrierId: string): Promise<NfeCarrier> {
+    const { data } = await http.delete<NfeCarrier>(
+      API_ROUTES.nfeCarriers.detail(carrierId),
+    );
+    return data;
+  },
+
   async searchMunicipalities(params: {
     q: string;
     state?: string;

@@ -91,6 +91,10 @@ export const API_ROUTES = {
     municipalities: "/fiscal-reference/municipalities",
     countries: "/fiscal-reference/countries",
   },
+  nfeCarriers: {
+    list: "/nfe-carriers",
+    detail: (carrierId: string) => `/nfe-carriers/${carrierId}`,
+  },
   dashboards: {
     admin: "/dashboards/admin",
     adminMetrics: "/dashboards/admin/metrics",

@@ -41,6 +41,7 @@ import { NfeDuimpOverview } from "@/components/nfe/nfe-duimp-overview";
 import { NfeDocumentPlanPanel } from "@/components/nfe/nfe-document-plan-panel";
 import { NfeClientFiscalCenter } from "@/components/nfe/nfe-client-fiscal-center";
 import { NfeWorkflowPendingSheet } from "@/components/nfe/nfe-workflow-pending-sheet";
+import { NfeCarrierSelector } from "@/components/nfe/nfe-carrier-selector";
 
 const actionLabels: Record<string, string> = {
   fetch_duimp: "Capturar a DUIMP",
@@ -372,11 +373,13 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
         .map((field) => [field, value(`supplier_${field}`)])
         .filter(([, fieldValue]) => fieldValue),
     );
-    const carrier = Object.fromEntries(
+    const carrierMode = value("carrier_mode");
+    const registeredCarrierId = value("registered_carrier_id");
+    const carrier = carrierMode === "manual" ? Object.fromEntries(
       ["tax_id", "name", "state_registration", "address", "city_name", "state"]
         .map((field) => [field, value(`carrier_${field}`)])
         .filter(([, fieldValue]) => fieldValue),
-    );
+    ) : {};
     const volumeEntries: Array<[string, string | number]> = [];
     const volumeQuantity = value("volume_quantity");
     if (volumeQuantity) volumeEntries.push(["quantity", Number(volumeQuantity)]);
@@ -388,6 +391,10 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     const supplierLegalName = value("supplier_legal_name");
     const supplierForeignId = value("supplier_foreign_id");
     const supplierCountryIso = value("supplier_country_iso_alpha_2").toUpperCase();
+    if (carrierMode === "registered" && !registeredCarrierId) {
+      toast.info("Selecione uma transportadora cadastrada antes de salvar.");
+      return;
+    }
     const payload: UpdateNfeDraftPayload = {
       issuer: {
         state_registration: value("issuer_state_registration"),
@@ -402,7 +409,12 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       },
       transport: {
         freight_mode: value("freight_mode"),
-        ...(Object.keys(carrier).length ? { carrier } : {}),
+        ...(carrierMode === "registered" && registeredCarrierId
+          ? { carrier_id: registeredCarrierId }
+          : {}),
+        ...(carrierMode === "manual"
+          ? { carrier: Object.keys(carrier).length ? carrier : null }
+          : {}),
         ...(volumeEntries.length ? { volume: Object.fromEntries(volumeEntries) } : {}),
       },
       additional_info: {
@@ -1189,12 +1201,10 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                       <option value="9">9 — Sem ocorrência de transporte</option>
                     </select>
                   </div>
-                  <div className="space-y-1.5"><Label htmlFor="carrier_name">Transportadora</Label><Input id="carrier_name" name="carrier_name" defaultValue={nestedText(correctionPayload, "transport", "carrier", "name")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="carrier_tax_id">CNPJ/CPF da transportadora</Label><Input id="carrier_tax_id" name="carrier_tax_id" defaultValue={nestedText(correctionPayload, "transport", "carrier", "tax_id")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="carrier_state_registration">Inscrição estadual</Label><Input id="carrier_state_registration" name="carrier_state_registration" defaultValue={nestedText(correctionPayload, "transport", "carrier", "state_registration")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="carrier_address">Endereço da transportadora</Label><Input id="carrier_address" name="carrier_address" defaultValue={nestedText(correctionPayload, "transport", "carrier", "address")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="carrier_city_name">Município</Label><Input id="carrier_city_name" name="carrier_city_name" defaultValue={nestedText(correctionPayload, "transport", "carrier", "city_name")} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="carrier_state">UF</Label><Input id="carrier_state" name="carrier_state" defaultValue={nestedText(correctionPayload, "transport", "carrier", "state")} maxLength={2} /></div>
+                  <NfeCarrierSelector
+                    key={correctionDetail.draft.id}
+                    initialCarrier={asRecord(asRecord(correctionPayload.transport).carrier)}
+                  />
                   <div className="space-y-1.5"><Label htmlFor="volume_quantity">Quantidade de volumes</Label><Input id="volume_quantity" name="volume_quantity" type="number" min={1} defaultValue={nestedText(correctionPayload, "transport", "volume", "quantity")} /></div>
                   <div className="space-y-1.5"><Label htmlFor="volume_species">Espécie</Label><Input id="volume_species" name="volume_species" defaultValue={nestedText(correctionPayload, "transport", "volume", "species")} placeholder="Ex.: CAIXA" /></div>
                   <div className="space-y-1.5"><Label htmlFor="volume_gross_weight">Peso bruto</Label><Input id="volume_gross_weight" name="volume_gross_weight" inputMode="decimal" defaultValue={nestedText(correctionPayload, "transport", "volume", "gross_weight")} /></div>

@@ -10,6 +10,7 @@ import {
     FileCode2,
     User2,
     UserCog,
+    Truck,
 } from "lucide-react";
 
 import { SidebarNavigation } from "./sidebar-types";
@@ -54,6 +55,16 @@ export const nfeSidebarNavigation: SidebarNavigation = {
             icon: FileCode2,
         },
     ],
+    settings: {
+        title: "Cadastros",
+        icon: Truck,
+        items: [
+            {
+                title: "Transportadoras",
+                url: "/nfe/carriers",
+            },
+        ],
+    },
     action: {
         title: "Nova emissão",
         url: "/nfe/new",
