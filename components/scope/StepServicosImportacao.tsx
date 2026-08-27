@@ -3,6 +3,11 @@
 import { EscopoForm } from "@/domain/scope/types";
 import RegimeEspecialList from "./blocks/RegimeEspecialList";
 import ServicoToggleCard from "./blocks/ServicoToggleCard";
+import PrepostoLookupPanel, {
+  prepostoNumericValue,
+  prepostoObservationFromItem,
+  selectedPrepostoFromItem,
+} from "./blocks/PrepostoLookupPanel";
 import {
   Field,
   NumberInput,
@@ -209,15 +214,42 @@ export default function StepServicosImportacao({
             </Select>
           </Field>
         </Grid>
-        <Field label="Valor do preposto" required error={errors?.valor}>
+        <PrepostoLookupPanel
+          operacao="IMPORTACAO"
+          selected={data.preposto.prepostoSelecionado}
+          error={errors["preposto.prepostoSelecionado"]}
+          onSelect={(item) => {
+            const selected = selectedPrepostoFromItem(item);
+            update("preposto", {
+              ...data.preposto,
+              valor: prepostoNumericValue(item),
+              prepostoSelecionado: selected,
+              observacao: prepostoObservationFromItem(item),
+            });
+          }}
+        />
+        <Field
+          label="Valor do preposto"
+          required
+          error={errors["preposto.valor"]}
+        >
           <NumberInput
-            value={data.preposto.prepostoSelecionado?.valor ?? ""}
-            onChange={(e) =>
-              update(
-                "preposto.prepostoSelecionado.valor",
-                Number(e.target.value),
-              )
+            value={
+              data.preposto.valor ??
+              data.preposto.prepostoSelecionado?.valor ??
+              ""
             }
+            onChange={(e) => {
+              const value =
+                e.target.value === "" ? null : Number(e.target.value);
+              update("preposto", {
+                ...data.preposto,
+                valor: value,
+                prepostoSelecionado: data.preposto.prepostoSelecionado
+                  ? { ...data.preposto.prepostoSelecionado, valor: value }
+                  : null,
+              });
+            }}
           />
         </Field>
         <Field label="Observação geral" hint="Campo opcional">

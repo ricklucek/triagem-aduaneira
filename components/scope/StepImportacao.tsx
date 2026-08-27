@@ -191,7 +191,6 @@ const ANUENCIAS = [
 const EMPTY_CONTA = { banco: "", agencia: "", conta: "" };
 const DEFAULT_AFRMM = {
   contaPagamento: "CASCO",
-  regime: "INTEGRAL",
   detalheBeneficio: "",
 } as const;
 const ICMS_DESTINACOES = [
@@ -210,7 +209,6 @@ const ICMS_DESTINACAO_LABEL: Record<(typeof ICMS_DESTINACOES)[number], string> =
 
 const DEFAULT_ICMS = {
   contaPagamento: "CASCO",
-  regime: "INTEGRAL",
   recolhida: "",
   efetiva: "",
 } as const;
@@ -256,14 +254,14 @@ export default function StepImportacao({
     outroOrgaoAnuente: "",
     impostosFederais: {
       contaPagamento: "CASCO",
-      ii: { regime: "INTEGRAL", detalheBeneficio: "" },
-      ipi: { regime: "INTEGRAL", detalheBeneficio: "" },
-      pis: { regime: "INTEGRAL", detalheBeneficio: "" },
-      cofins: { regime: "INTEGRAL", detalheBeneficio: "" },
+      ii: { detalheBeneficio: "" },
+      ipi: { detalheBeneficio: "" },
+      pis: { detalheBeneficio: "" },
+      cofins: { detalheBeneficio: "" },
       observacao: "",
     },
     afrmm: { observacao: "" },
-    icms: { regime: "INTEGRAL", observacao: "", porDestinacao: {} },
+    icms: { observacao: "", porDestinacao: {} },
     destinacao: [],
     subtipoConsumo: [],
   };
@@ -643,13 +641,24 @@ export default function StepImportacao({
         {(["ii", "ipi", "pis", "cofins"] as const).map((tributo) => (
           <Card key={tributo}>
             <Grid columns={2}>
-              <Field label={tributo.toUpperCase()} required>
+              <Field
+                label={tributo.toUpperCase()}
+                required
+                error={errors[`impostosFederais.${tributo}.regime`]}
+              >
                 <Select
-                  value={data.impostosFederais[tributo].regime}
+                  value={data.impostosFederais[tributo].regime ?? ""}
+                  invalid={Boolean(
+                    errors[`impostosFederais.${tributo}.regime`],
+                  )}
                   onChange={(e) =>
-                    update(`impostosFederais.${tributo}.regime`, e.target.value)
+                    update(
+                      `impostosFederais.${tributo}.regime`,
+                      e.target.value || undefined,
+                    )
                   }
                 >
+                  <option value="">Selecione uma opção</option>
                   <option value="INTEGRAL">Integral</option>
                   <option value="BENEFICIO">Benefício</option>
                 </Select>
@@ -704,13 +713,18 @@ export default function StepImportacao({
               <option value="CLIENTE">Conta do cliente</option>
             </Select>
           </Field>
-          <Field label="Regime" required>
+          <Field label="Regime" required error={errors["afrmm.regime"]}>
             <Select
-              value={afrmmData.regime ?? "INTEGRAL"}
+              value={afrmmData.regime ?? ""}
+              invalid={Boolean(errors["afrmm.regime"])}
               onChange={(e) =>
-                update("afrmm", { ...afrmmData, regime: e.target.value })
+                update("afrmm", {
+                  ...afrmmData,
+                  regime: e.target.value || undefined,
+                })
               }
             >
+              <option value="">Selecione uma opção</option>
               <option value="INTEGRAL">Integral</option>
               <option value="BENEFICIO">Benefício</option>
             </Select>
@@ -765,13 +779,18 @@ export default function StepImportacao({
               <option value="CLIENTE">Conta do cliente</option>
             </Select>
           </Field>
-          <Field label="Regime" required>
+          <Field label="Regime" required error={errors["icms.regime"]}>
             <Select
-              value={icmsData.regime ?? "INTEGRAL"}
+              value={icmsData.regime ?? ""}
+              invalid={Boolean(errors["icms.regime"])}
               onChange={(e) =>
-                update("icms", { ...icmsData, regime: e.target.value })
+                update("icms", {
+                  ...icmsData,
+                  regime: e.target.value || undefined,
+                })
               }
             >
+              <option value="">Selecione uma opção</option>
               <option value="INTEGRAL">Integral</option>
               <option value="BENEFICIO">Benefício</option>
             </Select>
@@ -823,7 +842,6 @@ export default function StepImportacao({
               )
               .map((destino) => {
                 const detalhe = icmsData.porDestinacao?.[destino] ?? {
-                  regime: icmsData.regime ?? "INTEGRAL",
                   recolhida: "",
                   efetiva: "",
                 };
@@ -834,9 +852,16 @@ export default function StepImportacao({
                       {ICMS_DESTINACAO_LABEL[destino]}
                     </h3>
                     <Grid columns={3}>
-                      <Field label="Regime" required>
+                      <Field
+                        label="Regime"
+                        required
+                        error={errors[`icms.porDestinacao.${destino}.regime`]}
+                      >
                         <Select
-                          value={detalhe.regime ?? "INTEGRAL"}
+                          value={detalhe.regime ?? ""}
+                          invalid={Boolean(
+                            errors[`icms.porDestinacao.${destino}.regime`],
+                          )}
                           onChange={(e) =>
                             update("icms", {
                               ...icmsData,
@@ -844,14 +869,14 @@ export default function StepImportacao({
                                 ...icmsData.porDestinacao,
                                 [destino]: {
                                   ...detalhe,
-                                  regime: e.target.value as
-                                    | "INTEGRAL"
-                                    | "BENEFICIO",
+                                  regime: (e.target.value || undefined) as
+                                    "INTEGRAL" | "BENEFICIO" | undefined,
                                 },
                               },
                             })
                           }
                         >
+                          <option value="">Selecione uma opção</option>
                           <option value="INTEGRAL">Integral</option>
                           <option value="BENEFICIO">Benefício</option>
                         </Select>

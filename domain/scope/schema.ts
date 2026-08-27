@@ -3,6 +3,12 @@ import { z } from "zod";
 export const SimNaoSchema = z.enum(["SIM", "NAO"]);
 export const ContaPagamentoSchema = z.enum(["CASCO", "CLIENTE"]);
 export const IntegralBeneficioSchema = z.enum(["INTEGRAL", "BENEFICIO"]);
+const ICMS_DESTINACOES_SCHEMA = [
+  "REVENDA",
+  "INDUSTRIALIZACAO",
+  "USO_E_CONSUMO",
+  "ATIVO_IMOBILIZADO",
+] as const;
 
 export const RegimeTributacaoSchema = z.enum([
   "SIMPLES_NACIONAL",
@@ -78,10 +84,18 @@ export const NcmItemSchema = z.object({
 
 const BeneficioTributoSchema = z
   .object({
-    regime: IntegralBeneficioSchema,
+    regime: IntegralBeneficioSchema.optional(),
     detalheBeneficio: z.string().trim().optional().nullable(),
   })
   .superRefine((value, ctx) => {
+    if (!value.regime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["regime"],
+        message: "Selecione o regime do tributo",
+      });
+    }
+
     if (value.regime === "BENEFICIO" && !value.detalheBeneficio) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -145,17 +159,47 @@ const PrepostoEscolhaSchema = z.object({
   origem: z.enum(["API", "MANUAL"]).default("MANUAL"),
 });
 
-const ServicoPrepostoSchema = z.object({
-  habilitado: z.boolean(),
-  valor: z.number().optional().nullable(),
-  modalidade: ModalidadeServicoSchema.optional().nullable(),
-  inclusoNoDesembaracoCasco: SimNaoSchema.optional().nullable(),
-  cidadesLiberacao: z.array(z.string().trim().min(1)).default([]),
-  outroPorto: z.string().trim().optional().nullable(),
-  outraFronteira: z.string().trim().optional().nullable(),
-  prepostoSelecionado: PrepostoEscolhaSchema.optional().nullable(),
-  observacao: z.string().trim().optional().nullable(),
-});
+const ServicoPrepostoSchema = z
+  .object({
+    habilitado: z.boolean(),
+    valor: z.number().optional().nullable(),
+    modalidade: ModalidadeServicoSchema.optional().nullable(),
+    inclusoNoDesembaracoCasco: SimNaoSchema.optional().nullable(),
+    cidadesLiberacao: z.array(z.string().trim().min(1)).default([]),
+    outroPorto: z.string().trim().optional().nullable(),
+    outraFronteira: z.string().trim().optional().nullable(),
+    prepostoSelecionado: PrepostoEscolhaSchema.optional().nullable(),
+    observacao: z.string().trim().optional().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.habilitado) return;
+
+    if (!value.modalidade) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["modalidade"],
+        message: "Modalidade é obrigatória",
+      });
+    }
+    if (!value.inclusoNoDesembaracoCasco) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["inclusoNoDesembaracoCasco"],
+        message: "Informe se o preposto está incluso no desembaraço",
+      });
+    }
+    if (
+      (value.valor === null || value.valor === undefined) &&
+      (value.prepostoSelecionado?.valor === null ||
+        value.prepostoSelecionado?.valor === undefined)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["valor"],
+        message: "Valor do preposto é obrigatório",
+      });
+    }
+  });
 
 const ServicoFreteInternacionalSchema = z
   .object({
@@ -419,6 +463,43 @@ export const ImportacaoSchema = z
         message: "Dados da conta do cliente são obrigatórios",
       });
     }
+    if (!value.afrmm.regime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["afrmm", "regime"],
+        message: "Selecione o regime do AFRMM",
+      });
+    }
+    if (value.afrmm.regime === "BENEFICIO" && !value.afrmm.detalheBeneficio) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["afrmm", "detalheBeneficio"],
+        message: "Detalhe do benefício é obrigatório",
+      });
+    }
+    if (!value.icms.regime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["icms", "regime"],
+        message: "Selecione o regime do ICMS",
+      });
+    }
+    value.destinacao.forEach((destino) => {
+      if (
+        ICMS_DESTINACOES_SCHEMA.includes(
+          destino as (typeof ICMS_DESTINACOES_SCHEMA)[number],
+        ) &&
+        !value.icms.porDestinacao?.[
+          destino as (typeof ICMS_DESTINACOES_SCHEMA)[number]
+        ]?.regime
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["icms", "porDestinacao", destino, "regime"],
+          message: "Selecione o regime desta destinação",
+        });
+      }
+    });
     if (!value.necessidadeDta) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

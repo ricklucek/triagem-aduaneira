@@ -18,10 +18,7 @@ export interface PublicCompanyLookupResponse {
     descricao: string;
   }[];
   regimeTributacao?:
-    | "SIMPLES_NACIONAL"
-    | "LUCRO_PRESUMIDO"
-    | "LUCRO_REAL"
-    | null;
+    "SIMPLES_NACIONAL" | "LUCRO_PRESUMIDO" | "LUCRO_REAL" | null;
 }
 
 export interface PrepostoLookupItem {
@@ -36,7 +33,7 @@ export interface PrepostoLookupItem {
   operacao: "IMPORTACAO" | "EXPORTACAO" | null;
   telefone: string | null;
   uf: string | null;
-  valor: string | null;
+  valor: number | string | null;
   valorDescricao: string | null;
 }
 

@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { EscopoForm } from "@/domain/scope/types";
 import RegimeEspecialList from "./blocks/RegimeEspecialList";
 import ServicoToggleCard from "./blocks/ServicoToggleCard";
-import PrepostoLookupPanel from "./blocks/PrepostoLookupPanel";
+import PrepostoLookupPanel, {
+  prepostoNumericValue,
+  prepostoObservationFromItem,
+  selectedPrepostoFromItem,
+} from "./blocks/PrepostoLookupPanel";
 import {
   Field,
   NumberInput,
@@ -13,10 +16,7 @@ import {
   TextInput,
 } from "@/components/ui/form-fields";
 import { Grid, Stack } from "@/components/ui/form-layout";
-import { ResponsiblePicker } from "./ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
-import { publicApi } from "@/lib/api/services/public";
-import type { PrepostoLookupItem } from "@/lib/api/types/public-api";
 import { PrestadoresFreteInternacional } from "./PrestadoresFreteInternacional";
 
 type Props = {
@@ -77,23 +77,10 @@ function emptyExportacaoServicos(): NonNullable<
     regimeEspecial: [],
   };
 }
-const CIDADES = [
-  "Foz do Iguaçu",
-  "Uruguaiana",
-  "Jaguarão",
-  "Chuí",
-  "Corumbá",
-  "Santos",
-  "Itajaí",
-  "Paranaguá",
-  "Campinas",
-  "Guarulhos",
-];
 export default function StepServicosExportacao({
   form,
   errors,
   onChange,
-  responsaveis,
 }: Props) {
   const data = form.servicos.exportacao ?? emptyExportacaoServicos();
 
@@ -225,15 +212,42 @@ export default function StepServicosExportacao({
             </Select>
           </Field>
         </Grid>
-        <Field label="Valor do preposto" required error={errors?.valor}>
+        <PrepostoLookupPanel
+          operacao="EXPORTACAO"
+          selected={data.preposto.prepostoSelecionado}
+          error={errors["preposto.prepostoSelecionado"]}
+          onSelect={(item) => {
+            const selected = selectedPrepostoFromItem(item);
+            update("preposto", {
+              ...data.preposto,
+              valor: prepostoNumericValue(item),
+              prepostoSelecionado: selected,
+              observacao: prepostoObservationFromItem(item),
+            });
+          }}
+        />
+        <Field
+          label="Valor do preposto"
+          required
+          error={errors["preposto.valor"]}
+        >
           <NumberInput
-            value={data.preposto.prepostoSelecionado?.valor ?? ""}
-            onChange={(e) =>
-              update(
-                "preposto.prepostoSelecionado.valor",
-                Number(e.target.value),
-              )
+            value={
+              data.preposto.valor ??
+              data.preposto.prepostoSelecionado?.valor ??
+              ""
             }
+            onChange={(e) => {
+              const value =
+                e.target.value === "" ? null : Number(e.target.value);
+              update("preposto", {
+                ...data.preposto,
+                valor: value,
+                prepostoSelecionado: data.preposto.prepostoSelecionado
+                  ? { ...data.preposto.prepostoSelecionado, valor: value }
+                  : null,
+              });
+            }}
           />
         </Field>
         <Field label="Observação geral" hint="Campo opcional">
