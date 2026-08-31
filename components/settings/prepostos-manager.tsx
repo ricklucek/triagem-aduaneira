@@ -326,9 +326,9 @@ function FragmentRows({
             {open ? <ChevronUp /> : <ChevronDown />}
           </Button>
         </TableCell>
-        <TableCell>
-          <div className="font-medium">{item.nome}</div>
-          <div className="text-xs text-muted-foreground">
+        <TableCell className="max-w-72 whitespace-normal">
+          <div className="break-words font-medium">{item.nome}</div>
+          <div className="break-words text-xs text-muted-foreground">
             {item.razao_social || "Razão social não informada"}
           </div>
           <Badge
@@ -338,9 +338,9 @@ function FragmentRows({
             {item.ativo ? "Ativo" : "Inativo"}
           </Badge>
         </TableCell>
-        <TableCell>
-          <div>{primary?.nome || "—"}</div>
-          <div className="text-xs text-muted-foreground">
+        <TableCell className="max-w-72 whitespace-normal">
+          <div className="break-words">{primary?.nome || "—"}</div>
+          <div className="break-all text-xs text-muted-foreground">
             {primary?.email || primary?.telefone || "Sem contato"}
           </div>
         </TableCell>
@@ -375,22 +375,22 @@ function FragmentRows({
       </TableRow>
       {open ? (
         <TableRow>
-          <TableCell colSpan={8} className="bg-muted/25 p-5">
-            <div className="grid gap-5 xl:grid-cols-3">
+          <TableCell colSpan={8} className="bg-muted/25 p-5 whitespace-normal">
+            <div className="grid min-w-0 items-start gap-5 lg:grid-cols-2 2xl:grid-cols-3">
               <DetailSection title="Contatos">
                 {item.contatos.length ? (
                   item.contatos.map((contact) => (
                     <div
                       key={contact.id}
-                      className="rounded-md border p-3 text-sm"
+                      className="min-w-0 overflow-hidden rounded-md border p-3 text-sm"
                     >
-                      <div className="font-medium">
+                      <div className="flex flex-wrap items-center gap-2 break-words font-medium">
                         {contact.nome}{" "}
                         {contact.principal && (
                           <Badge variant="secondary">Principal</Badge>
                         )}
                       </div>
-                      <div className="mt-1 text-muted-foreground">
+                      <div className="mt-1 break-words leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
                         {[contact.email, contact.telefone, contact.whatsapp]
                           .filter(Boolean)
                           .join(" · ") || "Sem canais informados"}
@@ -406,33 +406,43 @@ function FragmentRows({
                   item.localidades.map((locality) => (
                     <div
                       key={locality.id}
-                      className="rounded-md border p-3 text-sm"
+                      className="min-w-0 overflow-hidden rounded-md border p-3 text-sm"
                     >
-                      <div className="font-medium">
+                      <div className="break-words font-medium">
                         {locality.cidade}
                         {locality.uf ? ` / ${locality.uf}` : ""}
                       </div>
-                      <div className="text-muted-foreground">
+                      <div className="mt-1 break-words leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
                         {locality.descricao_local ||
                           locality.tipo_local ||
                           "Local sem descrição"}
                       </div>
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-3 divide-y divide-border/70">
                         {locality.tarifas.map((tariff) => (
-                          <div key={tariff.id}>
+                          <div
+                            key={tariff.id}
+                            className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-2 py-2 first:pt-0 last:pb-0"
+                          >
                             <Badge
+                              className="mt-0.5 shrink-0"
                               variant={
                                 tariff.principal ? "secondary" : "outline"
                               }
                             >
                               {tariff.operacao}
-                            </Badge>{" "}
-                            {tariff.condicao || tariff.tipo}:{" "}
-                            {formatMoney(
-                              tariff.valor,
-                              tariff.moeda,
-                              tariff.valor_descricao,
-                            )}
+                            </Badge>
+                            <div className="min-w-0 break-words leading-snug [overflow-wrap:anywhere]">
+                              <span className="block">
+                                {tariff.condicao || tariff.tipo}
+                              </span>
+                              <span className="mt-0.5 block text-muted-foreground">
+                                {formatMoney(
+                                  tariff.valor,
+                                  tariff.moeda,
+                                  tariff.valor_descricao,
+                                )}
+                              </span>
+                            </div>
                           </div>
                         ))}
                         {!locality.tarifas.length && (
@@ -452,10 +462,12 @@ function FragmentRows({
                   item.credenciados.map((credential) => (
                     <div
                       key={credential.id}
-                      className="rounded-md border p-3 text-sm"
+                      className="min-w-0 overflow-hidden rounded-md border p-3 text-sm"
                     >
-                      <div className="font-medium">{credential.nome}</div>
-                      <div className="text-muted-foreground">
+                      <div className="break-words font-medium">
+                        {credential.nome}
+                      </div>
+                      <div className="mt-1 break-words leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
                         {[
                           credential.cpf_mascarado,
                           credential.registro_rfb,
@@ -476,7 +488,7 @@ function FragmentRows({
               </DetailSection>
             </div>
             {item.observacoes ? (
-              <p className="mt-4 rounded-md border bg-background p-3 text-sm">
+              <p className="mt-4 break-words rounded-md border bg-background p-3 text-sm leading-relaxed [overflow-wrap:anywhere]">
                 <strong>Observações:</strong> {item.observacoes}
               </p>
             ) : null}
@@ -519,8 +531,8 @@ function DetailSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-2">
-      <h3 className="font-semibold">{title}</h3>
+    <section className="min-w-0 space-y-3">
+      <h3 className="break-words font-semibold">{title}</h3>
       {children}
     </section>
   );
