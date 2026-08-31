@@ -215,7 +215,7 @@ export function PrepostoEditor({
     const form = new FormData(event.currentTarget);
     const payload = {
       codigo: text(form, "codigo"),
-      operacao: text(form, "operacao") as "IMPORTACAO" | "EXPORTACAO" | "AMBAS",
+      operacao: text(form, "operacao") as "IMPORTACAO" | "EXPORTACAO",
       tipo: text(form, "tipo"),
       valor: decimal(form, "valor"),
       valor_descricao: nullableText(form, "valor_descricao"),
@@ -724,7 +724,6 @@ function TariffDialog({
           >
             <option value="IMPORTACAO">Importação</option>
             <option value="EXPORTACAO">Exportação</option>
-            <option value="AMBAS">Ambas</option>
           </select>
         </Field>
         <Field label="Condição">
@@ -806,10 +805,14 @@ function CredentialDialog({
         </Field>
       </div>
       <Field label="Categoria">
-        <Input
+        <select
           name="categoria"
           defaultValue={value?.categoria || "DESPACHANTE"}
-        />
+          className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+        >
+          <option value="DESPACHANTE">Despachante</option>
+          <option value="AJUDANTE">Ajudante</option>
+        </select>
       </Field>
       <Check
         name="ativo"

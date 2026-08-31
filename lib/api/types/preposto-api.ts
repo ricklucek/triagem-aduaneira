@@ -12,7 +12,7 @@ export type PrepostoTariff = {
   id: string;
   localidade_id: string;
   codigo: string;
-  operacao: "IMPORTACAO" | "EXPORTACAO" | "AMBAS";
+  operacao: "IMPORTACAO" | "EXPORTACAO";
   tipo: string;
   valor: number | null;
   valor_descricao: string | null;
