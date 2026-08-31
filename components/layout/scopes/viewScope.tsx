@@ -24,12 +24,12 @@ const text = (v: unknown) =>
     ? null
     : String(v);
 
-const currency = (v?: number | null) =>
+const currency = (v?: number | null, currencyCode = "BRL") =>
   v == null || Number.isNaN(v)
     ? null
     : new Intl.NumberFormat("pt-BR", {
         style: "currency",
-        currency: "BRL",
+        currency: currencyCode,
       }).format(v);
 
 const date = (v?: string | null) => {
@@ -552,6 +552,79 @@ function ServiceBlock({
 
 type ImportServices = NonNullable<EscopoForm["servicos"]["importacao"]>;
 type ExportServices = NonNullable<EscopoForm["servicos"]["exportacao"]>;
+type PrepostoService = ImportServices["preposto"];
+
+function PrepostoCatalogDetails({ service }: { service: PrepostoService }) {
+  const selected = service.prepostoSelecionado;
+  const tariff = selected?.tarifaSelecionada;
+  const credentials = selected?.credenciados ?? [];
+
+  return (
+    <>
+      <Field
+        label="Valor acordado"
+        value={currency(
+          service.valor ?? selected?.valor,
+          selected?.moeda ?? "BRL",
+        )}
+      />
+      <Field label="Localidade" value={text(selected?.descricaoLocal)} />
+      <Field label="Preposto selecionado" value={text(selected?.nome)} />
+      <Field label="Contato" value={text(selected?.contatoNome)} />
+      <Field label="Telefone" value={text(selected?.telefone)} />
+      <Field label="E-mail" value={text(selected?.email)} />
+      <Field label="Tarifa aplicada" value={text(tariff?.condicao)} />
+      <Field
+        label="Classificação da tarifa"
+        value={tariff ? (tariff.principal ? "Principal" : "Condicional") : null}
+      />
+      <Field
+        label="Valor cadastrado da tarifa"
+        value={
+          tariff?.valor != null
+            ? currency(tariff.valor, tariff.moeda || "BRL")
+            : text(tariff?.valorDescricao ?? selected?.valorDescricao)
+        }
+      />
+      <HighlightField
+        label="Observações da tarifa"
+        value={text(tariff?.observacoes)}
+      />
+
+      {credentials.length > 0 ? (
+        <div className="grid gap-3 md:col-span-2">
+          <TitleField
+            label="Despachantes credenciados"
+            value={`${credentials.length} cadastrado${credentials.length === 1 ? "" : "s"}`}
+          />
+          <div className="grid gap-3 sm:grid-cols-2">
+            {credentials.map((credential) => (
+              <Card
+                key={credential.id}
+                className="gap-2 border-border bg-muted/20 p-3"
+              >
+                <p className="text-sm font-semibold">{credential.nome}</p>
+                <p className="text-xs text-muted-foreground">
+                  {[
+                    credential.categoria,
+                    credential.registroRfb
+                      ? `Registro RFB: ${credential.registroRfb}`
+                      : null,
+                    credential.cpfMascarado
+                      ? `CPF: ${credential.cpfMascarado}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ") || "Sem dados complementares"}
+                </p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
 
 function EmptyState({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-muted-foreground">{children}</p>;
@@ -746,25 +819,10 @@ function ImportCustomsServicesView({
         enabled={services.preposto?.habilitado}
         mode={services.preposto?.modalidade ?? undefined}
       >
-        <Field
-          label="Valor"
-          value={currency(services.preposto?.prepostoSelecionado?.valor)}
-        />
+        <PrepostoCatalogDetails service={services.preposto} />
         <Field
           label="Incluso no desembaraço CASCO"
           value={text(services.preposto?.inclusoNoDesembaracoCasco)}
-        />
-        <Field
-          label="Preposto selecionado"
-          value={text(services.preposto?.prepostoSelecionado?.nome)}
-        />
-        <Field
-          label="Contato"
-          value={text(services.preposto?.prepostoSelecionado?.contatoNome)}
-        />
-        <Field
-          label="Telefone"
-          value={text(services.preposto?.prepostoSelecionado?.telefone)}
         />
         <Field
           label="Consultar prepostos"
@@ -773,8 +831,7 @@ function ImportCustomsServicesView({
               href={
                 "/scope/prepostos?cidade=" +
                 queryList(importPrepostoCities(scope.operacao.importacao)) +
-                "&operacao=" +
-                queryList(scope.operacao.tipos)
+                "&operacao=IMPORTACAO"
               }
             >
               <span className="underline">Abrir relação de prepostos</span>
@@ -905,10 +962,7 @@ function ExportCustomsServicesView({
         enabled={services.preposto?.habilitado}
         mode={services.preposto?.modalidade ?? undefined}
       >
-        <Field
-          label="Valor"
-          value={currency(services.preposto?.prepostoSelecionado?.valor)}
-        />
+        <PrepostoCatalogDetails service={services.preposto} />
         <Field
           label="Incluso no desembaraço CASCO"
           value={text(services.preposto?.inclusoNoDesembaracoCasco)}
@@ -924,18 +978,6 @@ function ExportCustomsServicesView({
         <Field
           label="Outra fronteira"
           value={text(services.preposto?.outraFronteira)}
-        />
-        <Field
-          label="Preposto selecionado"
-          value={text(services.preposto?.prepostoSelecionado?.nome)}
-        />
-        <Field
-          label="Contato"
-          value={text(services.preposto?.prepostoSelecionado?.contatoNome)}
-        />
-        <Field
-          label="Telefone"
-          value={text(services.preposto?.prepostoSelecionado?.telefone)}
         />
         <HighlightField
           label="Observação do preposto"

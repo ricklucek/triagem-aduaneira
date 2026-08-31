@@ -145,7 +145,7 @@ export function useOrganizationSettingsByKey(key: string) {
 
 export function usePrepostosLookup(params?: {
   cidade: string;
-  operacao: string;
+  operacao: "IMPORTACAO" | "EXPORTACAO";
 }) {
   const cidade = params?.cidade?.trim() ?? "";
   const operacao = params?.operacao ?? "IMPORTACAO";

@@ -23,6 +23,7 @@ export interface PublicCompanyLookupResponse {
 
 export interface PrepostoLookupItem {
   id: string;
+  localidadeId?: string;
   cidade: string;
   contatoNome: string | null;
   descricaoLocal: string | null;
@@ -30,11 +31,34 @@ export interface PrepostoLookupItem {
   moeda: string | null;
   nome: string;
   observacoes: string | null;
-  operacao: "IMPORTACAO" | "EXPORTACAO" | null;
+  operacao: "IMPORTACAO" | "EXPORTACAO";
   telefone: string | null;
   uf: string | null;
   valor: number | string | null;
   valorDescricao: string | null;
+  tarifas?: PrepostoTarifaLookup[];
+  credenciados?: PrepostoCredenciadoLookup[];
+}
+
+export interface PrepostoTarifaLookup {
+  id: string;
+  codigo: string | null;
+  tipo: string;
+  operacao: "IMPORTACAO" | "EXPORTACAO" | "AMBAS";
+  valor: number | null;
+  valorDescricao: string | null;
+  condicao: string;
+  principal: boolean;
+  moeda: string;
+  observacoes: string | null;
+}
+
+export interface PrepostoCredenciadoLookup {
+  id: string;
+  nome: string;
+  cpfMascarado: string | null;
+  registroRfb: string | null;
+  categoria: string | null;
 }
 
 export interface PrepostoLookupResponse {

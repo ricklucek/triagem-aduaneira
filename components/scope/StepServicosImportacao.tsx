@@ -4,9 +4,7 @@ import { EscopoForm } from "@/domain/scope/types";
 import RegimeEspecialList from "./blocks/RegimeEspecialList";
 import ServicoToggleCard from "./blocks/ServicoToggleCard";
 import PrepostoLookupPanel, {
-  prepostoNumericValue,
-  prepostoObservationFromItem,
-  selectedPrepostoFromItem,
+  prepostoObservationFromSelection,
 } from "./blocks/PrepostoLookupPanel";
 import {
   Field,
@@ -218,19 +216,24 @@ export default function StepServicosImportacao({
           operacao="IMPORTACAO"
           selected={data.preposto.prepostoSelecionado}
           error={errors["preposto.prepostoSelecionado"]}
-          onSelect={(item) => {
-            const selected = selectedPrepostoFromItem(item);
+          tariffError={errors["preposto.prepostoSelecionado.tarifaSelecionada"]}
+          onChange={(selected) => {
             update("preposto", {
               ...data.preposto,
-              valor: prepostoNumericValue(item),
+              valor: selected.valor,
               prepostoSelecionado: selected,
-              observacao: prepostoObservationFromItem(item),
+              observacao: prepostoObservationFromSelection(selected),
             });
           }}
         />
         <Field
           label="Valor do preposto"
-          required
+          required={!data.preposto.prepostoSelecionado?.valorDescricao}
+          hint={
+            data.preposto.prepostoSelecionado?.valorDescricao
+              ? `Referência cadastrada: ${data.preposto.prepostoSelecionado.valorDescricao}`
+              : "Preenchido pela tarifa; ajuste somente se houver valor acordado."
+          }
           error={errors["preposto.valor"]}
         >
           <NumberInput
@@ -245,9 +248,6 @@ export default function StepServicosImportacao({
               update("preposto", {
                 ...data.preposto,
                 valor: value,
-                prepostoSelecionado: data.preposto.prepostoSelecionado
-                  ? { ...data.preposto.prepostoSelecionado, valor: value }
-                  : null,
               });
             }}
           />

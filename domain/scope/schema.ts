@@ -147,15 +147,49 @@ const ServicoValorSimplesSchema = z
     }
   });
 
+const PrepostoTarifaEscolhidaSchema = z.object({
+  id: z.string().trim(),
+  codigo: z.string().trim().optional().nullable(),
+  tipo: z.string().trim(),
+  operacao: z.enum(["IMPORTACAO", "EXPORTACAO", "AMBAS"]),
+  valor: z.number().optional().nullable(),
+  valorDescricao: z.string().trim().optional().nullable(),
+  condicao: z.string().trim(),
+  principal: z.boolean(),
+  moeda: z.string().trim().default("BRL"),
+  observacoes: z.string().trim().optional().nullable(),
+});
+
+const PrepostoCredenciadoEscolhaSchema = z.object({
+  id: z.string().trim(),
+  nome: z.string().trim(),
+  cpfMascarado: z.string().trim().optional().nullable(),
+  registroRfb: z.string().trim().optional().nullable(),
+  categoria: z.string().trim().optional().nullable(),
+});
+
 const PrepostoEscolhaSchema = z.object({
   id: z.string().trim().optional().nullable(),
+  localidadeId: z.string().trim().optional().nullable(),
   nome: z.string().trim().optional().nullable(),
+  cidade: z.string().trim().optional().nullable(),
+  uf: z.string().trim().optional().nullable(),
   contatoNome: z.string().trim().optional().nullable(),
   telefone: z.string().trim().optional().nullable(),
   email: z.string().trim().optional().nullable(),
   valor: z.number().optional().nullable(),
   valorDescricao: z.string().trim().optional().nullable(),
+  moeda: z.string().trim().optional().nullable(),
   descricaoLocal: z.string().trim().optional().nullable(),
+  tarifaSelecionada: PrepostoTarifaEscolhidaSchema.optional().nullable(),
+  tarifasDisponiveis: z
+    .array(PrepostoTarifaEscolhidaSchema)
+    .optional()
+    .default([]),
+  credenciados: z
+    .array(PrepostoCredenciadoEscolhaSchema)
+    .optional()
+    .default([]),
   origem: z.enum(["API", "MANUAL"]).default("MANUAL"),
 });
 
@@ -191,12 +225,25 @@ const ServicoPrepostoSchema = z
     if (
       (value.valor === null || value.valor === undefined) &&
       (value.prepostoSelecionado?.valor === null ||
-        value.prepostoSelecionado?.valor === undefined)
+        value.prepostoSelecionado?.valor === undefined) &&
+      !value.prepostoSelecionado?.valorDescricao &&
+      !value.prepostoSelecionado?.tarifaSelecionada?.valorDescricao
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["valor"],
         message: "Valor do preposto é obrigatório",
+      });
+    }
+
+    if (
+      value.prepostoSelecionado?.tarifasDisponiveis?.length &&
+      !value.prepostoSelecionado.tarifaSelecionada
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["prepostoSelecionado", "tarifaSelecionada"],
+        message: "Selecione a tarifa aplicada",
       });
     }
   });

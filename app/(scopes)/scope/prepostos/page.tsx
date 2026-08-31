@@ -1,18 +1,25 @@
 "use client";
 
 import { usePrepostosLookup } from "@/lib/api/hooks/use-dashboards";
-import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PrepostoLookupItem } from "@/lib/api/types/public-api";
 
 export default function SettingsPrepostosPage() {
   const params = useSearchParams();
 
-  const cidade = params.get('cidade') || "";
-  const operacao = params.get('operacao') || "";
+  const cidade = params.get("cidade") || "";
+  const operacao =
+    params.get("operacao") === "EXPORTACAO" ? "EXPORTACAO" : "IMPORTACAO";
 
   const { data, isLoading, error } = usePrepostosLookup({
     cidade,
@@ -21,7 +28,6 @@ export default function SettingsPrepostosPage() {
 
   return (
     <div className="space-y-6 w-full">
-
       {isLoading && <p>Carregando contatos de prepostos...</p>}
       {error && <p>Falha ao carregar configurações.</p>}
 
@@ -57,17 +63,22 @@ export default function SettingsPrepostosPage() {
                 <TableBody>
                   {data.items.length > 0 ? (
                     data.items.map((item) => (
-                      <TableRow key={item.id}>
+                      <TableRow key={`${item.id}-${item.localidadeId ?? ""}`}>
                         <TableCell>{item.nome}</TableCell>
                         <TableCell>{formatLocalidade(item)}</TableCell>
                         <TableCell>{item.operacao ?? "-"}</TableCell>
-                        <TableCell>{item.valorDescricao ?? item.valor ?? "-"}</TableCell>
+                        <TableCell>
+                          {item.valorDescricao ?? item.valor ?? "-"}
+                        </TableCell>
                         <TableCell>{item.contatoNome ?? "-"}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-muted-foreground"
+                      >
                         Nenhum registro encontrado.
                       </TableCell>
                     </TableRow>
