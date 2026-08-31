@@ -8,7 +8,8 @@ export const API_ROUTES = {
   scopes: {
     create: (options?: { templateId?: string | number; clientId?: string }) => {
       const params = new URLSearchParams();
-      if (options?.templateId) params.set("templateId", String(options.templateId));
+      if (options?.templateId)
+        params.set("templateId", String(options.templateId));
       if (options?.clientId) params.set("clientId", options.clientId);
       const query = params.toString();
       return query ? `/scopes?${query}` : "/scopes";
@@ -46,7 +47,8 @@ export const API_ROUTES = {
     update: (clientId: string) => `/clients/${clientId}`,
     scopes: (clientId: string) => `/clients/${clientId}/scopes`,
     fiscalProfile: (clientId: string) => `/clients/${clientId}/fiscal-profile`,
-    importTaxRules: (clientId: string) => `/clients/${clientId}/import-tax-rules`,
+    importTaxRules: (clientId: string) =>
+      `/clients/${clientId}/import-tax-rules`,
     importTaxRuleDiagnostics: (clientId: string) =>
       `/clients/${clientId}/import-tax-rules/diagnostics`,
     nfeNumberSequences: (clientId: string) =>
@@ -77,8 +79,7 @@ export const API_ROUTES = {
       `/import-processes/${processId}/duimp/fetch`,
     snapshots: (processId: string) =>
       `/import-processes/${processId}/duimp-snapshots`,
-    drafts: (processId: string) =>
-      `/import-processes/${processId}/nfe-drafts`,
+    drafts: (processId: string) => `/import-processes/${processId}/nfe-drafts`,
     createDraft: (processId: string) =>
       `/import-processes/${processId}/nfe-draft/from-duimp`,
     draft: (draftId: string) => `/nfe-drafts/${draftId}`,
@@ -130,6 +131,31 @@ export const API_ROUTES = {
   },
   analytics: {
     comercialAveragePrice: "/analytics/comercial/average-price",
+  },
+  prepostos: {
+    list: "/prepostos",
+    detail: (prepostoId: string) => `/prepostos/${prepostoId}`,
+    contacts: (prepostoId: string) => `/prepostos/${prepostoId}/contatos`,
+    contact: (prepostoId: string, contactId: string) =>
+      `/prepostos/${prepostoId}/contatos/${contactId}`,
+    localities: (prepostoId: string) => `/prepostos/${prepostoId}/localidades`,
+    locality: (prepostoId: string, localityId: string) =>
+      `/prepostos/${prepostoId}/localidades/${localityId}`,
+    tariffs: (prepostoId: string, localityId: string) =>
+      `/prepostos/${prepostoId}/localidades/${localityId}/tarifas`,
+    tariff: (prepostoId: string, localityId: string, tariffId: string) =>
+      `/prepostos/${prepostoId}/localidades/${localityId}/tarifas/${tariffId}`,
+    credentials: "/prepostos/credenciados",
+    credential: (credentialId: string) =>
+      `/prepostos/credenciados/${credentialId}`,
+    credentialBindings: (prepostoId: string, localityId: string) =>
+      `/prepostos/${prepostoId}/localidades/${localityId}/credenciados`,
+    credentialBinding: (
+      prepostoId: string,
+      localityId: string,
+      credentialId: string,
+    ) =>
+      `/prepostos/${prepostoId}/localidades/${localityId}/credenciados/${credentialId}`,
   },
   public: {
     cnpjLookup(cnpj: string) {

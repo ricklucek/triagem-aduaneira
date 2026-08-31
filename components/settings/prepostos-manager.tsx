@@ -1,398 +1,546 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useCallback, useEffect, useState } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  BadgeDollarSign,
+  ChevronDown,
+  ChevronUp,
+  MapPin,
+  PencilLine,
+  Plus,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Trash2,
+  Users,
+} from "lucide-react";
 
-import { PrepostoLookupItem, PrepostoLookupResponse } from "@/lib/api/types/public-api";
+import { PrepostoEditor } from "@/components/settings/preposto-editor";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useToast } from "@/components/ui/toast";
+import { prepostosApi } from "@/lib/api/services/prepostos";
+import type {
+  PrepostoAdmin,
+  PrepostoCredential,
+  PrepostoListResponse,
+} from "@/lib/api/types/preposto-api";
 
-const emptyPreposto = (): PrepostoLookupItem => ({
-  id: `${Date.now()}`,
-  cidade: "",
-  contatoNome: null,
-  descricaoLocal: null,
-  email: null,
-  moeda: null,
-  nome: "",
-  observacoes: null,
-  operacao: "IMPORTACAO",
-  telefone: null,
-  uf: null,
-  valor: null,
-  valorDescricao: null,
-});
-
-type PrepostosManagerProps = {
-  settings: PrepostoLookupResponse;
-  filters?: {
-    cidade: string;
-    operacao: "IMPORTACAO" | "EXPORTACAO";
-  };
-  onSave?: (payload: PrepostoLookupResponse) => Promise<void>;
+const emptySummary: PrepostoListResponse["summary"] = {
+  prepostos: 0,
+  localidades: 0,
+  tarifas: 0,
+  credenciados: 0,
 };
 
-export function PrepostosManager({
-  settings,
-  filters,
-  onSave,
-}: PrepostosManagerProps) {
-  const [current, setCurrent] = useState<PrepostoLookupResponse>(settings);
-  const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [query, setQuery] = useState("");
-  const [editing, setEditing] = useState<PrepostoLookupItem | null>(null);
-
-  useEffect(() => {
-    setCurrent(settings);
-  }, [settings]);
-
-  const prepostos = current.items ?? [];
-
-  const filtered = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    if (!normalizedQuery) return prepostos;
-
-    return prepostos.filter((item) => {
-      const localidade = [item.cidade, item.uf, item.descricaoLocal]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return (
-        item.nome.toLowerCase().includes(normalizedQuery) ||
-        localidade.includes(normalizedQuery) ||
-        (item.contatoNome ?? "").toLowerCase().includes(normalizedQuery) ||
-        (item.email ?? "").toLowerCase().includes(normalizedQuery)
-      );
-    });
-  }, [prepostos, query]);
-
-  const openCreate = () => {
-    setEditing({
-      ...emptyPreposto(),
-      cidade: filters?.cidade ?? "",
-      operacao: filters?.operacao ?? "IMPORTACAO",
-    });
-    setOpen(true);
+function apiError(error: unknown) {
+  const candidate = error as {
+    response?: {
+      data?: { message?: string; errors?: Record<string, string[]> };
+    };
+    message?: string;
   };
-
-  const openEdit = (item: PrepostoLookupItem) => {
-    setEditing({ ...item });
-    setOpen(true);
-  };
-
-  const upsert = () => {
-    if (!editing) return;
-
-    const exists = prepostos.some((item) => item.id === editing.id);
-    const nextItems = exists
-      ? prepostos.map((item) => (item.id === editing.id ? editing : item))
-      : [...prepostos, editing];
-
-    setCurrent({
-      items: nextItems,
-      total: nextItems.length,
-    });
-
-    setOpen(false);
-    setEditing(null);
-  };
-
-  const remove = (id: string) => {
-    const nextItems = prepostos.filter((item) => item.id !== id);
-
-    setCurrent({
-      items: nextItems,
-      total: nextItems.length,
-    });
-  };
-
-  const saveAll = async () => {
-    if (!onSave) return;
-
-    try {
-      setSaving(true);
-      await onSave(current);
-    } finally {
-      setSaving(false);
-    }
-  };
-
+  const errors = candidate.response?.data?.errors;
   return (
-    <Card>
-      <CardHeader className="gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <CardTitle>Contatos de prepostos</CardTitle>
-            {filters ? (
-              <p className="mt-1 text-sm text-muted-foreground">
-                Cidade: {filters.cidade || "-"} · Operação: {filters.operacao}
-              </p>
-            ) : null}
-          </div>
-
-          <Button onClick={openCreate}>Gerenciar registros</Button>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-sm text-muted-foreground">
-            Total: {filtered.length} de {current.total}
-          </span>
-        </div>
-      </CardHeader>
-
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Localidade</TableHead>
-                <TableHead>Operação</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead className="w-20 text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {filtered.length > 0 ? (
-                filtered.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.nome}</TableCell>
-                    <TableCell>{formatLocalidade(item)}</TableCell>
-                    <TableCell>{item.operacao ?? "-"}</TableCell>
-                    <TableCell>{item.valorDescricao ?? item.valor ?? "-"}</TableCell>
-                    <TableCell>{item.contatoNome ?? "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(item)}>
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => remove(item.id)}
-                          >
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    Nenhum registro encontrado.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {onSave ? (
-          <div className="mt-4">
-            <Button onClick={saveAll} disabled={saving}>
-              {saving ? "Salvando..." : "Salvar alterações"}
-            </Button>
-          </div>
-        ) : null}
-      </CardContent>
-
-      <Sheet
-        open={open}
-        onOpenChange={(nextOpen) => {
-          setOpen(nextOpen);
-          if (!nextOpen) setEditing(null);
-        }}
-      >
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>
-              {prepostos.some((item) => item.id === editing?.id)
-                ? "Editar registro"
-                : "Novo registro"}
-            </SheetTitle>
-          </SheetHeader>
-
-          {editing ? (
-            <div className="mt-4 grid gap-3 pb-8">
-              <Field label="Nome">
-                <Input
-                  value={editing.nome}
-                  onChange={(e) => setEditing({ ...editing, nome: e.target.value })}
-                />
-              </Field>
-
-              <Field label="Cidade">
-                <Input
-                  value={editing.cidade}
-                  onChange={(e) => setEditing({ ...editing, cidade: e.target.value })}
-                />
-              </Field>
-
-              <Field label="UF">
-                <Input
-                  value={editing.uf ?? ""}
-                  onChange={(e) => setEditing({ ...editing, uf: emptyToNull(e.target.value) })}
-                />
-              </Field>
-
-              <Field label="Descrição do local">
-                <Input
-                  value={editing.descricaoLocal ?? ""}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      descricaoLocal: emptyToNull(e.target.value),
-                    })
-                  }
-                />
-              </Field>
-
-              <Field label="Operação">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={editing.operacao === "IMPORTACAO" ? "default" : "outline"}
-                    onClick={() =>
-                      setEditing({ ...editing, operacao: "IMPORTACAO" })
-                    }
-                  >
-                    IMPORTACAO
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant={editing.operacao === "EXPORTACAO" ? "default" : "outline"}
-                    onClick={() =>
-                      setEditing({ ...editing, operacao: "EXPORTACAO" })
-                    }
-                  >
-                    EXPORTACAO
-                  </Button>
-                </div>
-              </Field>
-
-              <Field label="Contato">
-                <Input
-                  value={editing.contatoNome ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, contatoNome: emptyToNull(e.target.value) })
-                  }
-                />
-              </Field>
-
-              <Field label="Telefone">
-                <Input
-                  value={editing.telefone ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, telefone: emptyToNull(e.target.value) })
-                  }
-                />
-              </Field>
-
-              <Field label="E-mail">
-                <Input
-                  value={editing.email ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, email: emptyToNull(e.target.value) })
-                  }
-                />
-              </Field>
-
-              <Field label="Moeda">
-                <Input
-                  value={editing.moeda ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, moeda: emptyToNull(e.target.value) })
-                  }
-                />
-              </Field>
-
-              <Field label="Valor">
-                <Input
-                  value={editing.valor ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, valor: emptyToNull(e.target.value) })
-                  }
-                  placeholder="Ex.: 150.00"
-                />
-              </Field>
-
-              <Field label="Descrição do valor">
-                <Input
-                  value={editing.valorDescricao ?? ""}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      valorDescricao: emptyToNull(e.target.value),
-                    })
-                  }
-                  placeholder="Ex.: USD 150,00"
-                />
-              </Field>
-
-              <Field label="Observações">
-                <Textarea
-                  value={editing.observacoes ?? ""}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      observacoes: emptyToNull(e.target.value),
-                    })
-                  }
-                />
-              </Field>
-
-              <Button onClick={upsert}>Salvar registro</Button>
-            </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
-    </Card>
+    (errors && Object.values(errors).flat()[0]) ||
+    candidate.response?.data?.message ||
+    candidate.message ||
+    "Não foi possível concluir a operação."
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+export function PrepostosManager() {
+  const toast = useToast();
+  const [items, setItems] = useState<PrepostoAdmin[]>([]);
+  const [credentials, setCredentials] = useState<PrepostoCredential[]>([]);
+  const [summary, setSummary] = useState(emptySummary);
+  const [query, setQuery] = useState("");
+  const [uf, setUf] = useState("");
+  const [operation, setOperation] = useState("TODAS");
+  const [status, setStatus] = useState("TODOS");
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [editing, setEditing] = useState<PrepostoAdmin | null | undefined>();
+
+  const loadCredentials = useCallback(async () => {
+    const response = await prepostosApi.listCredentials();
+    setCredentials(response.items);
+  }, []);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await prepostosApi.list({
+        q: query.trim() || undefined,
+        uf: uf.trim().toUpperCase() || undefined,
+        operacao: operation === "TODAS" ? undefined : operation,
+        ativo: status === "TODOS" ? undefined : status === "ATIVOS",
+      });
+      setItems(response.items);
+      setSummary(response.summary);
+      await loadCredentials();
+    } catch (error) {
+      toast.error(apiError(error));
+    } finally {
+      setLoading(false);
+    }
+  }, [loadCredentials, operation, query, status, toast, uf]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void load(), 250);
+    return () => window.clearTimeout(timer);
+  }, [load]);
+
+  async function remove(item: PrepostoAdmin) {
+    if (!window.confirm(`Excluir definitivamente o preposto ${item.nome}?`))
+      return;
+    try {
+      await prepostosApi.remove(item.id);
+      toast.success("Preposto excluído.");
+      await load();
+    } catch (error) {
+      toast.error(apiError(error));
+    }
+  }
+
   return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      {children}
+    <div className="w-full space-y-6 p-6 lg:p-10">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Prepostos</h1>
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+            Consulte e mantenha contatos, localidades, tarifas condicionais e
+            despachantes credenciados utilizados nos escopos.
+          </p>
+        </div>
+        <Button onClick={() => setEditing(null)}>
+          <Plus /> Novo preposto
+        </Button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard icon={Users} label="Prepostos" value={summary.prepostos} />
+        <SummaryCard
+          icon={MapPin}
+          label="Localidades"
+          value={summary.localidades}
+        />
+        <SummaryCard
+          icon={BadgeDollarSign}
+          label="Tarifas"
+          value={summary.tarifas}
+        />
+        <SummaryCard
+          icon={ShieldCheck}
+          label="Credenciados"
+          value={summary.credenciados}
+        />
+      </div>
+
+      <Card>
+        <CardHeader className="gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>Catálogo completo</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void load()}
+              disabled={loading}
+            >
+              <RefreshCw className={loading ? "animate-spin" : ""} /> Atualizar
+            </Button>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_120px_190px_150px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Nome, cidade, contato, tarifa ou credenciado"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </div>
+            <Input
+              aria-label="Filtrar por UF"
+              maxLength={2}
+              placeholder="UF"
+              value={uf}
+              onChange={(event) => setUf(event.target.value)}
+            />
+            <Select value={operation} onValueChange={setOperation}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TODAS">Todas as operações</SelectItem>
+                <SelectItem value="IMPORTACAO">Importação</SelectItem>
+                <SelectItem value="EXPORTACAO">Exportação</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ATIVOS">Ativos</SelectItem>
+                <SelectItem value="INATIVOS">Inativos</SelectItem>
+                <SelectItem value="TODOS">Todos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12" />
+                  <TableHead>Preposto</TableHead>
+                  <TableHead>Contato principal</TableHead>
+                  <TableHead>Localidades</TableHead>
+                  <TableHead>Operações</TableHead>
+                  <TableHead>Tarifas</TableHead>
+                  <TableHead>Credenciados</TableHead>
+                  <TableHead className="w-28 text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item) => {
+                  const open = expanded === item.id;
+                  const primary =
+                    item.contatos.find((contact) => contact.principal) ??
+                    item.contatos[0];
+                  const tariffs = item.localidades.reduce(
+                    (total, locality) => total + locality.tarifas.length,
+                    0,
+                  );
+                  const imports = item.localidades.some(
+                    (locality) => locality.atende_importacao,
+                  );
+                  const exports = item.localidades.some(
+                    (locality) => locality.atende_exportacao,
+                  );
+                  return (
+                    <FragmentRows
+                      key={item.id}
+                      item={item}
+                      open={open}
+                      primary={primary}
+                      tariffs={tariffs}
+                      imports={imports}
+                      exports={exports}
+                      onToggle={() => setExpanded(open ? null : item.id)}
+                      onEdit={() => setEditing(item)}
+                      onRemove={() => void remove(item)}
+                    />
+                  );
+                })}
+                {!loading && items.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="h-28 text-center text-muted-foreground"
+                    >
+                      Nenhum registro encontrado.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="h-28 text-center text-muted-foreground"
+                    >
+                      Carregando catálogo...
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <PrepostoEditor
+        open={editing !== undefined}
+        initial={editing ?? null}
+        credentials={credentials}
+        onOpenChange={(open) => {
+          if (!open) setEditing(undefined);
+        }}
+        onChanged={load}
+        onCredentialsChanged={loadCredentials}
+      />
     </div>
   );
 }
 
-function emptyToNull(value: string): string | null {
-  const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
+function FragmentRows({
+  item,
+  open,
+  primary,
+  tariffs,
+  imports,
+  exports,
+  onToggle,
+  onEdit,
+  onRemove,
+}: {
+  item: PrepostoAdmin;
+  open: boolean;
+  primary: PrepostoAdmin["contatos"][number] | undefined;
+  tariffs: number;
+  imports: boolean;
+  exports: boolean;
+  onToggle: () => void;
+  onEdit: () => void;
+  onRemove: () => void;
+}) {
+  return (
+    <>
+      <TableRow>
+        <TableCell>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            aria-label="Exibir detalhes"
+          >
+            {open ? <ChevronUp /> : <ChevronDown />}
+          </Button>
+        </TableCell>
+        <TableCell>
+          <div className="font-medium">{item.nome}</div>
+          <div className="text-xs text-muted-foreground">
+            {item.razao_social || "Razão social não informada"}
+          </div>
+          <Badge
+            className="mt-1"
+            variant={item.ativo ? "secondary" : "outline"}
+          >
+            {item.ativo ? "Ativo" : "Inativo"}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          <div>{primary?.nome || "—"}</div>
+          <div className="text-xs text-muted-foreground">
+            {primary?.email || primary?.telefone || "Sem contato"}
+          </div>
+        </TableCell>
+        <TableCell>{item.localidades.length}</TableCell>
+        <TableCell>
+          <div className="flex flex-wrap gap-1">
+            {imports && <Badge variant="outline">Importação</Badge>}
+            {exports && <Badge variant="outline">Exportação</Badge>}
+          </div>
+        </TableCell>
+        <TableCell>{tariffs}</TableCell>
+        <TableCell>{item.credenciados.length}</TableCell>
+        <TableCell className="text-right">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onEdit}
+            aria-label="Editar"
+          >
+            <PencilLine />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onRemove}
+            aria-label="Excluir"
+            className="text-destructive"
+          >
+            <Trash2 />
+          </Button>
+        </TableCell>
+      </TableRow>
+      {open ? (
+        <TableRow>
+          <TableCell colSpan={8} className="bg-muted/25 p-5">
+            <div className="grid gap-5 xl:grid-cols-3">
+              <DetailSection title="Contatos">
+                {item.contatos.length ? (
+                  item.contatos.map((contact) => (
+                    <div
+                      key={contact.id}
+                      className="rounded-md border p-3 text-sm"
+                    >
+                      <div className="font-medium">
+                        {contact.nome}{" "}
+                        {contact.principal && (
+                          <Badge variant="secondary">Principal</Badge>
+                        )}
+                      </div>
+                      <div className="mt-1 text-muted-foreground">
+                        {[contact.email, contact.telefone, contact.whatsapp]
+                          .filter(Boolean)
+                          .join(" · ") || "Sem canais informados"}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyText />
+                )}
+              </DetailSection>
+              <DetailSection title="Localidades e tarifas">
+                {item.localidades.length ? (
+                  item.localidades.map((locality) => (
+                    <div
+                      key={locality.id}
+                      className="rounded-md border p-3 text-sm"
+                    >
+                      <div className="font-medium">
+                        {locality.cidade}
+                        {locality.uf ? ` / ${locality.uf}` : ""}
+                      </div>
+                      <div className="text-muted-foreground">
+                        {locality.descricao_local ||
+                          locality.tipo_local ||
+                          "Local sem descrição"}
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        {locality.tarifas.map((tariff) => (
+                          <div key={tariff.id}>
+                            <Badge
+                              variant={
+                                tariff.principal ? "secondary" : "outline"
+                              }
+                            >
+                              {tariff.operacao}
+                            </Badge>{" "}
+                            {tariff.condicao || tariff.tipo}:{" "}
+                            {formatMoney(
+                              tariff.valor,
+                              tariff.moeda,
+                              tariff.valor_descricao,
+                            )}
+                          </div>
+                        ))}
+                        {!locality.tarifas.length && (
+                          <span className="text-muted-foreground">
+                            Sem tarifas adicionais
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyText />
+                )}
+              </DetailSection>
+              <DetailSection title="Despachantes credenciados">
+                {item.credenciados.length ? (
+                  item.credenciados.map((credential) => (
+                    <div
+                      key={credential.id}
+                      className="rounded-md border p-3 text-sm"
+                    >
+                      <div className="font-medium">{credential.nome}</div>
+                      <div className="text-muted-foreground">
+                        {[
+                          credential.cpf_mascarado,
+                          credential.registro_rfb,
+                          credential.categoria,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Vinculado a {credential.localidade_ids.length}{" "}
+                        localidade(s)
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyText />
+                )}
+              </DetailSection>
+            </div>
+            {item.observacoes ? (
+              <p className="mt-4 rounded-md border bg-background p-3 text-sm">
+                <strong>Observações:</strong> {item.observacoes}
+              </p>
+            ) : null}
+          </TableCell>
+        </TableRow>
+      ) : null}
+    </>
+  );
 }
 
-function formatLocalidade(item: PrepostoLookupItem) {
-  const base = [item.cidade, item.uf].filter(Boolean).join(" / ");
-  if (item.descricaoLocal) {
-    return base ? `${base} - ${item.descricaoLocal}` : item.descricaoLocal;
-  }
-  return base || "-";
+function SummaryCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Users;
+  label: string;
+  value: number;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex items-center gap-3 p-4">
+        <div className="rounded-lg bg-primary/10 p-2 text-primary">
+          <Icon />
+        </div>
+        <div>
+          <div className="text-2xl font-semibold">{value}</div>
+          <div className="text-sm text-muted-foreground">{label}</div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DetailSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-2">
+      <h3 className="font-semibold">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function EmptyText() {
+  return (
+    <p className="text-sm text-muted-foreground">Nenhum registro informado.</p>
+  );
+}
+
+function formatMoney(
+  value: number | null,
+  currency: string,
+  description: string | null,
+) {
+  if (description) return description;
+  if (value === null) return "Valor não informado";
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: currency || "BRL",
+  }).format(Number(value));
 }
