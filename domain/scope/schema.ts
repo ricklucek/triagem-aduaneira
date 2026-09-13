@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { areCanonicalCnaeLines, isCanonicalCnae } from "./cnae";
+import { getIcmsDestinations } from "./destination";
 
 export const SimNaoSchema = z.enum(["SIM", "NAO"]);
 export const ContaPagamentoSchema = z.enum(["CASCO", "CLIENTE"]);
@@ -531,22 +533,24 @@ export const ImportacaoSchema = z
         message: "Selecione o regime do ICMS",
       });
     }
-    value.destinacao.forEach((destino) => {
-      if (
-        ICMS_DESTINACOES_SCHEMA.includes(
-          destino as (typeof ICMS_DESTINACOES_SCHEMA)[number],
-        ) &&
-        !value.icms.porDestinacao?.[
-          destino as (typeof ICMS_DESTINACOES_SCHEMA)[number]
-        ]?.regime
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["icms", "porDestinacao", destino, "regime"],
-          message: "Selecione o regime desta destinação",
-        });
-      }
-    });
+    getIcmsDestinations(value.destinacao, value.subtipoConsumo).forEach(
+      (destino) => {
+        if (
+          ICMS_DESTINACOES_SCHEMA.includes(
+            destino as (typeof ICMS_DESTINACOES_SCHEMA)[number],
+          ) &&
+          !value.icms.porDestinacao?.[
+            destino as (typeof ICMS_DESTINACOES_SCHEMA)[number]
+          ]?.regime
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["icms", "porDestinacao", destino, "regime"],
+            message: "Selecione o regime desta destinação",
+          });
+        }
+      },
+    );
     if (!value.necessidadeDta) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -648,8 +652,20 @@ export const EscopoSchema = z
         .trim()
         .min(1, "Endereço do escritório é obrigatório"),
       enderecoCompletoArmazem: z.string().trim().optional().nullable(),
-      cnaePrincipal: z.string().trim().min(1, "CNAE principal é obrigatório"),
-      cnaeSecundario: z.string().trim().optional().nullable(),
+      cnaePrincipal: z
+        .string()
+        .trim()
+        .min(1, "CNAE principal é obrigatório")
+        .refine(isCanonicalCnae, "Informe no formato 0000-0/00 - Descrição"),
+      cnaeSecundario: z
+        .string()
+        .trim()
+        .optional()
+        .nullable()
+        .refine(
+          areCanonicalCnaeLines,
+          "Informe um CNAE por linha no formato 0000-0/00 - Descrição",
+        ),
       regimeTributacao: RegimeTributacaoSchema,
       responsavelComercial: ResponsavelComercialSchema,
       modalidadeRadar: z.enum([

@@ -2,27 +2,23 @@
 
 import { EscopoForm } from "@/domain/scope/types";
 
-import {
-  Card,
-} from "@/components/ui/form-layout";
-
+import { Card } from "@/components/ui/form-layout";
 import { Field, TextArea } from "@/components/ui/form-fields";
-
 
 type Props = {
   form: EscopoForm;
   onChange: (next: EscopoForm) => void;
 };
 
-export default function ScopeWizard({
-  form,
-  onChange
-}: Props) {
-
+export default function ScopeWizard({ form, onChange }: Props) {
   return (
-    <Card>
-      <Field label="Observações gerais" hint="">
+    <Card className="border-action/30 bg-action/5 shadow-sm">
+      <Field
+        label="Atividade principal"
+        hint="Descreva a atuação principal e outras características relevantes da empresa."
+      >
         <TextArea
+          className="min-h-32 bg-background"
           value={form.geral?.descricao ?? ""}
           onChange={(e) =>
             onChange({

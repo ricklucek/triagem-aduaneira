@@ -3,7 +3,18 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Eye, EyeOff, Info, RotateCw, X } from "lucide-react";
+import {
+  CheckCircle2,
+  Download,
+  Eye,
+  EyeOff,
+  FileSpreadsheet,
+  FileText,
+  Info,
+  Loader2,
+  RotateCw,
+  X,
+} from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
 import { LOCAIS } from "@/components/scope/StepImportacao";
@@ -18,6 +29,25 @@ import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
 import { ScopeViewTabs } from "./view/ScopeViewTabs";
 import { HighlightField } from "./view/HighlightField";
 import { TaxRegimeStatus } from "./view/TaxRegimeStatus";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  collectScopeExportDocument,
+  downloadScopeExcel,
+  downloadScopePdf,
+} from "@/lib/scope/export-scope";
+import {
+  consumptionSubtypeLabels,
+  destinationLabels,
+  icmsDestinationLabel,
+  includesIcmsDestination,
+} from "@/domain/scope/destination";
 
 const text = (v: unknown) =>
   v == null || v === "" || (Array.isArray(v) && v.length === 0)
@@ -110,13 +140,6 @@ const freightResponsibleLabel = (value?: string | null) => {
   return value;
 };
 
-const ICMS_DESTINACAO_LABEL: Record<string, string> = {
-  REVENDA: "Revenda",
-  INDUSTRIALIZACAO: "Industrialização",
-  USO_E_CONSUMO: "Uso e consumo",
-  ATIVO_IMOBILIZADO: "Ativo imobilizado",
-};
-
 const MODAL_LOCAL_LABEL: Record<string, string> = {
   AEREO: "Aéreo",
   MARITIMO: "Marítimo",
@@ -166,10 +189,12 @@ function Field({
   label,
   value,
   previewChars = 180,
+  exportValue,
 }: {
   label: string;
   value: React.ReactNode | null;
   previewChars?: number;
+  exportValue?: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -192,6 +217,9 @@ function Field({
 
   return (
     <div
+      data-export-field
+      data-export-label={label}
+      data-export-value={exportValue ?? rawText ?? undefined}
       className={`inline-block w-full break-inside-avoid rounded-xl border bg-background ${border} p-3 align-top shadow-sm`}
     >
       {label ? (
@@ -227,6 +255,7 @@ function PasswordField({ password }: { password?: string | null }) {
   return (
     <Field
       label="Senha"
+      exportValue="Não incluída na exportação por segurança"
       value={
         <div className="flex items-center justify-between gap-3">
           <span className="min-w-0 break-all font-mono">
@@ -330,14 +359,23 @@ function ThirdPartyFreightProvidersView({
 function TitleField({
   label,
   value,
+  exportValue,
 }: {
   label: string;
   value: React.ReactNode | null;
+  exportValue?: string;
 }) {
   if (!value) return null;
 
   return (
-    <div className="w-full col-span-2 flex flex-col gap-2">
+    <div
+      data-export-field
+      data-export-label={label}
+      data-export-value={
+        exportValue ?? (typeof value === "string" ? value : undefined)
+      }
+      className="w-full col-span-2 flex flex-col gap-2"
+    >
       <div className="p-3 flex flex-row items-center gap-5">
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {label}
@@ -363,7 +401,7 @@ function ViewCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="p-4 md:p-5">
+    <Card data-export-section={title} className="p-4 md:p-5">
       <h4 className="mb-4 text-sm font-semibold">{title}</h4>
       <div className="grid gap-4">{children}</div>
     </Card>
@@ -544,7 +582,19 @@ function ServiceBlock({
 
   return (
     <>
-      <TitleField label={title} value={<HiredBadge value={mode} />} />
+      <TitleField
+        label={title}
+        value={<HiredBadge value={mode} />}
+        exportValue={
+          mode === "SIM"
+            ? "Contratado"
+            : mode === "NAO"
+              ? "Não contratado"
+              : mode === "CASO_A_CASO"
+                ? "Caso a caso"
+                : "Habilitado"
+        }
+      />
       {children}
     </>
   );
@@ -601,6 +651,19 @@ function PrepostoCatalogDetails({ service }: { service: PrepostoService }) {
             {credentials.map((credential) => (
               <Card
                 key={credential.id}
+                data-export-field
+                data-export-label={`Despachante credenciado - ${credential.nome}`}
+                data-export-value={[
+                  credential.categoria,
+                  credential.registroRfb
+                    ? `Registro RFB: ${credential.registroRfb}`
+                    : null,
+                  credential.cpfMascarado
+                    ? `CPF: ${credential.cpfMascarado}`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" - ")}
                 className="gap-2 border-border bg-muted/20 p-3"
               >
                 <p className="text-sm font-semibold">{credential.nome}</p>
@@ -1137,6 +1200,16 @@ function ScopeDetails({
       label: "Sobre a empresa",
       content: (
         <div className="grid gap-4">
+          <ViewCard title="Atividade principal">
+            <HighlightField
+              label="Descrição da atividade"
+              value={text(scope.geral?.descricao)}
+            />
+            {!scope.geral?.descricao ? (
+              <EmptyState>Atividade principal não informada.</EmptyState>
+            ) : null}
+          </ViewCard>
+
           <ViewCard title="Dados cadastrais">
             <Grid>
               <Field
@@ -1185,10 +1258,6 @@ function ScopeDetails({
                 value={list(scope.operacao.tipos)}
               />
             </Grid>
-            <HighlightField
-              label="Particularidades gerais"
-              value={text(scope.geral?.descricao)}
-            />
           </ViewCard>
 
           {showImport && importacao ? (
@@ -1222,10 +1291,23 @@ function ScopeDetails({
                   label="Outro local de desembaraço"
                   value={text(importacao.outroLocalDesembaraco)}
                 />
-                <Field label="Destinação" value={list(importacao.destinacao)} />
+                <Field
+                  label="Destinação"
+                  value={list(
+                    destinationLabels(
+                      importacao.destinacao,
+                      importacao.subtipoConsumo,
+                    ),
+                  )}
+                />
                 <Field
                   label="Subtipo de consumo"
-                  value={list(importacao.subtipoConsumo)}
+                  value={list(
+                    consumptionSubtypeLabels(
+                      importacao.destinacao,
+                      importacao.subtipoConsumo,
+                    ),
+                  )}
                 />
               </Grid>
 
@@ -1268,10 +1350,23 @@ function ScopeDetails({
                   label="Produtos exportados"
                   value={text(exportacao.produtosExportados)}
                 />
-                <Field label="Destinação" value={list(exportacao.destinacao)} />
+                <Field
+                  label="Destinação"
+                  value={list(
+                    destinationLabels(
+                      exportacao.destinacao,
+                      exportacao.subtipoConsumo,
+                    ),
+                  )}
+                />
                 <Field
                   label="Subtipo de consumo"
-                  value={list(exportacao.subtipoConsumo)}
+                  value={list(
+                    consumptionSubtypeLabels(
+                      exportacao.destinacao,
+                      exportacao.subtipoConsumo,
+                    ),
+                  )}
                 />
               </Grid>
 
@@ -1343,12 +1438,17 @@ function ScopeDetails({
               {Object.entries(importacao.icms?.porDestinacao ?? {})
                 .filter(
                   ([destinacao, detalhe]) =>
-                    detalhe && importacao.destinacao.includes(destinacao),
+                    detalhe &&
+                    includesIcmsDestination(
+                      importacao.destinacao,
+                      importacao.subtipoConsumo,
+                      destinacao,
+                    ),
                 )
                 .map(([destinacao, detalhe]) => (
                   <Card key={destinacao} className="gap-3 p-3">
                     <h6 className="text-sm font-semibold">
-                      {ICMS_DESTINACAO_LABEL[destinacao] ?? destinacao}
+                      {icmsDestinationLabel(destinacao)}
                     </h6>
                     <div className="grid gap-3">
                       <TaxRegimeStatus
@@ -1599,6 +1699,8 @@ function ScopeDetails({
 
 export default function ViewScope({ id }: { id: string }) {
   const router = useRouter();
+  const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const {
     data: scopeResponse,
@@ -1612,6 +1714,40 @@ export default function ViewScope({ id }: { id: string }) {
   );
 
   const createdBy = scopeResponse?.created_by;
+
+  async function exportScope(format: "pdf" | "excel") {
+    const root = document.getElementById("scope-view-layout");
+    if (!root || !selectedScope) return;
+
+    setExporting(format);
+    setExportError(null);
+    try {
+      const companyName =
+        selectedScope.sobreEmpresa.nomeResumido ||
+        selectedScope.sobreEmpresa.razaoSocial ||
+        "Escopo";
+      const exportDocument = collectScopeExportDocument(
+        root,
+        `Escopo - ${companyName}`,
+        [
+          selectedScope.sobreEmpresa.razaoSocial,
+          formatCNPJ(selectedScope.sobreEmpresa.cnpj),
+          createdBy?.nome ? `Criado por ${createdBy.nome}` : null,
+        ]
+          .filter(Boolean)
+          .join(" - "),
+      );
+      if (format === "pdf") await downloadScopePdf(exportDocument);
+      else await downloadScopeExcel(exportDocument);
+    } catch (error) {
+      console.error("Falha ao exportar escopo", error);
+      setExportError(
+        "Não foi possível gerar o arquivo. Tente novamente ou atualize a página.",
+      );
+    } finally {
+      setExporting(null);
+    }
+  }
 
   if (loadingScope) {
     return (
@@ -1655,6 +1791,30 @@ export default function ViewScope({ id }: { id: string }) {
           </div>
 
           <div className="flex items-center gap-2 print:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={Boolean(exporting)}>
+                  {exporting ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <Download />
+                  )}
+                  {exporting ? "Gerando arquivo..." : "Baixar"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel>Exportar escopo</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => void exportScope("pdf")}>
+                  <FileText />
+                  Baixar PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void exportScope("excel")}>
+                  <FileSpreadsheet />
+                  Baixar Excel (.xlsx)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" onClick={() => router.back()}>
               Voltar
             </Button>
@@ -1663,6 +1823,11 @@ export default function ViewScope({ id }: { id: string }) {
             </Button>
           </div>
         </div>
+        {exportError ? (
+          <p className="mt-3 text-sm font-medium text-destructive print:hidden">
+            {exportError}
+          </p>
+        ) : null}
       </Card>
 
       <ScopeDetails scope={selectedScope} versionLabel="Escopo atual" />

@@ -30,6 +30,9 @@ export function TaxRegimeStatus({
 
   return (
     <div
+      data-export-field
+      data-export-label={label}
+      data-export-value={`${statusLabel}${isBenefit && hasDescription ? ` - ${String(description)}` : ""}`}
       className={cn(
         "break-inside-avoid rounded-xl border p-3 shadow-sm [print-color-adjust:exact]",
         isBenefit &&
