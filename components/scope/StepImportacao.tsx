@@ -15,6 +15,14 @@ import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 import { useOrganizationSettingsByKey } from "@/lib/api/hooks/use-dashboards";
+import {
+  CONSUMPTION_SUBTYPE_OPTIONS,
+  getConsumptionSubtypes,
+  getIcmsDestinations,
+  getPrimaryDestinations,
+  ICMS_DESTINATION_LABELS,
+  PRIMARY_DESTINATION_OPTIONS,
+} from "@/domain/scope/destination";
 
 const MODAIS_LOCAL = [
   { value: "AEREO", label: "Aéreo" },
@@ -193,20 +201,6 @@ const DEFAULT_AFRMM = {
   contaPagamento: "CASCO",
   detalheBeneficio: "",
 } as const;
-const ICMS_DESTINACOES = [
-  "REVENDA",
-  "INDUSTRIALIZACAO",
-  "USO_E_CONSUMO",
-  "ATIVO_IMOBILIZADO",
-] as const;
-const ICMS_DESTINACAO_LABEL: Record<(typeof ICMS_DESTINACOES)[number], string> =
-  {
-    REVENDA: "Revenda",
-    INDUSTRIALIZACAO: "Industrialização",
-    USO_E_CONSUMO: "Uso e consumo",
-    ATIVO_IMOBILIZADO: "Ativo imobilizado",
-  };
-
 const DEFAULT_ICMS = {
   contaPagamento: "CASCO",
   recolhida: "",
@@ -281,6 +275,18 @@ export default function StepImportacao({
   }
   const afrmmData = data.afrmm ?? { ...DEFAULT_AFRMM };
   const icmsData = data.icms ?? { ...DEFAULT_ICMS };
+  const selectedPrimaryDestinations = getPrimaryDestinations(
+    data.destinacao,
+    data.subtipoConsumo,
+  );
+  const selectedConsumptionSubtypes = getConsumptionSubtypes(
+    data.destinacao,
+    data.subtipoConsumo,
+  );
+  const selectedIcmsDestinations = getIcmsDestinations(
+    data.destinacao,
+    data.subtipoConsumo,
+  );
   const filterLocaisByModal = (modais: readonly string[] = []) =>
     LOCAIS.filter(
       (local) =>
@@ -818,110 +824,104 @@ export default function StepImportacao({
           <SearchableCheckboxMenu
             title=""
             searchLabel="Pesquisar destinação"
-            value={data.destinacao}
-            options={[
-              { value: "REVENDA", label: "Revenda" },
-              { value: "INDUSTRIALIZACAO", label: "Industrialização" },
-              { value: "USO_E_CONSUMO", label: "Uso e consumo" },
-              { value: "ATIVO_IMOBILIZADO", label: "Ativo imobilizado" },
-              { value: "CONSUMO", label: "Consumo" },
-            ]}
-            onChange={(next) => update("destinacao", next)}
+            value={selectedPrimaryDestinations}
+            options={[...PRIMARY_DESTINATION_OPTIONS]}
+            onChange={(next) =>
+              setData({
+                ...data,
+                destinacao: next,
+                subtipoConsumo: next.includes("CONSUMO")
+                  ? selectedConsumptionSubtypes
+                  : [],
+              })
+            }
             error={errors["destinacao"]}
           />
         </Field>
-        {data.destinacao.filter((d): d is (typeof ICMS_DESTINACOES)[number] =>
-          ICMS_DESTINACOES.includes(d as (typeof ICMS_DESTINACOES)[number]),
-        ).length > 0 ? (
+        {selectedIcmsDestinations.length > 0 ? (
           <div className="grid gap-3">
-            {data.destinacao
-              .filter((d): d is (typeof ICMS_DESTINACOES)[number] =>
-                ICMS_DESTINACOES.includes(
-                  d as (typeof ICMS_DESTINACOES)[number],
-                ),
-              )
-              .map((destino) => {
-                const detalhe = icmsData.porDestinacao?.[destino] ?? {
-                  recolhida: "",
-                  efetiva: "",
-                };
+            {selectedIcmsDestinations.map((destino) => {
+              const detalhe = icmsData.porDestinacao?.[destino] ?? {
+                recolhida: "",
+                efetiva: "",
+              };
 
-                return (
-                  <Card key={destino} className="gap-4 p-4">
-                    <h3 className="text-sm font-semibold">
-                      {ICMS_DESTINACAO_LABEL[destino]}
-                    </h3>
-                    <Grid columns={3}>
-                      <Field
-                        label="Regime"
-                        required
-                        error={errors[`icms.porDestinacao.${destino}.regime`]}
+              return (
+                <Card key={destino} className="gap-4 p-4">
+                  <h3 className="text-sm font-semibold">
+                    {ICMS_DESTINATION_LABELS[destino] ?? destino}
+                  </h3>
+                  <Grid columns={3}>
+                    <Field
+                      label="Regime"
+                      required
+                      error={errors[`icms.porDestinacao.${destino}.regime`]}
+                    >
+                      <Select
+                        value={detalhe.regime ?? ""}
+                        invalid={Boolean(
+                          errors[`icms.porDestinacao.${destino}.regime`],
+                        )}
+                        onChange={(e) =>
+                          update("icms", {
+                            ...icmsData,
+                            porDestinacao: {
+                              ...icmsData.porDestinacao,
+                              [destino]: {
+                                ...detalhe,
+                                regime: (e.target.value || undefined) as
+                                  "INTEGRAL" | "BENEFICIO" | undefined,
+                              },
+                            },
+                          })
+                        }
                       >
-                        <Select
-                          value={detalhe.regime ?? ""}
-                          invalid={Boolean(
-                            errors[`icms.porDestinacao.${destino}.regime`],
-                          )}
-                          onChange={(e) =>
-                            update("icms", {
-                              ...icmsData,
-                              porDestinacao: {
-                                ...icmsData.porDestinacao,
-                                [destino]: {
-                                  ...detalhe,
-                                  regime: (e.target.value || undefined) as
-                                    "INTEGRAL" | "BENEFICIO" | undefined,
-                                },
+                        <option value="">Selecione uma opção</option>
+                        <option value="INTEGRAL">Integral</option>
+                        <option value="BENEFICIO">Benefício</option>
+                      </Select>
+                    </Field>
+                    <Field label="Alíquota base">
+                      <TextInput
+                        value={detalhe.recolhida ?? ""}
+                        onChange={(e) =>
+                          update("icms", {
+                            ...icmsData,
+                            porDestinacao: {
+                              ...icmsData.porDestinacao,
+                              [destino]: {
+                                ...detalhe,
+                                recolhida: e.target.value,
                               },
-                            })
-                          }
-                        >
-                          <option value="">Selecione uma opção</option>
-                          <option value="INTEGRAL">Integral</option>
-                          <option value="BENEFICIO">Benefício</option>
-                        </Select>
-                      </Field>
-                      <Field label="Alíquota base">
-                        <TextInput
-                          value={detalhe.recolhida ?? ""}
-                          onChange={(e) =>
-                            update("icms", {
-                              ...icmsData,
-                              porDestinacao: {
-                                ...icmsData.porDestinacao,
-                                [destino]: {
-                                  ...detalhe,
-                                  recolhida: e.target.value,
-                                },
+                            },
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Alíquota efetiva">
+                      <TextInput
+                        value={detalhe.efetiva ?? ""}
+                        onChange={(e) =>
+                          update("icms", {
+                            ...icmsData,
+                            porDestinacao: {
+                              ...icmsData.porDestinacao,
+                              [destino]: {
+                                ...detalhe,
+                                efetiva: e.target.value,
                               },
-                            })
-                          }
-                        />
-                      </Field>
-                      <Field label="Alíquota efetiva">
-                        <TextInput
-                          value={detalhe.efetiva ?? ""}
-                          onChange={(e) =>
-                            update("icms", {
-                              ...icmsData,
-                              porDestinacao: {
-                                ...icmsData.porDestinacao,
-                                [destino]: {
-                                  ...detalhe,
-                                  efetiva: e.target.value,
-                                },
-                              },
-                            })
-                          }
-                        />
-                      </Field>
-                    </Grid>
-                  </Card>
-                );
-              })}
+                            },
+                          })
+                        }
+                      />
+                    </Field>
+                  </Grid>
+                </Card>
+              );
+            })}
           </div>
         ) : null}
-        {data.destinacao.includes("CONSUMO") ? (
+        {selectedPrimaryDestinations.includes("CONSUMO") ? (
           <Field
             label="Subtipo de consumo"
             required
@@ -930,19 +930,15 @@ export default function StepImportacao({
             <SearchableCheckboxMenu
               title=""
               searchLabel="Pesquisar subtipo de consumo"
-              value={data.subtipoConsumo}
-              options={[
-                {
-                  value: "ATIVO_IMOBILIZADO_FIXO",
-                  label: "Ativo imobilizado/fixo",
-                },
-                {
-                  value: "INSUMOS_PARA_INDUSTRIALIZACAO",
-                  label: "Insumos para industrialização",
-                },
-                { value: "USO_E_CONSUMO", label: "Uso e consumo" },
-              ]}
-              onChange={(next) => update("subtipoConsumo", next)}
+              value={selectedConsumptionSubtypes}
+              options={[...CONSUMPTION_SUBTYPE_OPTIONS]}
+              onChange={(next) =>
+                setData({
+                  ...data,
+                  destinacao: selectedPrimaryDestinations,
+                  subtipoConsumo: next as typeof data.subtipoConsumo,
+                })
+              }
               error={errors["subtipoConsumo"]}
             />
           </Field>

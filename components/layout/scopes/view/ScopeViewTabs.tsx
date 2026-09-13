@@ -65,6 +65,7 @@ export function ScopeViewTabs({ tabs }: { tabs: ScopeViewTab[] }) {
           id={`scope-tab-panel-${tab.id}`}
           role="tabpanel"
           aria-label={tab.label}
+          data-export-tab={tab.label}
           className={cn(
             "grid gap-4 print:block",
             tab.id !== activeTab && "hidden print:block",

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { areCanonicalCnaeLines, isCanonicalCnae } from "./cnae";
+import { getIcmsDestinations } from "./destination";
 
 export const SimNaoSchema = z.enum(["SIM", "NAO"]);
 export const ContaPagamentoSchema = z.enum(["CASCO", "CLIENTE"]);
@@ -532,22 +533,24 @@ export const ImportacaoSchema = z
         message: "Selecione o regime do ICMS",
       });
     }
-    value.destinacao.forEach((destino) => {
-      if (
-        ICMS_DESTINACOES_SCHEMA.includes(
-          destino as (typeof ICMS_DESTINACOES_SCHEMA)[number],
-        ) &&
-        !value.icms.porDestinacao?.[
-          destino as (typeof ICMS_DESTINACOES_SCHEMA)[number]
-        ]?.regime
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["icms", "porDestinacao", destino, "regime"],
-          message: "Selecione o regime desta destinação",
-        });
-      }
-    });
+    getIcmsDestinations(value.destinacao, value.subtipoConsumo).forEach(
+      (destino) => {
+        if (
+          ICMS_DESTINACOES_SCHEMA.includes(
+            destino as (typeof ICMS_DESTINACOES_SCHEMA)[number],
+          ) &&
+          !value.icms.porDestinacao?.[
+            destino as (typeof ICMS_DESTINACOES_SCHEMA)[number]
+          ]?.regime
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["icms", "porDestinacao", destino, "regime"],
+            message: "Selecione o regime desta destinação",
+          });
+        }
+      },
+    );
     if (!value.necessidadeDta) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
