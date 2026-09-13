@@ -12,10 +12,10 @@ type Props = {
 
 export default function ScopeWizard({ form, onChange }: Props) {
   return (
-    <Card className="border-action/30 bg-action/5 shadow-sm">
+    <Card>
       <Field
         label="Atividade principal"
-        hint="Descreva a atuação principal e outras características relevantes da empresa."
+        hint="Campo opcional. Descreva a atuação principal e outras características relevantes da empresa."
       >
         <TextArea
           className="min-h-32 bg-background"
