@@ -287,6 +287,16 @@ export default function StepImportacao({
     data.destinacao,
     data.subtipoConsumo,
   );
+  const showConsumptionOptions =
+    selectedPrimaryDestinations.includes("CONSUMO");
+  const selectedDestinationOptions = [
+    ...selectedPrimaryDestinations,
+    ...(showConsumptionOptions ? selectedConsumptionSubtypes : []),
+  ];
+  const visibleDestinationOptions = [
+    ...PRIMARY_DESTINATION_OPTIONS,
+    ...(showConsumptionOptions ? CONSUMPTION_SUBTYPE_OPTIONS : []),
+  ];
   const filterLocaisByModal = (modais: readonly string[] = []) =>
     LOCAIS.filter(
       (local) =>
@@ -824,18 +834,30 @@ export default function StepImportacao({
           <SearchableCheckboxMenu
             title=""
             searchLabel="Pesquisar destinação"
-            value={selectedPrimaryDestinations}
-            options={[...PRIMARY_DESTINATION_OPTIONS]}
-            onChange={(next) =>
+            value={selectedDestinationOptions}
+            options={visibleDestinationOptions}
+            onChange={(next) => {
+              const nextPrimaryDestinations = next.filter((value) =>
+                PRIMARY_DESTINATION_OPTIONS.some(
+                  (option) => option.value === value,
+                ),
+              );
+              const hasConsumption =
+                nextPrimaryDestinations.includes("CONSUMO");
+
               setData({
                 ...data,
-                destinacao: next,
-                subtipoConsumo: next.includes("CONSUMO")
-                  ? selectedConsumptionSubtypes
+                destinacao: nextPrimaryDestinations as typeof data.destinacao,
+                subtipoConsumo: hasConsumption
+                  ? (next.filter((value) =>
+                      CONSUMPTION_SUBTYPE_OPTIONS.some(
+                        (option) => option.value === value,
+                      ),
+                    ) as typeof data.subtipoConsumo)
                   : [],
-              })
-            }
-            error={errors["destinacao"]}
+              });
+            }}
+            error={errors["destinacao"] ?? errors["subtipoConsumo"]}
           />
         </Field>
         {selectedIcmsDestinations.length > 0 ? (
@@ -920,28 +942,6 @@ export default function StepImportacao({
               );
             })}
           </div>
-        ) : null}
-        {selectedPrimaryDestinations.includes("CONSUMO") ? (
-          <Field
-            label="Subtipo de consumo"
-            required
-            error={errors["subtipoConsumo"]}
-          >
-            <SearchableCheckboxMenu
-              title=""
-              searchLabel="Pesquisar subtipo de consumo"
-              value={selectedConsumptionSubtypes}
-              options={[...CONSUMPTION_SUBTYPE_OPTIONS]}
-              onChange={(next) =>
-                setData({
-                  ...data,
-                  destinacao: selectedPrimaryDestinations,
-                  subtipoConsumo: next as typeof data.subtipoConsumo,
-                })
-              }
-              error={errors["subtipoConsumo"]}
-            />
-          </Field>
         ) : null}
       </Grid>
     </main>
