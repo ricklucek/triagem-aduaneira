@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { EscopoForm } from "@/domain/scope/types";
-import { Field, Select, TextInput } from "@/components/ui/form-fields";
+import {
+  Field,
+  Select,
+  TextArea,
+  TextInput,
+} from "@/components/ui/form-fields";
 import { Grid } from "@/components/ui/form-layout";
 import { ResponsiblePicker } from "@/components/scope/ResponsiblePicker";
 import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
@@ -10,6 +15,7 @@ import type { ClientApi } from "@/lib/api/types/client-api";
 import { formatCNPJ } from "@/utils/format";
 import { clientsApi } from "@/lib/api/services/clients";
 import { publicApi } from "@/lib/api/services/public";
+import { formatCnae } from "@/domain/scope/cnae";
 
 type Props = {
   form: EscopoForm;
@@ -61,10 +67,13 @@ export default function StepSobreEmpresa({
             enderecoCompletoEscritorio: `${data.logradouro}, ${data.bairro}, n°${data.numero} - ${data.municipio}/${data.uf} - CEP: ${data.cep}`,
             enderecoCompletoArmazem: form.sobreEmpresa.enderecoCompletoArmazem,
             cnaePrincipal:
-              data.cnae_fiscal_descricao ?? form.sobreEmpresa.cnaePrincipal,
+              data.cnae_fiscal && data.cnae_fiscal_descricao
+                ? formatCnae(data.cnae_fiscal, data.cnae_fiscal_descricao)
+                : form.sobreEmpresa.cnaePrincipal,
             cnaeSecundario:
-              data.cnaes_secundarios?.map((c) => c.descricao).join("\n") ??
-              form.sobreEmpresa.cnaeSecundario,
+              data.cnaes_secundarios
+                ?.map((c) => formatCnae(c.codigo, c.descricao))
+                .join("\n") ?? form.sobreEmpresa.cnaeSecundario,
             regimeTributacao:
               data.regimeTributacao ?? form.sobreEmpresa.regimeTributacao,
           },
@@ -214,13 +223,24 @@ export default function StepSobreEmpresa({
             onChange={(e) => patch({ enderecoCompletoArmazem: e.target.value })}
           />
         </Field>
-        <Field label="CNAEs secundários" hint="Campo opcional">
-          <TextInput
+        <Field
+          label="CNAEs secundários"
+          hint="Um por linha: 0000-0/00 - Descrição"
+          error={errors["cnaeSecundario"]}
+        >
+          <TextArea
+            invalid={Boolean(errors["cnaeSecundario"])}
             value={s.cnaeSecundario ?? ""}
             onChange={(e) => patch({ cnaeSecundario: e.target.value })}
+            className="min-h-32"
           />
         </Field>
-        <Field label="CNAE principal" required error={errors["cnaePrincipal"]}>
+        <Field
+          label="CNAE principal"
+          required
+          hint="Formato: 0000-0/00 - Descrição"
+          error={errors["cnaePrincipal"]}
+        >
           <TextInput
             invalid={Boolean(errors["cnaePrincipal"])}
             value={s.cnaePrincipal}
