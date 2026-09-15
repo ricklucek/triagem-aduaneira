@@ -31,6 +31,31 @@ import type {
   NfeXmlVersionSummary,
 } from "@/lib/api/types/nfe-api";
 
+function normalizeDraftSummary<T extends NfeDraftSummary>(draft: T): T {
+  return {
+    ...draft,
+    validation_errors: Array.isArray(draft.validation_errors)
+      ? draft.validation_errors
+      : [],
+    validation_warnings: Array.isArray(draft.validation_warnings)
+      ? draft.validation_warnings
+      : [],
+    xml_versions: Array.isArray(draft.xml_versions) ? draft.xml_versions : [],
+  } as T;
+}
+
+function normalizeDraftDetail(
+  detail: NfeDraftDetailResponse,
+): NfeDraftDetailResponse {
+  return {
+    ...detail,
+    draft: normalizeDraftSummary(detail.draft),
+    items: Array.isArray(detail.items) ? detail.items : [],
+    xmlVersions: Array.isArray(detail.xmlVersions) ? detail.xmlVersions : [],
+    auditTrail: Array.isArray(detail.auditTrail) ? detail.auditTrail : [],
+  };
+}
+
 export const nfeApi = {
   async listCarriers(params: {
     q?: string;
@@ -309,7 +334,12 @@ export const nfeApi = {
 
   async listDrafts(processId: string): Promise<{ items: NfeDraftSummary[] }> {
     const { data } = await http.get<{ items: NfeDraftSummary[] }>(API_ROUTES.nfe.drafts(processId));
-    return data;
+    return {
+      ...data,
+      items: Array.isArray(data.items)
+        ? data.items.map(normalizeDraftSummary)
+        : [],
+    };
   },
 
   async listSnapshots(processId: string): Promise<DuimpSnapshotDetail[]> {
@@ -334,7 +364,7 @@ export const nfeApi = {
     const { data } = await http.get<NfeDraftDetailResponse>(
       API_ROUTES.nfe.draft(draftId),
     );
-    return data;
+    return normalizeDraftDetail(data);
   },
 
   async updateDraft(draftId: string, payload: UpdateNfeDraftPayload) {
