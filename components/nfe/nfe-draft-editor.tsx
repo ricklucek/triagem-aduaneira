@@ -45,6 +45,18 @@ function apiError(error: unknown) {
   return candidate.response?.data?.message || candidate.message || "Não foi possível salvar a alteração.";
 }
 
+function weightSourceLabel(source: string) {
+  return ({
+    duimp_items: "Automático · itens da DUIMP",
+    duimp_cargo_total: "Automático · total da carga",
+    duimp_cargo_received: "Automático · carga recepcionada",
+    duimp_cargo_delivered: "Automático · carga entregue",
+    duimp_cargo_totalized: "Automático · cargas totalizadas",
+    operator_override: "Ajuste manual",
+    tax_rule_default: "Padrão da regra tributária",
+  } as Record<string, string>)[source] || "Não informado";
+}
+
 const tabNames = [
   ["general", "Dados gerais"],
   ["parties", "Emitente e exportador"],
@@ -248,12 +260,12 @@ export function NfeDraftEditor({
         .filter(([, fieldValue]) => fieldValue),
     );
     const volumeQuantity = Number(value("volume_quantity") || 0);
-    const volume: Record<string, string | number> = {
+    const volume: Record<string, string | number | null> = {
       species: value("volume_species"),
       brand: value("volume_brand"),
       numbering: value("volume_numbering"),
-      net_weight: value("volume_net_weight") || "0",
-      gross_weight: value("volume_gross_weight") || "0",
+      net_weight: value("volume_net_weight") || null,
+      gross_weight: value("volume_gross_weight") || null,
     };
     if (volumeQuantity > 0) volume.quantity = volumeQuantity;
     await saveMetadata("transport", {
@@ -263,6 +275,12 @@ export function NfeDraftEditor({
         ...(carrierMode === "manual" ? { carrier: Object.keys(manualCarrier).length ? manualCarrier : null } : {}),
         volume,
       },
+    });
+  }
+
+  async function restoreAutomaticWeight(field: "net_weight" | "gross_weight") {
+    await saveMetadata(`restore:${field}`, {
+      transport: { volume: { [field]: null } },
     });
   }
 
@@ -398,7 +416,66 @@ export function NfeDraftEditor({
           <form className="space-y-5" onSubmit={saveTransport}>
             <div className="space-y-1.5"><Label>Modalidade do frete</Label><select name="freight_mode" defaultValue={text(payload, "transport", "freight_mode") || "9"} className="h-10 w-full rounded-md border bg-background px-3 text-sm"><option value="0">0 — Emitente</option><option value="1">1 — Destinatário</option><option value="2">2 — Terceiros</option><option value="3">3 — Próprio do emitente</option><option value="4">4 — Próprio do destinatário</option><option value="9">9 — Sem transporte</option></select></div>
             <NfeCarrierSelector key={detail.draft.updated_at || detail.draft.id} initialCarrier={record(record(payload.transport).carrier)} />
-            <div className="grid gap-3 md:grid-cols-3">{(["quantity", "species", "brand", "numbering", "net_weight", "gross_weight"] as const).map((field) => <div key={field} className="space-y-1.5"><Label>{field.replaceAll("_", " ")}</Label><Input name={`volume_${field}`} type={field === "quantity" ? "number" : "text"} defaultValue={text(payload, "transport", "volume", field)} /></div>)}</div>
+            <Alert>
+              <CircleAlert />
+              <AlertTitle>Pesos preenchidos pela DUIMP</AlertTitle>
+              <AlertDescription>
+                O peso líquido é a soma dos itens. O peso bruto usa o total da carga quando a DUIMP fornece uma origem completa. Você pode ajustar os valores sem perder a possibilidade de restaurar a automação.
+              </AlertDescription>
+            </Alert>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              {(["quantity", "species", "brand", "numbering"] as const).map((field) => (
+                <div key={field} className="space-y-1.5">
+                  <Label>{({ quantity: "Quantidade de volumes", species: "Espécie", brand: "Marca", numbering: "Numeração" })[field]}</Label>
+                  <Input name={`volume_${field}`} type={field === "quantity" ? "number" : "text"} defaultValue={text(payload, "transport", "volume", field)} />
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {(["net_weight", "gross_weight"] as const).map((field) => {
+                const source = text(payload, "transport", "volume", `${field}_source`);
+                const automaticValue = text(payload, "duimp", field);
+                const isManual = source === "operator_override";
+                return (
+                  <div key={field} className="space-y-2 rounded-lg border p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Label htmlFor={`volume_${field}`}>
+                        {field === "net_weight" ? "Peso líquido (kg)" : "Peso bruto (kg)"}
+                      </Label>
+                      <Badge variant={isManual ? "outline" : "secondary"}>
+                        {weightSourceLabel(source)}
+                      </Badge>
+                    </div>
+                    <Input
+                      id={`volume_${field}`}
+                      name={`volume_${field}`}
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.00001"
+                      defaultValue={text(payload, "transport", "volume", field)}
+                    />
+                    {automaticValue && isManual && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={immutable || busy === `restore:${field}`}
+                        onClick={() => void restoreAutomaticWeight(field)}
+                      >
+                        {busy === `restore:${field}` ? <Loader2 className="animate-spin" /> : <RotateCcw />}
+                        Restaurar {automaticValue} kg da DUIMP
+                      </Button>
+                    )}
+                    {!automaticValue && field === "gross_weight" && (
+                      <p className="text-xs text-muted-foreground">
+                        A DUIMP não retornou um peso bruto completo; confira e informe manualmente.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
             <Button disabled={immutable || busy === "transport"}>{busy === "transport" && <Loader2 className="animate-spin" />} Salvar transporte</Button>
           </form>
         </TabsContent>
