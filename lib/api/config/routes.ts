@@ -53,6 +53,16 @@ export const API_ROUTES = {
       `/clients/${clientId}/import-tax-rules/diagnostics`,
     nfeNumberSequences: (clientId: string) =>
       `/clients/${clientId}/nfe-number-sequences`,
+    fiscalCertificates: (clientId: string) =>
+      `/clients/${clientId}/fiscal-certificates`,
+    uploadFiscalCertificate: (clientId: string) =>
+      `/clients/${clientId}/fiscal-certificates/upload`,
+    validateFiscalCertificate: (clientId: string, certificateId: string) =>
+      `/clients/${clientId}/fiscal-certificates/${certificateId}/validate`,
+    activateFiscalCertificate: (clientId: string, certificateId: string) =>
+      `/clients/${clientId}/fiscal-certificates/${certificateId}/activate`,
+    deactivateFiscalCertificate: (clientId: string, certificateId: string) =>
+      `/clients/${clientId}/fiscal-certificates/${certificateId}/deactivate`,
   },
   nfe: {
     providerConnections: "/external-provider-connections",

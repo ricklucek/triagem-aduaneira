@@ -141,6 +141,36 @@ export interface ListNfeCarriersResponse {
   active?: boolean | null;
 }
 
+export type FiscalCertificateStatus =
+  | "pending_validation"
+  | "active"
+  | "expired"
+  | "revoked"
+  | "disabled"
+  | "invalid";
+
+export interface FiscalCertificate {
+  id: string;
+  organization_id: string;
+  client_id: string;
+  environment: FiscalEnvironment;
+  provider: "gcp_secret_manager";
+  status: FiscalCertificateStatus;
+  issuer_cnpj: string;
+  certificate_fingerprint_sha256?: string | null;
+  certificate_serial_number?: string | null;
+  subject_name?: string | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  expires_in_days?: number | null;
+  is_active: boolean;
+  last_validated_at?: string | null;
+  validation_error?: string | null;
+  created_by_name?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface FiscalProfilePayload {
   legal_name: string;
   trade_name?: string | null;

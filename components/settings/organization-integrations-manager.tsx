@@ -183,7 +183,9 @@ export function OrganizationIntegrationsManager({ returnTo }: { returnTo?: strin
               <CircleAlert />
               <AlertTitle>Credenciais diferentes do certificado da NF-e</AlertTitle>
               <AlertDescription>
-                Esta integração serve somente para consultar DUIMPs. O certificado A1 do cliente será cadastrado e validado no futuro fluxo de assinatura da NF-e.
+                Esta integração serve somente para consultar DUIMPs. O
+                certificado eCNPJ A1 de cada cliente é administrado em Emissão
+                de NF-e → Cadastros → Certificados A1.
               </AlertDescription>
             </Alert>
           </CardContent>
