@@ -325,7 +325,7 @@ export interface UpdateNfeDraftPayload {
     freight_mode?: string;
     carrier_id?: string;
     carrier?: Record<string, string> | null;
-    volume?: Record<string, string | number>;
+    volume?: Record<string, string | number | null>;
   };
   payment?: Record<string, unknown>;
   additional_info?: Record<string, unknown>;

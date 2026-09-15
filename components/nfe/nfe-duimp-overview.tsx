@@ -88,6 +88,23 @@ function money(value: unknown) {
   }).format(decimal(value));
 }
 
+function weight(value: unknown) {
+  if (value === null || value === undefined || value === "") {
+    return "Não informado";
+  }
+  return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 5 }).format(decimal(value))} kg`;
+}
+
+function weightOrigin(value: unknown) {
+  return ({
+    duimp_items: "soma dos itens",
+    duimp_cargo_total: "total da carga",
+    duimp_cargo_received: "carga recepcionada",
+    duimp_cargo_delivered: "carga entregue",
+    duimp_cargo_totalized: "cargas totalizadas",
+  } as Record<string, string>)[String(value || "")] || "origem não disponível";
+}
+
 function saveJson(value: Record<string, unknown>, filename: string) {
   const blob = new Blob([JSON.stringify(value, null, 2)], {
     type: "application/json",
@@ -353,16 +370,16 @@ export function NfeDuimpOverview({
               value={pick(normalized, ["transport_document"], ["awb"], ["ruc"])}
             />
             <Info
-              label="Peso líquido"
-              value={pick(normalized, ["net_weight"], ["cargo", "net_weight"])}
+              label={`Peso líquido · ${weightOrigin(pick(normalized, ["net_weight_source"], ["cargo", "net_weight_source"]))}`}
+              value={weight(pick(normalized, ["net_weight"], ["cargo", "net_weight"]))}
             />
             <Info
-              label="Peso bruto"
-              value={pick(
+              label={`Peso bruto · ${weightOrigin(pick(normalized, ["gross_weight_source"], ["cargo", "gross_weight_source"]))}`}
+              value={weight(pick(
                 normalized,
                 ["gross_weight"],
                 ["cargo", "gross_weight"],
-              )}
+              ))}
             />
           </dl>
         </Section>
