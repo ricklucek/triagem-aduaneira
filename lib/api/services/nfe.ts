@@ -3,6 +3,7 @@ import { API_ROUTES } from "@/lib/api/config/routes";
 import type {
   DuimpSnapshotDetail,
   FiscalEnvironment,
+  FiscalCertificate,
   FiscalProfilePayload,
   FiscalCountryReference,
   FiscalMunicipalityReference,
@@ -57,6 +58,64 @@ function normalizeDraftDetail(
 }
 
 export const nfeApi = {
+  async listFiscalCertificates(clientId: string): Promise<FiscalCertificate[]> {
+    const { data } = await http.get<FiscalCertificate[]>(
+      API_ROUTES.clients.fiscalCertificates(clientId),
+    );
+    return Array.isArray(data) ? data : [];
+  },
+
+  async uploadFiscalCertificate(
+    clientId: string,
+    payload: {
+      certificate: File;
+      password: string;
+      environment: FiscalEnvironment;
+      activate: boolean;
+    },
+  ): Promise<FiscalCertificate> {
+    const form = new FormData();
+    form.append("certificate", payload.certificate);
+    form.append("password", payload.password);
+    form.append("environment", payload.environment);
+    form.append("activate", String(payload.activate));
+    const { data } = await http.post<FiscalCertificate>(
+      API_ROUTES.clients.uploadFiscalCertificate(clientId),
+      form,
+    );
+    return data;
+  },
+
+  async validateFiscalCertificate(
+    clientId: string,
+    certificateId: string,
+  ): Promise<FiscalCertificate> {
+    const { data } = await http.post<FiscalCertificate>(
+      API_ROUTES.clients.validateFiscalCertificate(clientId, certificateId),
+    );
+    return data;
+  },
+
+  async activateFiscalCertificate(
+    clientId: string,
+    certificateId: string,
+  ): Promise<FiscalCertificate> {
+    const { data } = await http.post<FiscalCertificate>(
+      API_ROUTES.clients.activateFiscalCertificate(clientId, certificateId),
+    );
+    return data;
+  },
+
+  async deactivateFiscalCertificate(
+    clientId: string,
+    certificateId: string,
+  ): Promise<FiscalCertificate> {
+    const { data } = await http.post<FiscalCertificate>(
+      API_ROUTES.clients.deactivateFiscalCertificate(clientId, certificateId),
+    );
+    return data;
+  },
+
   async listCarriers(params: {
     q?: string;
     active?: boolean;

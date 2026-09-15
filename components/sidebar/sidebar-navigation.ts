@@ -63,6 +63,10 @@ export const nfeSidebarNavigation: SidebarNavigation = {
                 title: "Transportadoras",
                 url: "/nfe/carriers",
             },
+            {
+                title: "Certificados A1",
+                url: "/nfe/certificates",
+            },
         ],
     },
     action: {
