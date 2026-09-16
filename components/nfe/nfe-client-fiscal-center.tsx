@@ -227,7 +227,9 @@ export function NfeClientFiscalCenter({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const text = (name: string) => String(form.get(name) || "").trim();
-    const rate = text("icms_rate");
+    const decimal = (name: string) => text(name).replace(",", ".");
+    const rate = decimal("icms_rate");
+    const baseReductionRate = decimal("icms_base_reduction_rate");
     const existingConfiguration = editingRule?.configuration_json || {};
     const existingDocument = (existingConfiguration.document_defaults as Record<string, unknown>) || {};
     const existingItems = (existingConfiguration.item_defaults as Record<string, unknown>) || {};
@@ -256,7 +258,10 @@ export function NfeClientFiscalCenter({
     delete configuration.icms_rate;
     delete configuration.icms_base_reduction_rate;
     delete configuration.icms_deferment_rate;
-    if (icmsCst === "51" && icmsTreatment === "deferment") {
+    if (icmsCst === "20") {
+      configuration.icms_rate = rate;
+      configuration.icms_base_reduction_rate = baseReductionRate;
+    } else if (icmsCst === "51" && icmsTreatment === "deferment") {
       configuration.icms_deferment_rate = "100";
     } else if (icmsCst === "51" && icmsTreatment === "reduction") {
       configuration.icms_base_reduction_rate = "100";
@@ -611,6 +616,7 @@ export function NfeClientFiscalCenter({
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="00">00 — Tributada integralmente</SelectItem>
+                  <SelectItem value="20">20 — Com redução da base de cálculo</SelectItem>
                   <SelectItem value="40">40 — Isenta</SelectItem>
                   <SelectItem value="41">41 — Não tributada</SelectItem>
                   <SelectItem value="50">50 — Suspensão</SelectItem>
@@ -635,14 +641,23 @@ export function NfeClientFiscalCenter({
             ) : (
               <div className="space-y-1.5">
                 <Label>Tratamento do ICMS</Label>
-                <Input value={["40", "41", "50"].includes(icmsCst) ? "Sem alíquota nominal" : "Alíquota nominal"} disabled />
+                <Input value={["40", "41", "50"].includes(icmsCst) ? "Sem alíquota nominal" : icmsCst === "20" ? "Alíquota nominal com redução da base" : "Alíquota nominal"} disabled />
               </div>
             )}
 
-            {["00", "90"].includes(icmsCst) || (icmsCst === "51" && icmsTreatment === "nominal") ? (
+            {["00", "20", "90"].includes(icmsCst) || (icmsCst === "51" && icmsTreatment === "nominal") ? (
               <FormField label="Alíquota do ICMS" name="icms_rate" defaultValue={asText(configuration.icms_rate)} placeholder="Ex.: 12" />
             ) : (
               <input type="hidden" name="icms_rate" value="" />
+            )}
+
+            {icmsCst === "20" && (
+              <FormField
+                label="Redução da base do ICMS (%)"
+                name="icms_base_reduction_rate"
+                defaultValue={asText(configuration.icms_base_reduction_rate)}
+                placeholder="Ex.: 26,6667"
+              />
             )}
 
             <FormField label="CST do IPI" name="ipi_cst" defaultValue={asText(configuration.ipi_cst) || "00"} />
