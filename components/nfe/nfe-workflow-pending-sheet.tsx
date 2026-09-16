@@ -3,8 +3,10 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Check, CircleAlert, Loader2, Settings2 } from "lucide-react";
 import { nfeApi } from "@/lib/api/services/nfe";
+import { clientsApi } from "@/lib/api/services/clients";
 import { MunicipalityReferenceSearch } from "@/components/nfe/fiscal-reference-search";
 import { getSessionRole } from "@/lib/api/hooks/use-auth";
+import type { ClientApi } from "@/lib/api/types/client-api";
 import type {
   FiscalProfilePayload,
   NfeNumberSequence,
@@ -120,9 +122,37 @@ export function NfeWorkflowPendingSheet({
   const [busy, setBusy] = useState(false);
   const [profile, setProfile] = useState<FiscalProfilePayload | null>(null);
   const [numberSequence, setNumberSequence] = useState<NfeNumberSequence | null>(null);
+  const [importerFallback, setImporterFallback] = useState<ClientApi | null>(null);
   const action = actionOverride || workflow.next_action;
   const isAdmin = getSessionRole() === "admin";
   const importer = workflow.process.importer;
+  const currentImporterFallback =
+    importerFallback?.id === workflow.process.importer_id
+      ? importerFallback
+      : null;
+  const importerCnpj = importer?.cnpj || currentImporterFallback?.cnpj || "";
+  const importerLegalName =
+    importer?.legal_name || currentImporterFallback?.razao_social || "";
+  const importerName =
+    importer?.name || currentImporterFallback?.nome_resumido || importerLegalName;
+
+  useEffect(() => {
+    if (!open || !workflow.process.importer_id || importer?.cnpj) {
+      return;
+    }
+    let active = true;
+    void clientsApi
+      .getClient(workflow.process.importer_id)
+      .then((client) => {
+        if (active) setImporterFallback(client);
+      })
+      .catch(() => {
+        if (active) setImporterFallback(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [importer?.cnpj, open, workflow.process.importer_id]);
 
   useEffect(() => {
     if (!open || !workflow.process.importer_id) return;
@@ -155,13 +185,20 @@ export function NfeWorkflowPendingSheet({
       toast.error("Somente administradores podem alterar o perfil fiscal.");
       return;
     }
+    const cnpj = importerCnpj.replace(/[.\-/\s]/g, "").toUpperCase();
+    if (!cnpj) {
+      toast.error(
+        "Não foi possível identificar o CNPJ do cliente. Atualize o processo e tente novamente.",
+      );
+      return;
+    }
     const form = new FormData(event.currentTarget);
     setBusy(true);
     try {
       await nfeApi.saveFiscalProfile(workflow.process.importer_id, {
         legal_name: String(form.get("legal_name")),
         trade_name: String(form.get("trade_name") || "") || null,
-        cnpj: importer?.cnpj || "",
+        cnpj,
         state_registration: String(form.get("state_registration") || "") || null,
         tax_regime: String(form.get("tax_regime")) as "1" | "2" | "3",
         street: String(form.get("street")),
@@ -246,14 +283,18 @@ export function NfeWorkflowPendingSheet({
             <p className="text-xs text-muted-foreground">Processo</p>
             <strong>{workflow.process.reference_code}</strong>
             <p className="mt-1 text-xs text-muted-foreground">
-              {importer?.name || importer?.legal_name} · {importer?.cnpj}
+              {importerName} · {importerCnpj}
             </p>
           </div>
 
           {action === "configure_fiscal_profile" && (
             <form key={formKey} className="grid gap-4 sm:grid-cols-2" onSubmit={submitProfile}>
-              <Field label="Razão social" name="legal_name" defaultValue={profile?.legal_name || importer?.legal_name} />
-              <Field label="Nome fantasia" name="trade_name" defaultValue={profile?.trade_name || importer?.name} required={false} />
+              <Field label="Razão social" name="legal_name" defaultValue={profile?.legal_name || importerLegalName} />
+              <Field label="Nome fantasia" name="trade_name" defaultValue={profile?.trade_name || importerName} required={false} />
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="pending-cnpj">CNPJ do cliente</Label>
+                <Input id="pending-cnpj" value={importerCnpj} disabled />
+              </div>
               <Field label="Inscrição estadual" name="state_registration" defaultValue={profile?.state_registration || ""} required={false} />
               <div className="space-y-1.5">
                 <Label>Regime tributário NF-e</Label>
@@ -280,7 +321,7 @@ export function NfeWorkflowPendingSheet({
               <Field label="CEP" name="zip_code" defaultValue={profile?.zip_code} />
               <Field label="Telefone" name="phone" defaultValue={profile?.phone || ""} required={false} />
               <Field label="E-mail" name="email" defaultValue={profile?.email || ""} type="email" required={false} />
-              <Button className="sm:col-span-2" disabled={busy || !isAdmin}>
+              <Button className="sm:col-span-2" disabled={busy || !isAdmin || !importerCnpj}>
                 {busy ? <Loader2 className="animate-spin" /> : <Check />} Salvar perfil e reavaliar
               </Button>
             </form>
