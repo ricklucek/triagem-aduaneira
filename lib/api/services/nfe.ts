@@ -21,6 +21,7 @@ import type {
   NfeItemClassificationState,
   NfeNumberSequence,
   NfeNumberSequencePayload,
+  NfeSignatureResponse,
   NfeCarrier,
   NfeCarrierPayload,
   NfeContextState,
@@ -502,6 +503,18 @@ export const nfeApi = {
     const { data } = await http.post<NfeXmlValidationResult>(
       API_ROUTES.nfe.validateXml(draftId, xmlVersionId),
       {},
+    );
+    return data;
+  },
+
+  async signXml(
+    draftId: string,
+    xmlVersionId: string,
+    certificateId: string,
+  ): Promise<NfeSignatureResponse> {
+    const { data } = await http.post<NfeSignatureResponse>(
+      API_ROUTES.nfe.signXml(draftId, xmlVersionId),
+      { certificate_id: certificateId },
     );
     return data;
   },

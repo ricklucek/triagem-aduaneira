@@ -277,6 +277,41 @@ export interface NfeXmlVersionSummary {
   generated_at?: string | null;
 }
 
+export interface NfeSignatureSummary {
+  issuance_id: string;
+  status: string;
+  certificate_id?: string | null;
+  certificate_fingerprint_sha256?: string | null;
+  certificate_serial_number?: string | null;
+  certificate_valid_until?: string | null;
+  signed_at?: string | null;
+  signed_by_user_id?: string | null;
+  signed_by_name?: string | null;
+  unsigned_checksum_sha256?: string | null;
+  signed_checksum_sha256?: string | null;
+  attempt_number?: number | null;
+  attempt_status?: string | null;
+  last_error_code?: string | null;
+  last_error_message?: string | null;
+}
+
+export interface NfeSignatureResponse {
+  xml_version: NfeXmlVersionSummary;
+  issuance: {
+    id: string;
+    status: string;
+    certificate_id: string;
+    access_key?: string | null;
+  };
+  certificate: {
+    id: string;
+    issuer_cnpj: string;
+    fingerprint_sha256?: string | null;
+    valid_until?: string | null;
+  };
+  replayed: boolean;
+}
+
 export interface NfeXmlValidationResult {
   xml_version_id: string;
   nfe_draft_id: string;
@@ -312,6 +347,7 @@ export interface NfeDraftSummary {
   validation_warnings: Array<Record<string, unknown>>;
   created_at?: string | null;
   updated_at?: string | null;
+  signature?: NfeSignatureSummary | null;
   xml_versions: NfeXmlVersionSummary[];
 }
 
@@ -322,6 +358,7 @@ export interface NfeDraftDetailResponse {
   items: Array<Record<string, unknown> & { id: string }>;
   xmlVersions: NfeXmlVersionSummary[];
   auditTrail: NfeDraftAuditEvent[];
+  signature?: NfeSignatureSummary | null;
 }
 
 export interface NfeDraftAuditEvent {
@@ -584,6 +621,7 @@ export interface NfeWorkflowState {
     tax_rule_conflict_count: number;
     has_number_sequence: boolean;
     has_provider_connection: boolean;
+    has_active_certificate: boolean;
     has_item_classification: boolean;
     item_classification_ready: boolean;
     has_document_plan: boolean;
