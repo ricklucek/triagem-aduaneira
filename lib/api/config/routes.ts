@@ -104,6 +104,8 @@ export const API_ROUTES = {
     generateXml: (draftId: string) => `/nfe-drafts/${draftId}/generate-xml`,
     validateXml: (draftId: string, xmlVersionId: string) =>
       `/nfe-drafts/${draftId}/xml-versions/${xmlVersionId}/validate-xsd`,
+    signXml: (draftId: string, xmlVersionId: string) =>
+      `/nfe-drafts/${draftId}/xml-versions/${xmlVersionId}/sign`,
     downloadXml: (draftId: string, xmlVersionId: string) =>
       `/nfe-drafts/${draftId}/xml-versions/${xmlVersionId}/download`,
   },

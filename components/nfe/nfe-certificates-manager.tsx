@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
@@ -114,6 +115,8 @@ function validityMessage(certificate: FiscalCertificate) {
 
 export function NfeCertificatesManager() {
   const toast = useToast();
+  const searchParams = useSearchParams();
+  const requestedClientId = searchParams.get("clientId") || "";
   const isAdmin = getSessionRole() === "admin";
   const [clients, setClients] = useState<ClientApi[]>([]);
   const [clientQuery, setClientQuery] = useState("");
@@ -138,19 +141,31 @@ export function NfeCertificatesManager() {
         ativo: true,
         limit: 100,
       });
-      setClients(response.items);
+      let items = response.items;
+      if (
+        requestedClientId &&
+        !clientQuery.trim() &&
+        !items.some((client) => client.id === requestedClientId)
+      ) {
+        const requestedClient = await clientsApi.getClient(requestedClientId);
+        items = [requestedClient, ...items];
+      }
+      setClients(items);
       setSelectedClientId((current) => {
-        if (response.items.some((client) => client.id === current)) {
+        if (items.some((client) => client.id === current)) {
           return current;
         }
-        return response.items[0]?.id || "";
+        if (items.some((client) => client.id === requestedClientId)) {
+          return requestedClientId;
+        }
+        return items[0]?.id || "";
       });
     } catch (error) {
       toast.error(apiError(error));
     } finally {
       setLoadingClients(false);
     }
-  }, [clientQuery, toast]);
+  }, [clientQuery, requestedClientId, toast]);
 
   const loadCertificates = useCallback(async () => {
     if (!selectedClientId) {
@@ -272,7 +287,7 @@ export function NfeCertificatesManager() {
             <h1 className="text-2xl font-semibold">Certificados eCNPJ A1</h1>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Certificados utilizados na futura assinatura das NF-e do cliente.
+            Certificados utilizados para assinar as NF-e do cliente.
           </p>
         </div>
         {isAdmin && (

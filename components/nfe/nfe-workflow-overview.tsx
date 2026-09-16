@@ -10,6 +10,8 @@ import {
   CircleAlert,
   Download,
   FileCode2,
+  FileSignature,
+  KeyRound,
   Loader2,
   LockKeyhole,
   PencilLine,
@@ -23,16 +25,18 @@ import { useDuimpSnapshots, useNfeDrafts, useNfeWorkflowState } from "@/lib/api/
 import type {
   NfeDraftDetailResponse,
   NfeDraftSummary,
+  FiscalCertificate,
   NfeWorkflowState,
   NfeWorkflowStepKey,
   NfeXmlVersionSummary,
 } from "@/lib/api/types/nfe-api";
 import { useToast } from "@/components/ui/toast";
+import { getSessionRole } from "@/lib/api/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -63,7 +67,10 @@ const actionLabels: Record<string, string> = {
   generate_access_key: "Gerar a chave de acesso",
   generate_xml: "Gerar o XML não assinado",
   validate_xml: "Validar o XML no XSD",
-  completed: "XML não assinado validado",
+  configure_certificate: "Cadastrar ou ativar o certificado A1",
+  sign_xml: "Assinar a NF-e",
+  sign_child_xmls: "Assinar as NF-e filhas",
+  completed: "XML assinado e conferido",
 };
 
 const draftStatusLabels: Record<string, string> = {
@@ -108,8 +115,27 @@ const primaryActionLabels: Record<string, string> = {
   generate_access_key: "Gerar chave e XML",
   generate_xml: "Gerar XML",
   validate_xml: "Validar XML",
-  completed: "Baixar XML validado",
+  configure_certificate: "Configurar certificado A1",
+  sign_xml: "Assinar XML",
+  sign_child_xmls: "Assinar XMLs pendentes",
+  completed: "Baixar XML assinado",
 };
+
+type SignatureTarget = {
+  draftId: string;
+  xmlVersionId: string;
+  label: string;
+};
+
+function xmlType(value: string) {
+  return String(value || "").toLowerCase();
+}
+
+function isLockedDraftStatus(status: string) {
+  return ["signed", "transmitted", "authorized", "cancelled"].includes(
+    status,
+  );
+}
 
 function contextValue(
   context: NfeWorkflowState["context"],
@@ -153,6 +179,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
+  const isAdmin = getSessionRole() === "admin";
   const series = "1";
   const [refreshDuimp, setRefreshDuimp] = useState(false);
   const [newDraftOpen, setNewDraftOpen] = useState(false);
@@ -162,6 +189,10 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   const [setupAction, setSetupAction] = useState<string | null>(null);
   const [correctionDetail, setCorrectionDetail] = useState<NfeDraftDetailResponse | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [signatureOpen, setSignatureOpen] = useState(false);
+  const [signatureTargets, setSignatureTargets] = useState<SignatureTarget[]>([]);
+  const [signatureCertificates, setSignatureCertificates] = useState<FiscalCertificate[]>([]);
+  const [selectedCertificateId, setSelectedCertificateId] = useState("");
   const workflow = useNfeWorkflowState(processId);
   const drafts = useNfeDrafts(processId);
   const snapshots = useDuimpSnapshots(processId);
@@ -240,6 +271,9 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
   );
   const latestDraft = activeDraftItems[0];
   const latestXml = latestDraft?.xml_versions[0];
+  const latestUnsignedXml = latestDraft?.xml_versions.find(
+    (version) => xmlType(version.xml_type) === "unsigned",
+  );
   const primaryActionLabel = primaryActionLabels[data.next_action];
   const primaryActionSupported = Boolean(
     primaryActionLabel &&
@@ -258,6 +292,9 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       data.next_action === "correct_child_drafts" ||
       data.next_action === "generate_child_xmls" ||
       data.next_action === "validate_child_xmls" ||
+      data.next_action === "configure_certificate" ||
+      data.next_action === "sign_xml" ||
+      data.next_action === "sign_child_xmls" ||
       (data.next_action === "correct_draft" && latestDraft) ||
       (["generate_access_key", "generate_xml", "validate_xml"].includes(data.next_action) && latestDraft) ||
       (data.next_action === "completed" && latestDraft && latestXml)
@@ -383,6 +420,100 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     } finally {
       setBusyAction(null);
     }
+  }
+
+  function pendingSignatureTargets(): SignatureTarget[] {
+    return activeDraftItems.flatMap((draft, index) => {
+      const unsigned = draft.xml_versions.find(
+        (version) => xmlType(version.xml_type) === "unsigned",
+      );
+      if (!unsigned || unsigned.xsd_valid !== true) return [];
+      const signed = draft.xml_versions.some(
+        (version) =>
+          xmlType(version.xml_type) === "signed" &&
+          version.version_number === unsigned.version_number,
+      );
+      const outdated = Boolean(
+        draft.updated_at &&
+        unsigned.generated_at &&
+        new Date(draft.updated_at).getTime() >
+          new Date(unsigned.generated_at).getTime() &&
+        !signed,
+      );
+      if (signed || outdated) return [];
+      return [
+        {
+          draftId: draft.id,
+          xmlVersionId: unsigned.id,
+          label: draft.number
+            ? `NF-e nº ${draft.number}`
+            : `Rascunho #${activeDraftItems.length - index}`,
+        },
+      ];
+    });
+  }
+
+  async function openSignatureDialog(targets?: SignatureTarget[]) {
+    if (!isAdmin) {
+      toast.info("A assinatura da NF-e exige um usuário administrador.");
+      return;
+    }
+    const nextTargets = targets?.length ? targets : pendingSignatureTargets();
+    if (!nextTargets.length) {
+      toast.info("Não há XML válido e pendente de assinatura.");
+      return;
+    }
+    setBusyAction("load-certificates");
+    try {
+      const rows = await nfeApi.listFiscalCertificates(
+        data.process.importer_id,
+      );
+      const active = rows.filter(
+        (certificate) =>
+          certificate.environment === "production" &&
+          certificate.status === "active" &&
+          certificate.is_active,
+      );
+      setSignatureTargets(nextTargets);
+      setSignatureCertificates(active);
+      setSelectedCertificateId(active[0]?.id || "");
+      setSignatureOpen(true);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function signPendingXmls() {
+    if (!selectedCertificateId || !signatureTargets.length) return;
+    setBusyAction("sign-xmls");
+    let signedCount = 0;
+    const failures: string[] = [];
+    for (const target of signatureTargets) {
+      try {
+        await nfeApi.signXml(
+          target.draftId,
+          target.xmlVersionId,
+          selectedCertificateId,
+        );
+        signedCount += 1;
+      } catch (error) {
+        failures.push(`${target.label}: ${errorMessage(error)}`);
+      }
+    }
+    await Promise.all([workflow.mutate(), drafts.mutate()]);
+    setBusyAction(null);
+    if (failures.length) {
+      toast.error(
+        `${signedCount} XML(s) assinado(s); ${failures.length} falha(s). ${failures[0]}`,
+      );
+      return;
+    }
+    setSignatureOpen(false);
+    toast.success(
+      `${signedCount} XML(s) assinado(s) e aprovado(s) no XSD oficial.`,
+    );
   }
 
 
@@ -574,8 +705,16 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
       await generateChildXmls();
       return;
     }
-    if (data.next_action === "validate_xml" && latestDraft && latestXml) {
-      await validateExistingXml(latestDraft.id, latestXml);
+    if (
+      data.next_action === "validate_xml" &&
+      latestDraft &&
+      latestUnsignedXml
+    ) {
+      await validateExistingXml(latestDraft.id, latestUnsignedXml);
+      return;
+    }
+    if (["sign_xml", "sign_child_xmls"].includes(data.next_action)) {
+      await openSignatureDialog();
       return;
     }
     if (
@@ -608,6 +747,12 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
     if (data.next_action === "configure_provider_connection") {
       const returnTo = `/nfe/processes/${processId}?step=duimp`;
       router.push(`/settings/integrations?returnTo=${encodeURIComponent(returnTo)}`);
+      return;
+    }
+    if (data.next_action === "configure_certificate") {
+      router.push(
+        `/nfe/certificates?clientId=${encodeURIComponent(data.process.importer_id)}`,
+      );
       return;
     }
     if (sheetActions.includes(data.next_action)) {
@@ -778,7 +923,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
             <CardHeader><CardTitle>Próxima ação</CardTitle><CardDescription>{actionLabels[data.next_action] || data.next_action}</CardDescription></CardHeader>
             <CardContent className="space-y-4">
               {data.next_action === "completed" ? (
-                <Alert className="border-emerald-500/30 bg-emerald-500/5"><Check /><AlertTitle>Checkpoint concluído</AlertTitle><AlertDescription>O XML não assinado foi validado. Você pode baixá-lo ou criar outro rascunho preservando o histórico.</AlertDescription></Alert>
+                <Alert className="border-emerald-500/30 bg-emerald-500/5"><Check /><AlertTitle>Checkpoint concluído</AlertTitle><AlertDescription>O XML foi assinado com o certificado A1 ativo e aprovado no XSD oficial. Ele está pronto para a futura transmissão à SEFAZ.</AlertDescription></Alert>
               ) : (
                 <Alert><CircleAlert /><AlertTitle>Próxima etapa disponível</AlertTitle><AlertDescription>Preencha ou confirme os dados solicitados para continuar o processo até o XML.</AlertDescription></Alert>
               )}
@@ -799,6 +944,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
               <div className="flex justify-between"><span className="text-muted-foreground">Perfil fiscal</span><strong>{data.prerequisites.has_fiscal_profile ? "Configurado" : "Pendente"}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Regra tributária</span><strong>{data.prerequisites.has_active_tax_rule ? "Aplicada" : "Pendente"}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Sequência</span><strong>{data.prerequisites.has_number_sequence ? "Configurada" : "Pendente"}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Certificado A1</span><strong>{data.prerequisites.has_active_certificate ? "Ativo" : "Pendente"}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Dados da importação</span><strong>{data.context?.ready_for_draft ? "Completos" : `${data.context?.missing_fields?.length || 0} pendência(s)`}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Itens classificados</span><strong>{data.item_classification ? data.item_classification.classified_count + "/" + data.item_classification.total_items : "Pendente"}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">NF-e filhas planejadas</span><strong>{data.prerequisites.planned_documents_count || 0}</strong></div>
@@ -856,7 +1002,7 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                         {draft.validation_errors.length ? "Corrigir rascunho" : "Editar dados"}
                       </Button>
                     )}
-                    {!draft.deleted_at && <Button variant="outline" onClick={() => void generateDiagnosticXml(draft)} disabled={Boolean(busyAction) || draft.validation_errors.length > 0}>
+                    {!draft.deleted_at && !isLockedDraftStatus(draft.status) && <Button variant="outline" onClick={() => void generateDiagnosticXml(draft)} disabled={Boolean(busyAction) || draft.validation_errors.length > 0}>
                       {busyAction === `xml:${draft.id}` ? <Loader2 className="animate-spin" /> : <FileCode2 />}
                       {draft.xml_versions.length ? "Gerar nova versão XML" : "Gerar XML diagnóstico"}
                     </Button>}
@@ -883,6 +1029,16 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                 <div className="mt-4 space-y-2">
                   {draft.xml_versions.length === 0 && <p className="text-sm text-muted-foreground">Nenhum XML gerado para este rascunho.</p>}
                   {draft.xml_versions.map((version) => {
+                    const versionType = xmlType(version.xml_type);
+                    const latestUnsigned = draft.xml_versions.find(
+                      (candidate) =>
+                        xmlType(candidate.xml_type) === "unsigned",
+                    );
+                    const signedForVersion = draft.xml_versions.some(
+                      (candidate) =>
+                        xmlType(candidate.xml_type) === "signed" &&
+                        candidate.version_number === version.version_number,
+                    );
                     const xmlOutdated = Boolean(
                       draft.updated_at &&
                       version.generated_at &&
@@ -890,22 +1046,40 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                     );
                     const xsdApproved = version.xsd_valid === true && !xmlOutdated;
                     const xsdRejected = version.xsd_valid === false && !xmlOutdated;
+                    const canSign =
+                      versionType === "unsigned" &&
+                      latestUnsigned?.id === version.id &&
+                      xsdApproved &&
+                      !signedForVersion;
                     const xsdErrors = version.xsd_errors || [];
                     return (
                       <div id={`xml-version-${version.id}`} key={version.id} className="space-y-3 rounded-lg bg-muted/50 p-3">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex flex-wrap items-center gap-2">
                             <FileCode2 className="size-4" />
-                            <span className="text-sm font-medium">XML {version.xml_type === "unsigned" ? "não assinado" : version.xml_type} v{version.version_number}</span>
+                            <span className="text-sm font-medium">XML {versionType === "unsigned" ? "não assinado" : versionType === "signed" ? "assinado" : versionType} v{version.version_number}</span>
                             <Badge variant={xsdApproved ? "default" : xsdRejected ? "destructive" : "outline"}>
-                              {xmlOutdated ? "Versão anterior" : xsdApproved ? "XSD válido" : xsdRejected ? "XSD inválido" : "Ainda não validado"}
+                              {xmlOutdated ? "Versão anterior" : versionType === "signed" && xsdApproved ? "Assinatura válida" : xsdApproved ? "XSD válido" : xsdRejected ? "XSD inválido" : "Ainda não validado"}
                             </Badge>
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            {!xsdApproved && !xmlOutdated && (
+                            {versionType === "unsigned" && !xsdApproved && !xmlOutdated && (
                               <Button size="sm" variant={xsdRejected ? "destructive" : "outline"} onClick={() => void validateExistingXml(draft.id, version)} disabled={Boolean(busyAction)}>
                                 {busyAction === `validate-xml:${version.id}` ? <Loader2 className="animate-spin" /> : <Check />}
                                 {xsdRejected ? "Validar novamente" : "Validar XML"}
+                              </Button>
+                            )}
+                            {canSign && isAdmin && (
+                              <Button
+                                size="sm"
+                                onClick={() => void openSignatureDialog([{
+                                  draftId: draft.id,
+                                  xmlVersionId: version.id,
+                                  label: draft.number ? `NF-e nº ${draft.number}` : "Rascunho",
+                                }])}
+                                disabled={Boolean(busyAction)}
+                              >
+                                <FileSignature /> Assinar XML
                               </Button>
                             )}
                             <Button size="sm" variant="ghost" onClick={() => void downloadXml(draft.id, version.id)} disabled={busyAction === `download:${version.id}`}>
@@ -943,6 +1117,19 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
                       </div>
                     );
                   })}
+                  {draft.signature?.status === "signed" && (
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm">
+                      <div className="flex items-center gap-2 font-medium text-emerald-800 dark:text-emerald-300">
+                        <FileSignature className="size-4" /> Assinatura XMLDSig registrada
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {draft.signature.signed_by_name || "Usuário não identificado"} · {dateLabel(draft.signature.signed_at)} · SHA-256 {draft.signature.signed_checksum_sha256?.slice(0, 16) || "—"}…
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Certificado {draft.signature.certificate_fingerprint_sha256?.slice(0, 16) || "—"}… · válido até {dateLabel(draft.signature.certificate_valid_until)}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -1041,6 +1228,107 @@ export function NfeWorkflowOverview({ processId }: { processId: string }) {
           await continueWorkflow();
         }}
       />
+
+      <Dialog open={signatureOpen} onOpenChange={(open) => {
+        setSignatureOpen(open);
+        if (!open) {
+          setSignatureTargets([]);
+          setSignatureCertificates([]);
+          setSelectedCertificateId("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSignature className="size-5" /> Assinar XML da NF-e
+            </DialogTitle>
+            <DialogDescription>
+              A API utilizará o certificado A1 diretamente do Secret Manager,
+              verificará a XMLDSig e validará novamente o XML no XSD oficial.
+            </DialogDescription>
+          </DialogHeader>
+
+          {signatureCertificates.length ? (
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="signature-certificate">Certificado ativo</Label>
+                <select
+                  id="signature-certificate"
+                  value={selectedCertificateId}
+                  onChange={(event) => setSelectedCertificateId(event.target.value)}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  {signatureCertificates.map((certificate) => (
+                    <option key={certificate.id} value={certificate.id}>
+                      CNPJ {certificate.issuer_cnpj} · válido até {dateLabel(certificate.valid_until)} · {certificate.certificate_fingerprint_sha256?.slice(0, 12)}…
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="rounded-lg border p-3 text-sm">
+                <strong>{signatureTargets.length} documento(s)</strong>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
+                  {signatureTargets.map((target) => (
+                    <li key={`${target.draftId}:${target.xmlVersionId}`}>
+                      {target.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <Alert>
+                <LockKeyhole />
+                <AlertTitle>O rascunho ficará bloqueado</AlertTitle>
+                <AlertDescription>
+                  Após a assinatura, os dados fiscais não poderão mais ser
+                  editados nem o XML poderá ser regenerado. Uma nova versão
+                  exigirá outro rascunho e preservará esta assinatura.
+                </AlertDescription>
+              </Alert>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSignatureOpen(false)}
+                  disabled={busyAction === "sign-xmls"}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => void signPendingXmls()}
+                  disabled={!selectedCertificateId || busyAction === "sign-xmls"}
+                >
+                  {busyAction === "sign-xmls" ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <FileSignature />
+                  )}
+                  Confirmar assinatura
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Alert variant="destructive">
+                <KeyRound />
+                <AlertTitle>Certificado A1 ativo não encontrado</AlertTitle>
+                <AlertDescription>
+                  Cadastre e ative um certificado de produção pertencente ao
+                  CNPJ do cliente antes de assinar.
+                </AlertDescription>
+              </Alert>
+              <Button asChild>
+                <Link href={`/nfe/certificates?clientId=${encodeURIComponent(data.process.importer_id)}`}>
+                  <KeyRound /> Abrir certificados A1
+                </Link>
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={correctionOpen} onOpenChange={(open) => {
         setCorrectionOpen(open);
