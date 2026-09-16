@@ -45,13 +45,34 @@ async function request<T>(
   config?: AxiosRequestConfig,
 ): Promise<AxiosResponse<T>> {
   const target = buildUrl(baseURL, url, config?.params);
+  const sourceBody = config?.body;
+  const isMultipart =
+    typeof FormData !== "undefined" && sourceBody instanceof FormData;
+  const headers = { ...(config?.headers ?? {}) };
+
+  if (isMultipart) {
+    // O navegador precisa definir o boundary do multipart. Um Content-Type
+    // manual, sem esse boundary, faz o servidor receber request.files vazio.
+    for (const name of Object.keys(headers)) {
+      if (name.toLowerCase() === "content-type") delete headers[name];
+    }
+  } else if (
+    !Object.keys(headers).some((name) => name.toLowerCase() === "content-type")
+  ) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const body =
+    sourceBody === undefined || sourceBody === null
+      ? undefined
+      : isMultipart
+        ? sourceBody
+        : JSON.stringify(sourceBody);
+
   const res = await fetch(target, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(config?.headers ?? {}),
-    },
-    body: config?.body ? JSON.stringify(config.body) : undefined,
+    headers,
+    body,
   });
 
   let payload: unknown = null;
