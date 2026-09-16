@@ -185,6 +185,7 @@ export function NfeDraftEditor({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const value = (name: string) => String(form.get(name) || "").trim();
+    const decimal = (name: string) => value(name).replace(",", ".");
     setBusy(`tax:${itemId}`);
     try {
       const result = await nfeApi.adjustDraftItemTax(detail.draft.id, itemId, {
@@ -193,10 +194,10 @@ export function NfeDraftEditor({
         cfop: value("cfop"),
         icms: {
           cst: value("cst"),
-          base: value("base"),
-          rate: value("rate") || null,
-          reduction_rate: value("reduction_rate") || null,
-          deferment_rate: value("deferment_rate") || null,
+          base: decimal("base"),
+          rate: decimal("rate") || null,
+          reduction_rate: decimal("reduction_rate") || null,
+          deferment_rate: decimal("deferment_rate") || null,
         },
       });
       await reload();
@@ -386,8 +387,8 @@ export function NfeDraftEditor({
                 {source === "manual_adjustment" && <Alert className="mb-4 border-amber-500/40 bg-amber-500/5"><CircleAlert /><AlertDescription>A regra tributária foi sobrescrita especificamente neste item.</AlertDescription></Alert>}
                 <div className="grid gap-3 md:grid-cols-4">
                   <div className="space-y-1.5"><Label>CFOP</Label><Input name="cfop" defaultValue={String(item.cfop || "")} required /></div>
-                  <div className="space-y-1.5"><Label>CST ICMS</Label><select name="cst" defaultValue={String(icms.cst || "90")} className="h-10 w-full rounded-md border bg-background px-3 text-sm">{["00", "40", "41", "50", "51", "90"].map((cst) => <option key={cst}>{cst}</option>)}</select></div>
-                  <div className="space-y-1.5"><Label>Base de cálculo</Label><Input name="base" defaultValue={String(icms.base || "0.00")} inputMode="decimal" required /></div>
+                  <div className="space-y-1.5"><Label>CST ICMS</Label><select name="cst" defaultValue={String(icms.cst || "90")} className="h-10 w-full rounded-md border bg-background px-3 text-sm">{["00", "20", "40", "41", "50", "51", "90"].map((cst) => <option key={cst}>{cst}</option>)}</select></div>
+                  <div className="space-y-1.5"><Label>Base de cálculo (vBC)</Label><Input name="base" defaultValue={String(icms.base || "0.00")} inputMode="decimal" required /></div>
                   <div className="space-y-1.5"><Label>Alíquota (%)</Label><Input name="rate" defaultValue={String(icms.rate || "")} inputMode="decimal" /></div>
                   <div className="space-y-1.5"><Label>Redução (%)</Label><Input name="reduction_rate" defaultValue={String(icms.base_reduction_rate || "")} inputMode="decimal" /></div>
                   <div className="space-y-1.5"><Label>Diferimento (%)</Label><Input name="deferment_rate" defaultValue={String(icms.deferment_rate || "")} inputMode="decimal" /></div>
