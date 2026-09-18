@@ -11,10 +11,10 @@ export interface PublicCompanyLookupResponse {
   nome_fantasia?: string | null;
   inscricaoEstadual?: string | null;
   inscricaoMunicipal?: string | null;
-  cnae_fiscal?: string | null;
+  cnae_fiscal?: string | number | null;
   cnae_fiscal_descricao?: string | null;
   cnaes_secundarios?: {
-    codigo: string;
+    codigo: string | number;
     descricao: string;
   }[];
   regimeTributacao?:
