@@ -484,20 +484,18 @@ export default function StepImportacao({
                   />
                 </Field>
               ) : null}
-              {data.ncms.length > 1 ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() =>
-                    update(
-                      "ncms",
-                      data.ncms.filter((_, i) => i !== index),
-                    )
-                  }
-                >
-                  Remover
-                </Button>
-              ) : null}
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() =>
+                  update(
+                    "ncms",
+                    data.ncms.filter((_, i) => i !== index),
+                  )
+                }
+              >
+                Remover
+              </Button>
             </Card>
           ))}
           <Field label="Observações" hint="Campo opcional">
