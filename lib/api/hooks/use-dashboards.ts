@@ -144,15 +144,15 @@ export function useOrganizationSettingsByKey(key: string) {
 }
 
 export function usePrepostosLookup(params?: {
-  cidade: string;
+  cidade?: string;
   operacao: "IMPORTACAO" | "EXPORTACAO";
 }) {
   const cidade = params?.cidade?.trim() ?? "";
   const operacao = params?.operacao ?? "IMPORTACAO";
 
   return useSWR(
-    cidade && operacao
-      ? ["prepostos:lookup", cidade, operacao].toLocaleString()
+    operacao
+      ? ["prepostos:lookup", cidade || "*", operacao].toLocaleString()
       : null,
     () =>
       publicApi.lookupPrepostos({

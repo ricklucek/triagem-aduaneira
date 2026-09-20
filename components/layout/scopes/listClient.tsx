@@ -44,7 +44,7 @@ export default function ClientsPage({
         </div>
 
         <TextInput
-          placeholder="Buscar por razão social ou CNPJ"
+          placeholder="Buscar por razão social, nome resumido ou CNPJ"
           value={q}
           onChange={(e) => {
             setQ(e.target.value);
@@ -83,8 +83,13 @@ export default function ClientsPage({
                 </div>
               </div>
 
-              <div className="py-4 font-medium whitespace-normal flex items-start">
-                {client.razao_social}
+              <div className="flex flex-col items-start gap-1 py-4 whitespace-normal">
+                <span className="font-medium">{client.razao_social}</span>
+                {client.nome_resumido?.trim() ? (
+                  <span className="text-sm text-muted-foreground">
+                    {client.nome_resumido.trim()}
+                  </span>
+                ) : null}
               </div>
             </>
           );

@@ -15,6 +15,7 @@ type Props = {
   customValue?: string;
   onCustomValueChange?: (next: string) => void;
   customLabel?: string;
+  allowCustomOption?: boolean;
   error?: string;
 };
 
@@ -27,6 +28,7 @@ export default function SearchableCheckboxMenu({
   customValue = "",
   onCustomValueChange,
   customLabel,
+  allowCustomOption = true,
   error,
 }: Props) {
   const [query, setQuery] = useState("");
@@ -40,6 +42,7 @@ export default function SearchableCheckboxMenu({
   }, [options, query]);
 
   const showCustomOption =
+    allowCustomOption &&
     Boolean(query.trim()) &&
     !options.some(
       (option) => option.label.toLowerCase() === query.trim().toLowerCase(),

@@ -597,6 +597,13 @@ export const ExportacaoSchema = z
       )
       .default([]),
     observacaoNcms: z.string().trim().optional().nullable(),
+    modaisSaida: z
+      .array(z.enum(["AEREO", "MARITIMO", "RODOVIARIO"]))
+      .default([]),
+    urfsDespacho: z.array(z.string().trim().min(1)).default([]),
+    outraUrfDespacho: z.string().trim().optional().nullable(),
+    urfsEmbarque: z.array(z.string().trim().min(1)).default([]),
+    outraUrfEmbarque: z.string().trim().optional().nullable(),
     destinacao: DestinacaoSchema,
     subtipoConsumo: SubtipoConsumoSchema,
   })
