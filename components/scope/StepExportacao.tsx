@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { EscopoForm } from "@/domain/scope/types";
 import {
   Field,
@@ -12,6 +13,13 @@ import { Button } from "../ui/button";
 import { formatNCM } from "@/utils/format";
 import { ResponsiblePicker } from "./ResponsiblePicker";
 import { ScopeResponsible } from "@/lib/api/types/scope-metadata";
+import SearchableCheckboxMenu from "./blocks/SearchableCheckboxMenu";
+import { usePrepostosLookup } from "@/lib/api/hooks/use-dashboards";
+import {
+  buildExportUrfLocations,
+  filterUrfLocationsByModal,
+  MODAIS_LOCAL,
+} from "@/domain/scope/locations";
 
 type Props = {
   form: EscopoForm;
@@ -26,16 +34,38 @@ export default function StepExportacao({
   onChange,
   responsaveis,
 }: Props) {
-  const data: NonNullable<EscopoForm["operacao"]["exportacao"]> =
-    form.operacao.exportacao ?? {
-      produtosExportados: "",
-      ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
-      observacaoNcms: "",
-      analistaDA: [""],
-      analistaAE: [],
-      destinacao: [],
-      subtipoConsumo: [],
-    };
+  const {
+    data: prepostos,
+    isLoading: loadingPrepostos,
+    error: prepostosError,
+  } = usePrepostosLookup({ operacao: "EXPORTACAO" });
+  const data: NonNullable<EscopoForm["operacao"]["exportacao"]> = form.operacao
+    .exportacao ?? {
+    produtosExportados: "",
+    ncms: [{ codigo: "", possuiBeneficio: null, descricaoBeneficio: "" }],
+    observacaoNcms: "",
+    analistaDA: [""],
+    analistaAE: [],
+    destinacao: [],
+    subtipoConsumo: [],
+    modaisSaida: [],
+    urfsDespacho: [],
+    outraUrfDespacho: "",
+    urfsEmbarque: [],
+    outraUrfEmbarque: "",
+  };
+  const exportUrfLocations = useMemo(
+    () => buildExportUrfLocations(prepostos?.items ?? []),
+    [prepostos?.items],
+  );
+  const visibleUrfLocations = useMemo(
+    () => filterUrfLocationsByModal(exportUrfLocations, data.modaisSaida),
+    [data.modaisSaida, exportUrfLocations],
+  );
+  const urfOptions = visibleUrfLocations.map(({ value, label }) => ({
+    value,
+    label,
+  }));
   function setData(next: NonNullable<EscopoForm["operacao"]["exportacao"]>) {
     onChange({ ...form, operacao: { ...form.operacao, exportacao: next } });
   }
@@ -48,6 +78,29 @@ export default function StepExportacao({
     }
     ref[keys[keys.length - 1]] = value;
     setData(next as NonNullable<EscopoForm["operacao"]["exportacao"]>);
+  }
+
+  function updateModaisSaida(next: string[]) {
+    const knownValues = new Set(
+      exportUrfLocations.map((location) => location.value),
+    );
+    const allowedValues = new Set(
+      filterUrfLocationsByModal(exportUrfLocations, next).map(
+        (location) => location.value,
+      ),
+    );
+    setData({
+      ...data,
+      modaisSaida: next as NonNullable<
+        EscopoForm["operacao"]["exportacao"]
+      >["modaisSaida"],
+      urfsDespacho: (data.urfsDespacho ?? []).filter(
+        (value) => !knownValues.has(value) || allowedValues.has(value),
+      ),
+      urfsEmbarque: (data.urfsEmbarque ?? []).filter(
+        (value) => !knownValues.has(value) || allowedValues.has(value),
+      ),
+    });
   }
 
   return (
@@ -76,7 +129,13 @@ export default function StepExportacao({
                 />
               </div>
             ))}
-            <Button type="button" variant="outline" onClick={() => update("analistaDA", [...data.analistaDA, ""])}>+ Analista DA</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => update("analistaDA", [...data.analistaDA, ""])}
+            >
+              + Analista DA
+            </Button>
           </div>
           <div className="flex flex-col gap-2">
             {(data.analistaAE ?? []).map((analista, index) => (
@@ -99,7 +158,15 @@ export default function StepExportacao({
                 />
               </div>
             ))}
-            <Button type="button" variant="outline" onClick={() => update("analistaAE", [...(data.analistaAE ?? []), ""])}>+ Analista AE</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                update("analistaAE", [...(data.analistaAE ?? []), ""])
+              }
+            >
+              + Analista AE
+            </Button>
           </div>
         </Grid>
 
@@ -113,6 +180,60 @@ export default function StepExportacao({
             onChange={(e) => update("produtosExportados", e.target.value)}
           />
         </Field>
+      </div>
+
+      <div className="flex flex-col gap-5">
+        <p className="text-sm text-muted-foreground sm:text-base">
+          Locais brasileiros da operação. Os campos abaixo são opcionais e
+          combinam as localidades atendidas pela Casco com as localidades ativas
+          dos prepostos de exportação.
+        </p>
+
+        <SearchableCheckboxMenu
+          title="Modal de saída"
+          searchLabel="Pesquisar modal"
+          value={data.modaisSaida ?? []}
+          options={MODAIS_LOCAL}
+          onChange={updateModaisSaida}
+          allowCustomOption={false}
+          error={errors["modaisSaida"]}
+        />
+
+        <SearchableCheckboxMenu
+          title="URF de despacho"
+          searchLabel="Pesquisar URF de despacho"
+          value={data.urfsDespacho ?? []}
+          options={urfOptions}
+          onChange={(next) => update("urfsDespacho", next)}
+          customValue={data.outraUrfDespacho ?? ""}
+          onCustomValueChange={(next) => update("outraUrfDespacho", next)}
+          customLabel="Outra URF de despacho"
+          error={errors["urfsDespacho"] || errors["outraUrfDespacho"]}
+        />
+
+        <SearchableCheckboxMenu
+          title="URF de embarque/saída"
+          searchLabel="Pesquisar URF de embarque/saída"
+          value={data.urfsEmbarque ?? []}
+          options={urfOptions}
+          onChange={(next) => update("urfsEmbarque", next)}
+          customValue={data.outraUrfEmbarque ?? ""}
+          onCustomValueChange={(next) => update("outraUrfEmbarque", next)}
+          customLabel="Outra URF de embarque/saída"
+          error={errors["urfsEmbarque"] || errors["outraUrfEmbarque"]}
+        />
+
+        {loadingPrepostos ? (
+          <p className="text-xs text-muted-foreground">
+            Carregando localidades dos prepostos...
+          </p>
+        ) : null}
+        {prepostosError ? (
+          <p className="text-xs text-destructive">
+            Não foi possível carregar as localidades dos prepostos. As
+            localidades da Casco continuam disponíveis.
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-5">
@@ -159,9 +280,7 @@ export default function StepExportacao({
                         ...next[index],
                         possuiBeneficio: value,
                         descricaoBeneficio:
-                          value === "SIM"
-                            ? next[index].descricaoBeneficio
-                            : "",
+                          value === "SIM" ? next[index].descricaoBeneficio : "",
                       };
                       update("ncms", next);
                     }}
@@ -216,7 +335,6 @@ export default function StepExportacao({
           onChange={(e) => update("observacaoNcms", e.target.value)}
         />
       </Field>
-
     </main>
   );
 }

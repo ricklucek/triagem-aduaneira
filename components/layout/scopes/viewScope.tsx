@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import type { EscopoForm } from "@/domain/scope/types";
-import { LOCAIS } from "@/components/scope/StepImportacao";
+import { LOCAIS } from "@/domain/scope/locations";
 import { useScope, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -152,6 +152,18 @@ const modalLocalList = (v?: Array<string | null> | null) =>
     : v
         .filter((modal): modal is string => Boolean(modal))
         .map((modal) => MODAL_LOCAL_LABEL[modal] ?? modal)
+        .join(", ");
+
+const urfLocationList = (v?: Array<string | null> | null) =>
+  !v?.length
+    ? null
+    : v
+        .filter((location): location is string => Boolean(location))
+        .map(
+          (location) =>
+            LOCAIS.find((option) => option.value === location)?.label ??
+            location,
+        )
         .join(", ");
 
 const HiredBadge = ({
@@ -1349,6 +1361,26 @@ function ScopeDetails({
                 <Field
                   label="Produtos exportados"
                   value={text(exportacao.produtosExportados)}
+                />
+                <Field
+                  label="Modal de saída"
+                  value={modalLocalList(exportacao.modaisSaida)}
+                />
+                <Field
+                  label="URF de despacho"
+                  value={urfLocationList(exportacao.urfsDespacho)}
+                />
+                <Field
+                  label="Outra URF de despacho"
+                  value={text(exportacao.outraUrfDespacho)}
+                />
+                <Field
+                  label="URF de embarque/saída"
+                  value={urfLocationList(exportacao.urfsEmbarque)}
+                />
+                <Field
+                  label="Outra URF de embarque/saída"
+                  value={text(exportacao.outraUrfEmbarque)}
                 />
                 <Field
                   label="Destinação"

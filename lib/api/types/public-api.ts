@@ -27,6 +27,7 @@ export interface PrepostoLookupItem {
   cidade: string;
   contatoNome: string | null;
   descricaoLocal: string | null;
+  tipoLocal: "CIDADE" | "PORTO" | "AEROPORTO" | "CLIA" | "FRONTEIRA" | null;
   email: string | null;
   moeda: string | null;
   nome: string;
