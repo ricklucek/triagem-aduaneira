@@ -10,9 +10,6 @@ export default function DashboardPage() {
     <main className="w-full min-w-0">
       <ClientsPage
         onOpenScope={(scopeId) => router.push(`/scope/view/${scopeId}`)}
-        onCreateScope={(clientId) =>
-          router.push(`/scope/new?clientId=${clientId}`)
-        }
       />
     </main>
   );

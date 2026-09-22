@@ -1,9 +1,8 @@
 "use client";
 
-import { Plus, RotateCw, Search } from "lucide-react";
+import { RotateCw, Search } from "lucide-react";
 import { TextInput } from "@/components/ui/form-fields";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useClients } from "@/lib/api/hooks/use-clients-api";
 import { formatCNPJ, isCNPJ } from "@/utils/format";
 import { useMemo, useState } from "react";
@@ -12,13 +11,9 @@ import { ptBR } from "date-fns/locale/pt-BR";
 
 type ListTableProps = {
   onOpenScope: (scopeId: string) => void;
-  onCreateScope: (clientId: string) => void;
 };
 
-export default function ClientsPage({
-  onOpenScope,
-  onCreateScope,
-}: ListTableProps) {
+export default function ClientsPage({ onOpenScope }: ListTableProps) {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
 
@@ -26,6 +21,7 @@ export default function ClientsPage({
     () => ({
       q: isCNPJ(q) ? undefined : q,
       cnpj: isCNPJ(q) ? q.replace(/\D/g, "") : undefined,
+      scope_status: "published" as const,
       limit: 100,
       offset: page - 1,
     }),
@@ -74,9 +70,6 @@ export default function ClientsPage({
                 <div>{client.cnpj ? formatCNPJ(client.cnpj) : "-"}</div>
 
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  {!hasScope ? (
-                    <Badge variant="outline">Sem escopo</Badge>
-                  ) : null}
                   <Badge variant={client.ativo ? "default" : "secondary"}>
                     {client.ativo ? "Ativo" : "Inativo"}
                   </Badge>
@@ -119,17 +112,6 @@ export default function ClientsPage({
                     locale: ptBR,
                   })}
                 </span>
-
-                {!hasScope ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => onCreateScope(client.id)}
-                  >
-                    <Plus className="size-4" />
-                    Criar escopo
-                  </Button>
-                ) : null}
               </div>
             </div>
           );
