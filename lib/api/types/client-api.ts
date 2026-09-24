@@ -37,6 +37,7 @@ export interface ListClientsParams {
   q?: string;
   cnpj?: string;
   ativo?: boolean;
+  scope_status?: ScopeSummary["status"];
   limit?: number;
   offset?: number;
 }
