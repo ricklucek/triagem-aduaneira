@@ -244,9 +244,15 @@ export const scopeApi: ScopeApiClient = {
   async getBulkScopeCandidates(
     filters: BulkScopeCandidateFilters,
   ): Promise<BulkScopeCandidatesResponse> {
+    const params = {
+      ...filters,
+      commercialUserIds: filters.commercialUserIds?.join(",") || undefined,
+      analystDaUserIds: filters.analystDaUserIds?.join(",") || undefined,
+      analystAeUserIds: filters.analystAeUserIds?.join(",") || undefined,
+    };
     const { data } = await http.get<BulkScopeCandidatesResponse>(
       API_ROUTES.scopes.bulkUpdateCandidates,
-      { params: { ...filters } },
+      { params },
     );
     return data;
   },

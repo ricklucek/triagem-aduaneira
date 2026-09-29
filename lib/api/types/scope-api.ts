@@ -148,8 +148,6 @@ export interface BulkScopeUpdateFieldOption {
 
 export interface BulkScopeUpdateOptions {
   fields: BulkScopeUpdateFieldOption[];
-  statuses: ScopeStatus[];
-  operations: Array<"IMPORTACAO" | "EXPORTACAO">;
 }
 
 export interface BulkScopeUserSummary {
@@ -171,9 +169,9 @@ export interface BulkScopeCandidate {
 
 export interface BulkScopeCandidateFilters {
   q?: string;
-  status?: ScopeStatus;
-  operation?: "IMPORTACAO" | "EXPORTACAO";
-  tagId?: string;
+  commercialUserIds?: string[];
+  analystDaUserIds?: string[];
+  analystAeUserIds?: string[];
   limit?: number;
   offset?: number;
 }
