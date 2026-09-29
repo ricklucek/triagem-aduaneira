@@ -198,21 +198,60 @@ export interface OperacaoDashboardResponse {
   waitingAdjustment: number;
 }
 
+export type UserTagColor = "slate" | "blue" | "emerald" | "amber" | "violet" | "rose";
+
+export type UserTag = {
+  id: string;
+  organization_id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  color: UserTagColor;
+  is_master: boolean;
+  is_system: boolean;
+  active: boolean;
+  users_count?: number;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
 export type UserSummary = {
   id: string;
   nome: string;
   email: string;
-  role: "administrador" | "comercial" | "credenciamento" | "operacao";
-  setor: string;
+  role: "admin" | "comercial" | "credenciamento" | "operacao";
+  setor?: string | null;
   ativo: boolean;
+  tags: UserTag[];
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
 export interface CreateUserPayload {
   nome: string;
   email: string;
   password: string;
-  role: "comercial" | "credenciamento" | "operacao" | "administrador";
+  role: "admin" | "comercial" | "credenciamento" | "operacao";
   setor: string;
+  ativo?: boolean;
+  tag_ids: string[];
 }
 
 export type UpdateUserPayload = Partial<CreateUserPayload> & { password?: string };
+
+export type ListUsersParams = {
+  q?: string;
+  tag_id?: string;
+  active?: boolean;
+  include_inactive?: boolean;
+};
+
+export type CreateUserTagPayload = {
+  name: string;
+  description?: string;
+  color: UserTagColor;
+};
+
+export type UpdateUserTagPayload = Partial<CreateUserTagPayload> & {
+  active?: boolean;
+};

@@ -140,6 +140,8 @@ export const API_ROUTES = {
     update: (userId: string) => `/users/user/${userId}`,
     deleteUser: (userId: string) => `/users/user/${userId}`,
     deleteAdmin: (userId: string) => `/users/admin/${userId}`,
+    tags: "/users/tags",
+    tag: (tagId: string) => `/users/tags/${tagId}`,
   },
   analytics: {
     comercialAveragePrice: "/analytics/comercial/average-price",
