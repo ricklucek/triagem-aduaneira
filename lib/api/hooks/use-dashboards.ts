@@ -8,6 +8,7 @@ import { publicApi } from "../services/public";
 import type {
   AdminDashboardMetricsFilters,
   ClientsByUserFilters,
+  ListUsersParams,
   ScopesByUserFilters,
   ServicesByScopeFilters,
   ServicesMetricsFilters,
@@ -124,8 +125,22 @@ export function useOperacaoDashboard() {
   return useSWR("dashboard:operacao", dashboardApi.getOperacaoMetrics);
 }
 
-export function useUsers() {
-  return useSWR("users:list", usersApi.listUsers);
+export function useUsers(params: ListUsersParams = {}) {
+  const key = [
+    "users:list",
+    params.q ?? "",
+    params.tag_id ?? "",
+    params.active === undefined ? "" : String(params.active),
+    params.include_inactive ? "include_inactive:true" : "include_inactive:false",
+  ].toLocaleString();
+
+  return useSWR(key, () => usersApi.listUsers(params));
+}
+
+export function useUserTags(includeInactive = false) {
+  const key = ["users:tags", includeInactive ? "include_inactive:true" : "include_inactive:false"].toLocaleString();
+
+  return useSWR(key, () => usersApi.listTags(includeInactive));
 }
 
 export function useAdmins() {
