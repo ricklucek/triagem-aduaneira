@@ -24,6 +24,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -43,7 +51,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { UserTagBadge } from "@/components/settings/user-tag-badge";
-import { useUsers, useUserTags } from "@/lib/api/hooks/use-dashboards";
+import { useResponsibles, useUserTags } from "@/lib/api/hooks/use-dashboards";
 import {
   useBulkScopeCandidates,
   useBulkScopeUpdateOptions,
@@ -112,20 +120,6 @@ export default function BulkScopeUpdatePage() {
     );
   }
 
-  if (session.user.role !== "admin") {
-    return (
-      <main className="w-full p-6">
-        <Alert variant="destructive">
-          <ShieldAlert />
-          <AlertTitle>Acesso restrito</AlertTitle>
-          <AlertDescription>
-            A alteração em massa está disponível somente para administradores.
-          </AlertDescription>
-        </Alert>
-      </main>
-    );
-  }
-
   return <BulkScopeUpdateWorkflow />;
 }
 
@@ -141,6 +135,8 @@ function BulkScopeUpdateWorkflow() {
   const [targetUserId, setTargetUserId] = useState("");
   const [preview, setPreview] = useState<BulkScopeUpdatePreview | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmationText, setConfirmationText] = useState("");
   const [executing, setExecuting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [executionSummary, setExecutionSummary] = useState<{
@@ -151,12 +147,15 @@ function BulkScopeUpdateWorkflow() {
   const candidates = useBulkScopeCandidates(filters);
   const options = useBulkScopeUpdateOptions();
   const { data: tags = [] } = useUserTags();
+  const responsibles = useResponsibles();
   const selectedField = options.data?.fields.find((item) => item.value === field);
   const requiredTag = tags.find((tag) => tag.code === selectedField?.requiredTagCode);
-  const users = useUsers(requiredTag ? {
-    active: true,
-    tag_id: requiredTag.id,
-  } : null);
+  const users = useMemo(
+    () => (responsibles.data ?? []).filter(
+      (user) => requiredTag && user.tags.some((tag) => tag.id === requiredTag.id),
+    ),
+    [requiredTag, responsibles.data],
+  );
 
   const items = candidates.data?.items ?? [];
   const total = candidates.data?.total ?? 0;
@@ -164,7 +163,7 @@ function BulkScopeUpdateWorkflow() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const pageIds = items.map((item) => item.id);
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
-  const targetUser = users.data?.find((user) => user.id === targetUserId);
+  const targetUser = users.find((user) => user.id === targetUserId);
 
   const assignmentColumns = useMemo(
     () => options.data?.fields.map((item) => item.value) ?? [],
@@ -256,6 +255,13 @@ function BulkScopeUpdateWorkflow() {
     } finally {
       setExecuting(false);
     }
+  }
+
+  function confirmExecution() {
+    if (confirmationText.trim().toUpperCase() !== "ALTERAR") return;
+    setConfirmOpen(false);
+    setConfirmationText("");
+    void executeUpdate();
   }
 
   return (
@@ -485,10 +491,10 @@ function BulkScopeUpdateWorkflow() {
                   <Select value={targetUserId} onValueChange={(value) => { setTargetUserId(value); setPreview(null); }}>
                     <SelectTrigger className="max-w-xl"><SelectValue placeholder="Selecione o usuário de destino" /></SelectTrigger>
                     <SelectContent>
-                      {(users.data ?? []).map((user) => <SelectItem key={user.id} value={user.id}>{user.nome} · {user.email}</SelectItem>)}
+                      {users.map((user) => <SelectItem key={user.id} value={user.id}>{user.nome} · {user.email}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  {!users.isLoading && requiredTag && !(users.data ?? []).length ? (
+                  {!responsibles.isLoading && requiredTag && !users.length ? (
                     <Alert>
                       <ShieldAlert />
                       <AlertTitle>Nenhum usuário disponível</AlertTitle>
@@ -554,7 +560,7 @@ function BulkScopeUpdateWorkflow() {
 
             <div className="flex justify-between gap-3">
               <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft /> Ajustar alteração</Button>
-              <Button disabled={!preview.eligibleScopes} onClick={() => void executeUpdate()}>
+              <Button disabled={!preview.eligibleScopes} onClick={() => setConfirmOpen(true)}>
                 Confirmar {preview.eligibleScopes} alteração(ões) <ArrowRight />
               </Button>
             </div>
@@ -593,6 +599,56 @@ function BulkScopeUpdateWorkflow() {
             {selectedIds.length} escopo(s) selecionado(s){targetUser ? ` · destino: ${targetUser.nome}` : ""}
           </div>
         ) : null}
+
+        <Dialog
+          open={confirmOpen}
+          onOpenChange={(open) => {
+            setConfirmOpen(open);
+            if (!open) setConfirmationText("");
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar alteração em massa</DialogTitle>
+              <DialogDescription>
+                Esta operação modificará {preview?.eligibleScopes ?? 0} escopo(s). Confira os dados antes de continuar.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="rounded-xl border bg-muted/30 p-4 text-sm">
+                <div><span className="font-medium">Campo:</span> {preview?.fieldLabel ?? selectedField?.label}</div>
+                <div><span className="font-medium">Novo valor:</span> {preview?.targetUser.name ?? targetUser?.nome}</div>
+                <div><span className="font-medium">Escopos alterados:</span> {preview?.eligibleScopes ?? 0}</div>
+                <div><span className="font-medium">Escopos ignorados:</span> {preview?.skippedScopes ?? 0}</div>
+              </div>
+              <Alert variant="destructive">
+                <ShieldAlert />
+                <AlertTitle>Confirmação obrigatória</AlertTitle>
+                <AlertDescription>
+                  Digite <strong>ALTERAR</strong> para autorizar a aplicação das mudanças.
+                </AlertDescription>
+              </Alert>
+              <Input
+                value={confirmationText}
+                onChange={(event) => setConfirmationText(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") confirmExecution();
+                }}
+                placeholder="Digite ALTERAR"
+                autoComplete="off"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+              <Button
+                onClick={confirmExecution}
+                disabled={confirmationText.trim().toUpperCase() !== "ALTERAR"}
+              >
+                Aplicar alterações
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );

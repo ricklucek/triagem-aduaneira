@@ -21,6 +21,11 @@ export const usersApi = {
     return data;
   },
 
+  async listResponsibles(): Promise<UserSummary[]> {
+    const { data } = await http.get<UserSummary[]>(API_ROUTES.users.listResponsibles);
+    return data;
+  },
+
   async createUser(payload: CreateUserPayload): Promise<UserSummary> {
     const { data } = await http.post<UserSummary>(
       API_ROUTES.users.create,

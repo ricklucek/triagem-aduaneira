@@ -8,7 +8,7 @@ import { useAuthSession } from "@/lib/auth/session-storage";
 
 const BulkEdit = () => {
   const session = useAuthSession();
-  if (session?.user.role !== "admin") return null;
+  if (!session) return null;
 
   return (
     <Button type="button" variant="outline" asChild>

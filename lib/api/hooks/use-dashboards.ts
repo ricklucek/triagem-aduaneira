@@ -132,16 +132,20 @@ export function useOperacaoDashboard() {
   return useSWR("dashboard:operacao", dashboardApi.getOperacaoMetrics);
 }
 
-export function useUsers(params: ListUsersParams | null = {}) {
-  const key = params ? [
+export function useUsers(params: ListUsersParams = {}) {
+  const key = [
     "users:list",
     params.q ?? "",
     params.tag_id ?? "",
     params.active === undefined ? "" : String(params.active),
     params.include_inactive ? "include_inactive:true" : "include_inactive:false",
-  ].toLocaleString() : null;
+  ].toLocaleString();
 
-  return useSWR(key, () => usersApi.listUsers(params ?? {}));
+  return useSWR(key, () => usersApi.listUsers(params));
+}
+
+export function useResponsibles() {
+  return useSWR("users:responsibles", usersApi.listResponsibles);
 }
 
 export function useUserTags(includeInactive = false) {
