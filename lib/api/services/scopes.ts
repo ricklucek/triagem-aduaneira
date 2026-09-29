@@ -15,6 +15,12 @@ import type {
   BulkAssignmentSummaryResponse,
   BulkAssignmentUpdatePayload,
   BulkAssignmentUpdateResponse,
+  BulkScopeCandidateFilters,
+  BulkScopeCandidatesResponse,
+  BulkScopeUpdateOptions,
+  BulkScopeUpdatePayload,
+  BulkScopeUpdatePreview,
+  BulkScopeUpdateResult,
   CreateScopeOptions,
   CreateScopeResponse,
   SaveScopeDraftPayload,
@@ -223,6 +229,43 @@ export const scopeApi: ScopeApiClient = {
   ): Promise<BulkAssignmentUpdateResponse> {
     const { data } = await http.post<BulkAssignmentUpdateResponse>(
       API_ROUTES.scopes.bulkAssignmentUpdate,
+      payload,
+    );
+    return data;
+  },
+
+  async getBulkScopeUpdateOptions(): Promise<BulkScopeUpdateOptions> {
+    const { data } = await http.get<BulkScopeUpdateOptions>(
+      API_ROUTES.scopes.bulkUpdateOptions,
+    );
+    return data;
+  },
+
+  async getBulkScopeCandidates(
+    filters: BulkScopeCandidateFilters,
+  ): Promise<BulkScopeCandidatesResponse> {
+    const { data } = await http.get<BulkScopeCandidatesResponse>(
+      API_ROUTES.scopes.bulkUpdateCandidates,
+      { params: { ...filters } },
+    );
+    return data;
+  },
+
+  async previewBulkScopeUpdate(
+    payload: BulkScopeUpdatePayload,
+  ): Promise<BulkScopeUpdatePreview> {
+    const { data } = await http.post<BulkScopeUpdatePreview>(
+      API_ROUTES.scopes.bulkUpdatePreview,
+      payload,
+    );
+    return data;
+  },
+
+  async applyBulkScopeUpdate(
+    payload: BulkScopeUpdatePayload,
+  ): Promise<BulkScopeUpdateResult> {
+    const { data } = await http.post<BulkScopeUpdateResult>(
+      API_ROUTES.scopes.bulkUpdateApply,
       payload,
     );
     return data;

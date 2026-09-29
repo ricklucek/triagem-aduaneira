@@ -4,7 +4,10 @@ import useSWR from "swr";
 import type { ListScopesParams } from "@/data/scope/ScopeRepo";
 import { scopeApi } from "@/lib/api/services/scopes";
 import { organizationSettingsApi } from "@/lib/api/services/organization-settings";
-import type { BulkAssignmentGroupBy } from "@/lib/api/types/scope-api";
+import type {
+  BulkAssignmentGroupBy,
+  BulkScopeCandidateFilters,
+} from "@/lib/api/types/scope-api";
 
 export function useScopes(params: ListScopesParams | null) {
   const key = params ? `scopes:${JSON.stringify(params)}` : null;
@@ -60,6 +63,20 @@ export function useBulkAssignmentScopes(
   return useSWR(key, () => {
     if (!groupBy || !userId) throw new Error("Parâmetros inválidos.");
     return scopeApi.getBulkAssignmentScopes(groupBy, userId);
+  });
+}
+
+export function useBulkScopeUpdateOptions() {
+  return useSWR("scope:bulk-update:options", scopeApi.getBulkScopeUpdateOptions);
+}
+
+export function useBulkScopeCandidates(filters: BulkScopeCandidateFilters | null) {
+  const key = filters
+    ? ["scope:bulk-update:candidates", JSON.stringify(filters)].toLocaleString()
+    : null;
+  return useSWR(key, () => {
+    if (!filters) throw new Error("Filtros inválidos.");
+    return scopeApi.getBulkScopeCandidates(filters);
   });
 }
 
