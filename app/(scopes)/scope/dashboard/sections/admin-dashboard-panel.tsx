@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { useAdminDashboardMetrics } from "@/lib/api/hooks/use-dashboards";
 
@@ -7,12 +8,16 @@ import { useAdminDashboardMetrics } from "@/lib/api/hooks/use-dashboards";
 import ScopesBySectorSection from "@/components/dashboard/admin/ScopesBySector";
 import ClientsBySectorSection from "@/components/dashboard/admin/ClientsBySector";
 import ServicesSection from "@/components/dashboard/admin/ServicesSection";
+import DashboardProfileFilter from "@/components/dashboard/admin/DashboardProfileFilter";
 
 export default function AdminDashboardPanel() {
-  const metrics = useAdminDashboardMetrics({ status: "published" });
+  const [tagId, setTagId] = useState<string>();
+  const metrics = useAdminDashboardMetrics({ status: "published", tagId });
 
   return (
     <main className="w-full flex flex-col gap-6 p-2 md:p-4">
+      <DashboardProfileFilter tagId={tagId} onTagChange={setTagId} />
+
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <DashboardCard title="Total de escopos"><div className="text-3xl font-bold text-high -mt-5">{metrics.data?.totalScopes ?? 0}</div></DashboardCard>
         <DashboardCard title="Criados esse mês"><div className="text-3xl font-bold text-high -mt-5">{metrics.data?.monthCreatedScopes ?? 0}</div></DashboardCard>
@@ -21,16 +26,15 @@ export default function AdminDashboardPanel() {
       </section>
 
       <div className="w-full h-105">
-        <ScopesBySectorSection />
+        <ScopesBySectorSection tagId={tagId} />
       </div>
 
       <div className="w-full h-105">
-        <ClientsBySectorSection />
+        <ClientsBySectorSection tagId={tagId} />
       </div>
 
-      <ServicesSection />
+      <ServicesSection tagId={tagId} />
     </main>
   );
 }
-
 

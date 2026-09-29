@@ -24,6 +24,7 @@ export function useAdminDashboardMetrics(filters: AdminDashboardMetricsFilters) 
     filters.status ?? "",
     filters.dateFrom ?? "",
     filters.dateTo ?? "",
+    filters.tagId ?? "",
   ].toLocaleString();
 
   return useSWR(key, () => dashboardApi.getAdminDashboardMetrics(filters));
@@ -36,6 +37,7 @@ export function useAdminScopesByUser(filters: ScopesByUserFilters) {
     filters.groupBy ?? "",
     filters.dateFrom ?? "",
     filters.dateTo ?? "",
+    filters.tagId ?? "",
     filters.includeScopes ? "includeScopes:true" : "includeScopes:false",
   ].toLocaleString();
 
@@ -50,6 +52,7 @@ export function useAdminUserScopes(userId: string, filters: ScopesByUserFilters)
     filters.groupBy ?? "",
     filters.dateFrom ?? "",
     filters.dateTo ?? "",
+    filters.tagId ?? "",
     filters.includeScopes ? "includeScopes:true" : "includeScopes:false",
   ].toLocaleString();
 
@@ -63,6 +66,7 @@ export function useAdminClientsByUser(filters: ClientsByUserFilters) {
     filters.groupBy ?? "",
     filters.dateFrom ?? "",
     filters.dateTo ?? "",
+    filters.tagId ?? "",
     filters.includeClients ? "includeClients:true" : "includeClients:false",
   ].toLocaleString();
 
@@ -77,6 +81,7 @@ export function useAdminUserClients(userId: string, filters: ClientsByUserFilter
     filters.groupBy ?? "",
     filters.dateFrom ?? "",
     filters.dateTo ?? "",
+    filters.tagId ?? "",
     filters.includeClients ? "includeClients:true" : "includeClients:false",
   ].toLocaleString();
 
@@ -89,6 +94,7 @@ export function useAdminServicesMetrics(filters: ServicesMetricsFilters) {
     filters.status ?? "",
     filters.dateFrom ?? "",
     filters.dateTo ?? "",
+    filters.tagId ?? "",
     filters.serviceCode ?? "",
   ].toLocaleString();
 
@@ -101,6 +107,7 @@ export function useAdminServicesByScope(filters: ServicesByScopeFilters) {
     filters.status ?? "",
     filters.dateFrom ?? "",
     filters.dateTo ?? "",
+    filters.tagId ?? "",
     filters.createdById ?? "",
     filters.serviceCode ?? "",
     filters.limit ?? "",
