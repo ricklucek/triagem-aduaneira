@@ -144,6 +144,10 @@ export function useUsers(params: ListUsersParams = {}) {
   return useSWR(key, () => usersApi.listUsers(params));
 }
 
+export function useResponsibles() {
+  return useSWR("users:responsibles", usersApi.listResponsibles);
+}
+
 export function useUserTags(includeInactive = false) {
   const key = ["users:tags", includeInactive ? "include_inactive:true" : "include_inactive:false"].toLocaleString();
 

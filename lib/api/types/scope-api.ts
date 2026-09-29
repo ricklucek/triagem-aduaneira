@@ -84,14 +84,6 @@ export interface BulkReassignResponsibleResponse {
   scope_ids: string[];
 }
 
-export interface BulkReassignResponsiblePayload {
-  old_user_id: string;
-  new_user_id: string;
-  apply_status?: ScopeStatus[];
-  only_active_assignments?: boolean;
-  dry_run?: boolean;
-}
-
 export type BulkAssignmentGroupBy =
   | "responsavel_comercial"
   | "analista_da"
@@ -140,6 +132,103 @@ export interface BulkAssignmentUpdateResponse {
   updatedScopeIds: string[];
 }
 
+export type BulkScopeUpdateField =
+  | "responsavel_comercial"
+  | "analista_da_importacao"
+  | "analista_ae_importacao"
+  | "analista_da_exportacao"
+  | "analista_ae_exportacao";
+
+export interface BulkScopeUpdateFieldOption {
+  value: BulkScopeUpdateField;
+  label: string;
+  operation: "IMPORTACAO" | "EXPORTACAO" | null;
+  requiredTagCode: string;
+}
+
+export interface BulkScopeUpdateOptions {
+  fields: BulkScopeUpdateFieldOption[];
+  statuses: ScopeStatus[];
+  operations: Array<"IMPORTACAO" | "EXPORTACAO">;
+}
+
+export interface BulkScopeUserSummary {
+  id: string;
+  name: string;
+}
+
+export interface BulkScopeCandidate {
+  id: string;
+  status: ScopeStatus;
+  version?: number | null;
+  clientName?: string | null;
+  clientShortName?: string | null;
+  clientCnpj?: string | null;
+  operations: Array<"IMPORTACAO" | "EXPORTACAO">;
+  assignments: Record<BulkScopeUpdateField, BulkScopeUserSummary[]>;
+  updatedAt?: string | null;
+}
+
+export interface BulkScopeCandidateFilters {
+  q?: string;
+  status?: ScopeStatus;
+  operation?: "IMPORTACAO" | "EXPORTACAO";
+  tagId?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface BulkScopeCandidatesResponse {
+  items: BulkScopeCandidate[];
+  total: number;
+  limit: number;
+  offset: number;
+  filters: BulkScopeCandidateFilters;
+}
+
+export interface BulkScopeUpdatePayload {
+  field: BulkScopeUpdateField;
+  targetUserId: string;
+  scopeIds: string[];
+}
+
+export interface BulkScopeUpdateChange {
+  scopeId: string;
+  clientName?: string | null;
+  clientCnpj?: string | null;
+  fromUsers: BulkScopeUserSummary[];
+  toUser: BulkScopeUserSummary;
+}
+
+export interface BulkScopeUpdateSkipped {
+  scopeId: string;
+  clientName?: string | null;
+  reason: "not_found_or_forbidden" | "operation_not_enabled" | "already_assigned";
+}
+
+export interface BulkScopeUpdatePreview {
+  field: BulkScopeUpdateField;
+  fieldLabel: string;
+  targetUser: BulkScopeUserSummary;
+  requestedScopes: number;
+  eligibleScopes: number;
+  skippedScopes: number;
+  changes: BulkScopeUpdateChange[];
+  skipped: BulkScopeUpdateSkipped[];
+}
+
+export interface BulkScopeUpdateResult {
+  ok: boolean;
+  field: BulkScopeUpdateField;
+  fieldLabel: string;
+  targetUser: BulkScopeUserSummary;
+  requestedScopes: number;
+  impactedScopes: number;
+  skippedScopes: number;
+  updatedScopeIds: string[];
+  skipped: BulkScopeUpdateSkipped[];
+}
+
 export interface ScopeApiClient {
   createScope(initial?: DeepPartial<EscopoForm>, options?: CreateScopeOptions): Promise<CreateScopeResponse>;
   listScopeTemplates(): Promise<ScopeTemplateSummary[]>;
@@ -168,4 +257,14 @@ export interface ScopeApiClient {
   updateBulkAssignment(
     payload: BulkAssignmentUpdatePayload,
   ): Promise<BulkAssignmentUpdateResponse>;
+  getBulkScopeUpdateOptions(): Promise<BulkScopeUpdateOptions>;
+  getBulkScopeCandidates(
+    filters: BulkScopeCandidateFilters,
+  ): Promise<BulkScopeCandidatesResponse>;
+  previewBulkScopeUpdate(
+    payload: BulkScopeUpdatePayload,
+  ): Promise<BulkScopeUpdatePreview>;
+  applyBulkScopeUpdate(
+    payload: BulkScopeUpdatePayload,
+  ): Promise<BulkScopeUpdateResult>;
 }
