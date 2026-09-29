@@ -20,27 +20,39 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAdminClientsByUser, useAdminUserClients } from "@/lib/api/hooks/use-dashboards";
-import type { ClientsByUserItem } from "@/lib/api/types/dashboard-api";
+import { UserTagBadge } from "@/components/settings/user-tag-badge";
 
-export default function ClientsBySectorSection() {
-    const [selectedUser, setSelectedUser] = useState<ClientsByUserItem | null>(null);
+export default function ClientsBySectorSection({ tagId }: { tagId?: string }) {
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [sectorFilter, setSectorFilter] = useState<string>("analista_da");
 
     const isMobile = useIsMobile();
 
-    const clientsByUser = useAdminClientsByUser({ groupBy: sectorFilter, includeClients: true });
+    const clientsByUser = useAdminClientsByUser({
+        status: "published",
+        groupBy: sectorFilter,
+        includeClients: true,
+        tagId,
+    });
 
     const isLoading = clientsByUser.isLoading;
 
     const users = useMemo(() => clientsByUser.data?.items ?? [], [clientsByUser.data?.items]);
+    const selectedUser = useMemo(
+        () => users.find((item) => item.userId === selectedUserId) ?? null,
+        [selectedUserId, users],
+    );
 
     const usersTable = (
         <Table>
-            <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Setor</TableHead><TableHead>Total</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tags</TableHead><TableHead>Setor</TableHead><TableHead>Total</TableHead></TableRow></TableHeader>
             <TableBody>
-                {users.map((item) => (
-                    <TableRow key={item.userId} onClick={() => setSelectedUser(item)} className="cursor-pointer">
+                {users.length === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Nenhum analista encontrado para estes filtros.</TableCell></TableRow>
+                ) : users.map((item) => (
+                    <TableRow key={item.userId} onClick={() => setSelectedUserId(item.userId)} className="cursor-pointer">
                         <TableCell>{item.userName}</TableCell>
+                        <TableCell><div className="flex flex-wrap gap-1">{(item.userTags ?? []).map((tag) => <UserTagBadge key={tag.id} tag={tag} />)}</div></TableCell>
                         <TableCell>{item.userSetor || "-"}</TableCell>
                         <TableCell>{item.totalClients}</TableCell>
                     </TableRow>
@@ -54,7 +66,7 @@ export default function ClientsBySectorSection() {
             {isMobile ? (
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Clientes por setor</CardTitle>
+                        <CardTitle>Clientes por analista</CardTitle>
                         <SectorFilterDropdown sectorFilter={sectorFilter} onSectorChange={setSectorFilter} />
                     </CardHeader>
 
@@ -73,7 +85,7 @@ export default function ClientsBySectorSection() {
                 <ResizablePanelGroup orientation="horizontal" className="rounded-lg border">
                     <ResizablePanel defaultSize="45%" minSize={35}>
                         <Card className="h-full rounded-none border-0">
-                            <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Clientes por setor</CardTitle><SectorFilterDropdown sectorFilter={sectorFilter} onSectorChange={setSectorFilter} /></CardHeader>
+                            <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Clientes por analista</CardTitle><SectorFilterDropdown sectorFilter={sectorFilter} onSectorChange={setSectorFilter} /></CardHeader>
                             {
                                 isLoading ? (
                                     <div className="p-4 flex flex-col items-center justify-center gap-5">
@@ -90,17 +102,17 @@ export default function ClientsBySectorSection() {
                     <ResizablePanel defaultSize="55%" minSize={35}>
                         <Card className="h-full rounded-none border-0">
                             <CardHeader><CardTitle>{selectedUser ? `Clientes com ${selectedUser.userName}` : "Selecione um usuário"}</CardTitle></CardHeader>
-                            <CardContent>{selectedUser ? <UserClientsTable userId={selectedUser.userId} sectorFilter={sectorFilter} /> : <p className="text-sm text-muted-foreground">Selecione um nome na tabela para abrir os clientes.</p>}</CardContent>
+                            <CardContent>{selectedUser ? <UserClientsTable userId={selectedUser.userId} sectorFilter={sectorFilter} tagId={tagId} /> : <p className="text-sm text-muted-foreground">Selecione um nome na tabela para abrir os clientes.</p>}</CardContent>
                         </Card>
                     </ResizablePanel>
                 </ResizablePanelGroup>
             )}
 
-            <Sheet open={Boolean(isMobile && selectedUser)} onOpenChange={(open) => !open && setSelectedUser(null)}>
+            <Sheet open={Boolean(isMobile && selectedUser)} onOpenChange={(open) => !open && setSelectedUserId(null)}>
                 <SheetContent side="bottom" className="h-dvh w-full max-w-none rounded-none border-0 p-0">
                     <SheetHeader><SheetTitle>{selectedUser ? `Clientes com ${selectedUser.userName}` : "Clientes"}</SheetTitle></SheetHeader>
                     <div className="overflow-auto px-4 pb-4">
-                        {selectedUser && <UserClientsTable userId={selectedUser.userId} sectorFilter={sectorFilter} />}
+                        {selectedUser && <UserClientsTable userId={selectedUser.userId} sectorFilter={sectorFilter} tagId={tagId} />}
                     </div>
                 </SheetContent>
             </Sheet>
@@ -108,8 +120,8 @@ export default function ClientsBySectorSection() {
     );
 }
 
-function UserClientsTable({ userId, sectorFilter }: { userId: string; sectorFilter: string }) {
-    const { data, isLoading } = useAdminUserClients(userId, { groupBy: sectorFilter });
+function UserClientsTable({ userId, sectorFilter, tagId }: { userId: string; sectorFilter: string; tagId?: string }) {
+    const { data, isLoading } = useAdminUserClients(userId, { status: "published", groupBy: sectorFilter, tagId });
 
     const clients = data?.items ?? [];
 
@@ -132,7 +144,9 @@ function UserClientsTable({ userId, sectorFilter }: { userId: string; sectorFilt
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {clients.map((client) => (
+                {clients.length === 0 ? (
+                    <TableRow><TableCell colSpan={3} className="h-24 text-center text-muted-foreground">Nenhum cliente encontrado.</TableCell></TableRow>
+                ) : clients.map((client) => (
                     <TableRow key={client.id}>
                         <TableCell><Link href={`/scope/clients/${client.id}`} className="underline">{client.nome_resumido || client.razao_social}</Link></TableCell>
                         <TableCell>{client.cnpj}</TableCell>
@@ -151,7 +165,7 @@ function SectorFilterDropdown({ sectorFilter, onSectorChange }: { sectorFilter: 
                 <Button variant="outline" size="sm"><Filter className="mr-2 h-4 w-4" />Filtros</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Setor</DropdownMenuLabel>
+                <DropdownMenuLabel>Vínculo com o escopo</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuRadioGroup value={sectorFilter} onValueChange={onSectorChange}>
                     <DropdownMenuRadioItem value="analista_da">Analista DA</DropdownMenuRadioItem>

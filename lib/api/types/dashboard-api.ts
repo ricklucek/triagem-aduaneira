@@ -27,6 +27,7 @@ export interface AdminDashboardMetricsFilters {
   status?: string;
   dateFrom?: string;
   dateTo?: string;
+  tagId?: string;
 }
 
 export interface AdminDashboardMetricsResponse {
@@ -45,6 +46,7 @@ export interface ScopeByUserItem {
   userEmail: string;
   userRole: string;
   userSetor: string;
+  userTags: UserTag[];
   totalScopes: number;
   scopes?: Array<{
     id: string;
@@ -71,6 +73,7 @@ export interface ScopesByUserResponse {
   items: ScopeByUserItem[];
   totalUsers: number;
   totalScopes: number;
+  tagId?: string | null;
 }
 
 export interface UserScopeItem {
@@ -101,6 +104,7 @@ export interface ClientsByUserItem {
   userEmail: string;
   userRole: string;
   userSetor: string;
+  userTags: UserTag[];
   totalClients: number;
   clients?: ClientApi[];
   clientsLimit?: number;
@@ -111,6 +115,7 @@ export interface ClientsByUserResponse {
   items: ClientsByUserItem[];
   totalUsers: number;
   totalClients: number;
+  tagId?: string | null;
 }
 
 export interface ServiceMetricItem {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminServicesMetrics } from "@/lib/api/hooks/use-dashboards";
 import { Button } from "@/components/ui/button";
@@ -17,8 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 
-export default function ServicesSection() {
-    const services = useAdminServicesMetrics({ status: "published" });
+export default function ServicesSection({ tagId }: { tagId?: string }) {
+    const services = useAdminServicesMetrics({ status: "published", tagId });
 
     const [serviceCategory, setServiceCategory] = useState<"importacao" | "exportacao">("importacao");
 
@@ -34,6 +33,9 @@ export default function ServicesSection() {
                 <ServiceFilterDropdown serviceCategory={serviceCategory} onServiceCategoryChange={setServiceCategory} />
             </CardHeader>
             <CardContent className="space-y-3">
+                {filteredServices.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-muted-foreground">Nenhum serviço encontrado para os filtros selecionados.</p>
+                ) : null}
                 {filteredServices.map((item) => {
                     const percentage = Math.max(2, Math.min(100, item.occurrencesPercentage));
                     return (
