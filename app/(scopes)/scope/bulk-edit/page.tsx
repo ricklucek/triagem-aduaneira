@@ -7,11 +7,13 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  ChevronDown,
   Filter,
   Loader2,
   Search,
   ShieldAlert,
   UsersRound,
+  X,
 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -33,6 +35,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -65,7 +72,6 @@ import type {
 import { useAuthSession } from "@/lib/auth/session-storage";
 import { formatCNPJ } from "@/utils/format";
 
-const ALL = "__all__";
 const PAGE_SIZE = 50;
 const APPLY_BATCH_SIZE = 50;
 const MAX_SELECTION = 500;
@@ -85,14 +91,23 @@ const fieldShortLabels: Record<BulkScopeUpdateField, string> = {
   analista_ae_exportacao: "AE Exportação",
 };
 
+type PersonFilterKey =
+  | "commercialUserIds"
+  | "analystDaUserIds"
+  | "analystAeUserIds";
+
+const personFilterGroups: Array<{
+  key: PersonFilterKey;
+  label: string;
+  tagCode: string;
+}> = [
+  { key: "commercialUserIds", label: "Responsável comercial", tagCode: "comercial" },
+  { key: "analystDaUserIds", label: "Analista DA", tagCode: "analista-da" },
+  { key: "analystAeUserIds", label: "Analista AE", tagCode: "analista-ae" },
+];
+
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Não foi possível concluir a operação.";
-}
-
-function statusLabel(status: string) {
-  if (status === "published") return "Publicado";
-  if (status === "draft") return "Rascunho";
-  return "Arquivado";
 }
 
 function skippedReason(reason: string) {
@@ -164,6 +179,20 @@ function BulkScopeUpdateWorkflow() {
   const pageIds = items.map((item) => item.id);
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
   const targetUser = users.find((user) => user.id === targetUserId);
+  const selectedPersonCount = personFilterGroups.reduce(
+    (totalSelected, group) => totalSelected + (filters[group.key]?.length ?? 0),
+    0,
+  );
+  const selectedPeople = useMemo(
+    () => personFilterGroups.flatMap((group) =>
+      (filters[group.key] ?? []).map((userId) => ({
+        group,
+        user: responsibles.data?.find((item) => item.id === userId),
+        userId,
+      })),
+    ),
+    [filters, responsibles.data],
+  );
 
   const assignmentColumns = useMemo(
     () => options.data?.fields.map((item) => item.value) ?? [],
@@ -203,6 +232,20 @@ function BulkScopeUpdateWorkflow() {
       return merged;
     });
     setPreview(null);
+  }
+
+  function togglePersonFilter(key: PersonFilterKey, userId: string) {
+    setFilters((current) => {
+      const selected = current[key] ?? [];
+      const next = selected.includes(userId)
+        ? selected.filter((id) => id !== userId)
+        : [...selected, userId];
+      return {
+        ...current,
+        [key]: next.length ? next : undefined,
+        offset: 0,
+      };
+    });
   }
 
   async function buildPreview() {
@@ -306,56 +349,105 @@ function BulkScopeUpdateWorkflow() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Filter className="size-5" /> Filtros dos escopos</CardTitle>
                 <CardDescription>
-                  A pesquisa procura cada palavra na razão social, nome resumido, CNPJ e em todo o conteúdo preenchido no escopo.
+                  Somente escopos publicados são exibidos. A pesquisa considera razão social, nome resumido, CNPJ e todo o conteúdo preenchido, sem separar importação e exportação.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-                <div className="relative md:col-span-2">
-                  <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                  <Input
-                    value={queryInput}
-                    onChange={(event) => setQueryInput(event.target.value)}
-                    onKeyDown={(event) => { if (event.key === "Enter") applyFilters(); }}
-                    placeholder="Ex.: madeira Curitiba importação"
-                    className="pl-9"
-                  />
+              <CardContent className="space-y-3">
+                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                    <Input
+                      value={queryInput}
+                      onChange={(event) => setQueryInput(event.target.value)}
+                      onKeyDown={(event) => { if (event.key === "Enter") applyFilters(); }}
+                      placeholder="Ex.: madeira Curitiba importação"
+                      className="pl-9"
+                    />
+                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="outline" className="justify-between md:min-w-56">
+                        <span className="flex items-center gap-2">
+                          <UsersRound className="size-4" />
+                          Pessoas{selectedPersonCount ? ` (${selectedPersonCount})` : ""}
+                        </span>
+                        <ChevronDown className="size-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-80 p-3">
+                      <div className="max-h-96 space-y-4 overflow-y-auto">
+                        {personFilterGroups.map((group) => {
+                          const groupUsers = (responsibles.data ?? []).filter((user) =>
+                            user.tags.some((tag) => tag.code === group.tagCode),
+                          );
+                          return (
+                            <div key={group.key} className="space-y-2">
+                              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                {group.label}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {groupUsers.map((user) => {
+                                  const selected = filters[group.key]?.includes(user.id) ?? false;
+                                  return (
+                                    <button
+                                      key={user.id}
+                                      type="button"
+                                      onClick={() => togglePersonFilter(group.key, user.id)}
+                                      aria-pressed={selected}
+                                    >
+                                      <Badge variant={selected ? "default" : "outline"} className="cursor-pointer">
+                                        {selected ? <Check className="size-3" /> : null}
+                                        {user.nome}
+                                      </Badge>
+                                    </button>
+                                  );
+                                })}
+                                {!responsibles.isLoading && !groupUsers.length ? (
+                                  <span className="text-xs text-muted-foreground">Nenhum usuário cadastrado.</span>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <Button onClick={() => applyFilters()}>
+                    <Search /> Pesquisar
+                  </Button>
                 </div>
-                <Select
-                  value={filters.status ?? ALL}
-                  onValueChange={(value) => applyFilters({ status: value === ALL ? undefined : value as BulkScopeCandidateFilters["status"] })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ALL}>Todos os status</SelectItem>
-                    <SelectItem value="published">Publicados</SelectItem>
-                    <SelectItem value="draft">Rascunhos</SelectItem>
-                    <SelectItem value="archived">Arquivados</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={filters.operation ?? ALL}
-                  onValueChange={(value) => applyFilters({ operation: value === ALL ? undefined : value as BulkScopeCandidateFilters["operation"] })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Operação" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ALL}>Importação e exportação</SelectItem>
-                    <SelectItem value="IMPORTACAO">Importação</SelectItem>
-                    <SelectItem value="EXPORTACAO">Exportação</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={filters.tagId ?? ALL}
-                  onValueChange={(value) => applyFilters({ tagId: value === ALL ? undefined : value })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Tag vinculada" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ALL}>Todas as tags</SelectItem>
-                    {tags.map((tag) => <SelectItem key={tag.id} value={tag.id}>{tag.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Button onClick={() => applyFilters()} className="xl:col-start-5">
-                  <Search /> Pesquisar
-                </Button>
+                {selectedPeople.length ? (
+                  <div className="flex flex-wrap gap-2 border-t pt-3">
+                    {selectedPeople.map(({ group, user, userId }) => (
+                      <Badge key={`${group.key}:${userId}`} variant="secondary" className="gap-1.5 py-1">
+                        <span className="text-muted-foreground">{group.label}:</span>
+                        {user?.nome ?? "Usuário"}
+                        <button
+                          type="button"
+                          onClick={() => togglePersonFilter(group.key, userId)}
+                          aria-label={`Remover filtro ${user?.nome ?? "de usuário"}`}
+                          className="rounded-full hover:bg-background/70"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFilters((current) => ({
+                        ...current,
+                        commercialUserIds: undefined,
+                        analystDaUserIds: undefined,
+                        analystAeUserIds: undefined,
+                        offset: 0,
+                      }))}
+                    >
+                      Limpar pessoas
+                    </Button>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
 
@@ -391,7 +483,6 @@ function BulkScopeUpdateWorkflow() {
                         <TableHead>Cliente</TableHead>
                         <TableHead>Operação</TableHead>
                         <TableHead>Responsáveis atuais</TableHead>
-                        <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -427,7 +518,6 @@ function BulkScopeUpdateWorkflow() {
                                 })}
                               </div>
                             </TableCell>
-                            <TableCell><Badge variant={scope.status === "published" ? "default" : "secondary"}>{statusLabel(scope.status)}</Badge></TableCell>
                           </TableRow>
                         );
                       })}
