@@ -147,6 +147,14 @@ export const API_ROUTES = {
     tags: "/users/tags",
     tag: (tagId: string) => `/users/tags/${tagId}`,
   },
+  audit: {
+    events: "/audit/events",
+    options: "/audit/events/options",
+    event: (eventId: string) => `/audit/events/${eventId}`,
+    reversalPreview: (eventId: string) =>
+      `/audit/events/${eventId}/reversal-preview`,
+    reverse: (eventId: string) => `/audit/events/${eventId}/reverse`,
+  },
   analytics: {
     comercialAveragePrice: "/analytics/comercial/average-price",
   },

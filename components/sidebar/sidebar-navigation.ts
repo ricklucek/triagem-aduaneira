@@ -8,6 +8,7 @@ import {
     PlugZap,
     ShieldCheck,
     FileCode2,
+    History,
     User2,
     UserCog,
     Truck,
@@ -21,6 +22,11 @@ export const scopeSidebarNavigation: SidebarNavigation = {
             title: "Dashboard",
             url: "/scope/dashboard",
             icon: LayoutDashboard,
+        },
+        {
+            title: "Histórico",
+            url: "/scope/history",
+            icon: History,
         },
     ],
     settings: {
