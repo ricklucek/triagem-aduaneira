@@ -270,6 +270,7 @@ function BulkScopeUpdateWorkflow() {
     if (!field || !targetUserId || !preview?.changes.length) return;
     const eligibleIds = preview.changes.map((change) => change.scopeId);
     const batches = chunk(eligibleIds, APPLY_BATCH_SIZE);
+    const operationId = crypto.randomUUID();
     let impacted = 0;
     let skipped = preview.skippedScopes;
 
@@ -283,6 +284,7 @@ function BulkScopeUpdateWorkflow() {
           field,
           targetUserId,
           scopeIds: batches[index],
+          operationId,
         });
         impacted += result.impactedScopes;
         skipped += result.skippedScopes;

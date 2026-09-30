@@ -188,6 +188,7 @@ export interface BulkScopeUpdatePayload {
   field: BulkScopeUpdateField;
   targetUserId: string;
   scopeIds: string[];
+  operationId?: string;
 }
 
 export interface BulkScopeUpdateChange {
@@ -225,6 +226,7 @@ export interface BulkScopeUpdateResult {
   skippedScopes: number;
   updatedScopeIds: string[];
   skipped: BulkScopeUpdateSkipped[];
+  operationId: string;
 }
 
 export interface ScopeApiClient {
