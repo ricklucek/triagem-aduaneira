@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Ellipsis, RotateCw, Search } from "lucide-react";
+import { Ellipsis, LockKeyhole, RotateCw, Search } from "lucide-react";
 import {
     SecondaryButton,
     Toolbar,
 } from "@/components/ui/form-layout";
-import { TextInput } from "@/components/ui/form-fields";
+import { Checkbox, TextInput } from "@/components/ui/form-fields";
 
 import { useScopes } from "@/lib/api/hooks/use-scope-api";
 import { formatCNPJ, isCNPJ } from "@/utils/format";
@@ -30,15 +30,13 @@ import { ptBR } from "date-fns/locale";
 import { ScopeSummary } from "@/data/scope/ScopeRepo";
 import BulkEdit from "@/components/scope/operations/BulkEdit";
 
-type StatusFilter = "todos" | "draft" | "published" | "archived";
-
 type ListTableProps = {
     onSelectScope: (scope: ScopeSummary) => void;
     selectedScopeId?: string;
 };
 
 const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
-    const [status, setStatus] = useState<StatusFilter>("published");
+    const [includeDrafts, setIncludeDrafts] = useState(false);
     const [q, setQ] = useState("");
     const [page, setPage] = useState(1);
     const [scopeToDelete, setScopeToDelete] = useState<{
@@ -50,12 +48,13 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
 
     const params = useMemo(
         () => ({
-            status: status === "todos" ? undefined : status,
+            status: includeDrafts ? undefined : "published" as const,
+            include_drafts: includeDrafts || undefined,
             q: isCNPJ(q) ? q.replace(/\D/g, '') : q || undefined,
             limit: pageSize,
             offset: (page - 1) * pageSize,
         }),
-        [page, q, status],
+        [includeDrafts, page, q],
     );
 
     const { data, error, isLoading, mutate } = useScopes(params);
@@ -90,15 +89,27 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                     <BulkEdit />
                 </div>
 
-                <TextInput
-                    placeholder="Buscar por razão social ou CNPJ"
-                    value={q}
-                    onChange={(e) => {
-                        setQ(e.target.value);
-                        setPage(1);
-                    }}
-                    className="rounded-md bg-background pl-10"
-                />
+                <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                    <TextInput
+                        placeholder="Buscar por razão social, nome resumido ou CNPJ"
+                        value={q}
+                        onChange={(e) => {
+                            setQ(e.target.value);
+                            setPage(1);
+                        }}
+                        className="rounded-md bg-background pl-10"
+                    />
+                    <div className="shrink-0">
+                        <Checkbox
+                            checked={includeDrafts}
+                            onChange={(checked) => {
+                                setIncludeDrafts(checked);
+                                setPage(1);
+                            }}
+                            label="Incluir rascunhos"
+                        />
+                    </div>
+                </div>
             </div>
 
             {isLoading ? (
@@ -113,7 +124,30 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                 <div className="p-5 text-sm">Nenhum escopo encontrado.</div>
             ) :
                 items.map((x) => {
-                    const selected = selectedScopeId === x.id;
+                    const canView = x.can_view !== false;
+                    const selected = canView && selectedScopeId === x.id;
+                    const summary = (
+                        <>
+                            <div className="flex flex-row items-center justify-between gap-3">
+                                <div>{x.client_cnpj ? formatCNPJ(x.client_cnpj) : "-"}</div>
+
+                                <Badge variant={x.status === "draft" ? "secondary" : "default"}>
+                                    {x.status === "draft"
+                                        ? "Rascunho"
+                                        : x.status === "published"
+                                            ? "Publicado"
+                                            : "Arquivado"}
+                                </Badge>
+                            </div>
+
+                            <div className="pt-2 font-medium whitespace-normal flex items-start">
+                                {x.razao_social}
+                            </div>
+                            <div className="pb-2 text-sm whitespace-normal flex items-start">
+                                {x.nome_resumido}
+                            </div>
+                        </>
+                    );
 
                     return (
                         <div
@@ -123,30 +157,19 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                                 selected ? "bg-accent text-accent-foreground" : "hover:bg-muted/60",
                             ].join(" ")}
                         >
-                            <button
-                                type="button"
-                                className="w-full cursor-pointer p-5 text-left focus:outline-none focus:ring-2 focus:ring-ring"
-                                onClick={() => onSelectScope(x)}
-                            >
-                                <div className="flex flex-row items-center justify-between">
-                                    <div>{x.client_cnpj ? formatCNPJ(x.client_cnpj) : "-"}</div>
-
-                                    <Badge variant={x.status === "draft" ? "secondary" : "default"}>
-                                        {x.status === "draft"
-                                            ? "Rascunho"
-                                            : x.status === "published"
-                                                ? "Publicado"
-                                                : "Arquivado"}
-                                    </Badge>
+                            {canView ? (
+                                <button
+                                    type="button"
+                                    className="w-full cursor-pointer p-5 text-left focus:outline-none focus:ring-2 focus:ring-ring"
+                                    onClick={() => onSelectScope(x)}
+                                >
+                                    {summary}
+                                </button>
+                            ) : (
+                                <div className="w-full p-5 text-left" aria-disabled="true">
+                                    {summary}
                                 </div>
-
-                                <div className="pt-2 font-medium whitespace-normal flex items-start">
-                                    {x.razao_social}
-                                </div>
-                                <div className="pb-2 text-sm whitespace-normal flex items-start">
-                                    {x.nome_resumido}
-                                </div>
-                            </button>
+                            )}
 
                             <div className="flex flex-row items-center justify-between px-5 pb-5">
                                 <span className="text-xs">
@@ -156,7 +179,7 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                                     })}
                                 </span>
 
-                                <Popover>
+                                {canView ? <Popover>
                                     <PopoverTrigger asChild>
                                         <button
                                             type="button"
@@ -202,7 +225,12 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                                             )}
                                         </div>
                                     </PopoverContent>
-                                </Popover>
+                                </Popover> : (
+                                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                        <LockKeyhole className="size-4" />
+                                        Visualização restrita
+                                    </span>
+                                )}
                             </div>
                         </div>
                     );

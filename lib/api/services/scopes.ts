@@ -65,6 +65,7 @@ function normalizeScopeSummary(item: ScopeSummaryApi | ScopeSummary): ScopeSumma
     version_count: "version_count" in item ? item.version_count ?? null : null,
     responsible_user_id: item.responsible_user_id ?? null,
     responsible_user_nome: item.responsible_user_nome ?? null,
+    can_view: item.can_view ?? true,
   };
 }
 
