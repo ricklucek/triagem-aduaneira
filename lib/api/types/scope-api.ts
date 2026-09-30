@@ -68,6 +68,7 @@ export interface ScopeSummaryApi {
   client_nome_resumido?: string | null;
   responsible_user_id?: string | null;
   responsible_user_nome?: string | null;
+  can_view?: boolean;
 }
 
 export interface BulkReassignResponsiblePayload {

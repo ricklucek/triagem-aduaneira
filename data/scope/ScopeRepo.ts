@@ -13,6 +13,7 @@ export type ScopeSummary = {
   version?: number | null;
   responsible_user_id?: string | null;
   responsible_user_nome?: string | null;
+  can_view?: boolean;
 };
 
 export type ScopeVersion = {
@@ -23,6 +24,7 @@ export type ScopeVersion = {
 
 export type ListScopesParams = {
   status?: "draft" | "published" | "archived";
+  include_drafts?: boolean;
   cnpj?: string;
   q?: string;
   client_id?: string;
