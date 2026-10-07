@@ -127,6 +127,17 @@ const ServicoValorOuSalarioSchema = z
         message: "Tipo de valor é obrigatório",
       });
     }
+
+    if (
+      value.tipoValor === "OUTRO" &&
+      (value.valor == null || value.valor <= 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["valor"],
+        message: "Informe um valor maior que zero",
+      });
+    }
   });
 
 const ModalidadeServicoSchema = z.enum(["SIM", "NAO", "CASO_A_CASO"]);

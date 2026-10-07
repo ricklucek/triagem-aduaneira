@@ -62,6 +62,24 @@ const currency = (v?: number | null, currencyCode = "BRL") =>
         currency: currencyCode,
       }).format(v);
 
+const servicePricingTypeLabel = (value?: string | null) => {
+  if (value === "SALARIO_MINIMO") return "Um salário mínimo vigente";
+  if (value === "MEIO_SALARIO_MINIMO") return "Meio salário mínimo vigente";
+  if (value === "OUTRO") return "Outro";
+  return text(value);
+};
+
+const advisoryPricingTypeLabel = (value?: string | null) => {
+  if (value === "OUTRO") return "Outro";
+  if (value === "SALARIO_MINIMO" || value === "MEIO_SALARIO_MINIMO") {
+    return "Meio salário mínimo vigente";
+  }
+  return text(value);
+};
+
+const manualServiceValue = (type?: string | null, value?: number | null) =>
+  type === "OUTRO" ? currency(value) : null;
+
 const date = (v?: string | null) => {
   if (!v) return null;
 
@@ -719,8 +737,14 @@ function AdvisoryServiceView({
   return (
     <Grid>
       <ServiceBlock title={title} enabled={service.habilitado} mode="SIM">
-        <Field label="Tipo de valor" value={text(service.tipoValor)} />
-        <Field label="Valor" value={currency(service.valor)} />
+        <Field
+          label="Tipo de valor"
+          value={advisoryPricingTypeLabel(service.tipoValor)}
+        />
+        <Field
+          label="Valor"
+          value={manualServiceValue(service.tipoValor, service.valor)}
+        />
         <Field
           label="Última atualização"
           value={date(service.ultimaAtualizacao)}
@@ -873,11 +897,16 @@ function ImportCustomsServicesView({
       >
         <Field
           label="Tipo de valor"
-          value={text(services.despachoAduaneiroImportacao?.tipoValor)}
+          value={servicePricingTypeLabel(
+            services.despachoAduaneiroImportacao?.tipoValor,
+          )}
         />
         <Field
           label="Valor"
-          value={currency(services.despachoAduaneiroImportacao?.valor)}
+          value={manualServiceValue(
+            services.despachoAduaneiroImportacao?.tipoValor,
+            services.despachoAduaneiroImportacao?.valor,
+          )}
         />
         <Field
           label="Última atualização"
@@ -1016,11 +1045,16 @@ function ExportCustomsServicesView({
       >
         <Field
           label="Tipo de valor"
-          value={text(services.despachoAduaneiroExportacao?.tipoValor)}
+          value={servicePricingTypeLabel(
+            services.despachoAduaneiroExportacao?.tipoValor,
+          )}
         />
         <Field
           label="Valor"
-          value={currency(services.despachoAduaneiroExportacao?.valor)}
+          value={manualServiceValue(
+            services.despachoAduaneiroExportacao?.tipoValor,
+            services.despachoAduaneiroExportacao?.valor,
+          )}
         />
         <Field
           label="Última atualização"

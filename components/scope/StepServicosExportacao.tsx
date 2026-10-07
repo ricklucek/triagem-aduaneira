@@ -127,9 +127,19 @@ export default function StepServicosExportacao({
               value={
                 data.despachoAduaneiroExportacao.tipoValor as string | undefined
               }
-              onChange={(e) =>
-                update("despachoAduaneiroExportacao.tipoValor", e.target.value)
-              }
+              onChange={(e) => {
+                const tipoValor = e.target.value as
+                  "SALARIO_MINIMO" | "OUTRO" | "";
+
+                setData({
+                  ...data,
+                  despachoAduaneiroExportacao: {
+                    ...data.despachoAduaneiroExportacao,
+                    tipoValor,
+                    valor: null,
+                  },
+                });
+              }}
             >
               <option value="">Selecione uma opção</option>
               <option value="SALARIO_MINIMO">Um salário mínimo vigente</option>
@@ -137,7 +147,11 @@ export default function StepServicosExportacao({
             </Select>
           </Field>
           {data.despachoAduaneiroExportacao.tipoValor === "OUTRO" ? (
-            <Field label="Valor">
+            <Field
+              label="Valor"
+              required
+              error={errors["despachoAduaneiroExportacao.valor"]}
+            >
               <NumberInput
                 value={data.despachoAduaneiroExportacao.valor ?? ""}
                 onChange={(e) =>
@@ -414,18 +428,34 @@ export default function StepServicosExportacao({
         <Grid columns={2}>
           <Field label="Tipo de valor" required>
             <Select
-              value={data.assessoria.tipoValor as string | undefined}
-              onChange={(e) => update("assessoria.tipoValor", e.target.value)}
+              value={
+                data.assessoria.tipoValor === "SALARIO_MINIMO"
+                  ? "MEIO_SALARIO_MINIMO"
+                  : (data.assessoria.tipoValor as string | undefined)
+              }
+              onChange={(e) => {
+                const tipoValor = e.target.value as
+                  "MEIO_SALARIO_MINIMO" | "OUTRO" | "";
+
+                setData({
+                  ...data,
+                  assessoria: {
+                    ...data.assessoria,
+                    tipoValor,
+                    valor: null,
+                  },
+                });
+              }}
             >
               <option value="">Selecione uma opção</option>
-              <option value="SALARIO_MINIMO">
+              <option value="MEIO_SALARIO_MINIMO">
                 Meio salário mínimo vigente
               </option>
               <option value="OUTRO">Outro</option>
             </Select>
           </Field>
           {data.assessoria.tipoValor === "OUTRO" ? (
-            <Field label="Valor" required>
+            <Field label="Valor" required error={errors["assessoria.valor"]}>
               <NumberInput
                 value={data.assessoria.valor ?? ""}
                 onChange={(e) =>
