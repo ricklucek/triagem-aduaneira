@@ -129,9 +129,19 @@ export default function StepServicosImportacao({
               value={
                 data.despachoAduaneiroImportacao.tipoValor as string | undefined
               }
-              onChange={(e) =>
-                update("despachoAduaneiroImportacao.tipoValor", e.target.value)
-              }
+              onChange={(e) => {
+                const tipoValor = e.target.value as
+                  "SALARIO_MINIMO" | "OUTRO" | "";
+
+                setData({
+                  ...data,
+                  despachoAduaneiroImportacao: {
+                    ...data.despachoAduaneiroImportacao,
+                    tipoValor,
+                    valor: null,
+                  },
+                });
+              }}
             >
               <option value="">Selecione uma opção</option>
               <option value="SALARIO_MINIMO">Um salário mínimo vigente</option>
@@ -139,7 +149,11 @@ export default function StepServicosImportacao({
             </Select>
           </Field>
           {data.despachoAduaneiroImportacao.tipoValor === "OUTRO" ? (
-            <Field label="Valor">
+            <Field
+              label="Valor"
+              required
+              error={errors["despachoAduaneiroImportacao.valor"]}
+            >
               <NumberInput
                 value={data.despachoAduaneiroImportacao.valor ?? ""}
                 onChange={(e) =>
@@ -346,7 +360,19 @@ export default function StepServicosImportacao({
           <Field label="Tipo de valor" required>
             <Select
               value={data.assessoria.tipoValor as string | undefined}
-              onChange={(e) => update("assessoria.tipoValor", e.target.value)}
+              onChange={(e) => {
+                const tipoValor = e.target.value as
+                  "MEIO_SALARIO_MINIMO" | "OUTRO" | "";
+
+                setData({
+                  ...data,
+                  assessoria: {
+                    ...data.assessoria,
+                    tipoValor,
+                    valor: null,
+                  },
+                });
+              }}
             >
               <option value="">Selecione uma opção</option>
               <option value="MEIO_SALARIO_MINIMO">
