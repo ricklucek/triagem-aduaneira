@@ -438,6 +438,55 @@ function ViewCard({
   );
 }
 
+type ScopeNcm = {
+  codigo?: string | null;
+  possuiBeneficio?: "SIM" | "NAO" | null;
+  descricaoBeneficio?: string | null;
+};
+
+function NcmView({
+  title,
+  ncms,
+  observation,
+}: {
+  title: string;
+  ncms?: ScopeNcm[] | null;
+  observation?: string | null;
+}) {
+  const registeredNcms = (ncms ?? []).filter((ncm) => ncm.codigo);
+
+  return (
+    <ViewCard title={title}>
+      {registeredNcms.length ? (
+        <div className="grid gap-3">
+          {registeredNcms.map((ncm, index) => (
+            <Card key={index} className="gap-3 bg-muted/20 p-3">
+              <Grid>
+                <Field
+                  label={index === 0 ? "NCM principal" : `NCM ${index + 1}`}
+                  value={text(ncm.codigo)}
+                />
+                <Field
+                  label="Possui benefício"
+                  value={text(ncm.possuiBeneficio)}
+                />
+                <HighlightField
+                  label="Descrição do benefício"
+                  value={text(ncm.descricaoBeneficio)}
+                />
+              </Grid>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <EmptyState>Nenhum NCM cadastrado.</EmptyState>
+      )}
+
+      <HighlightField label="Observação sobre NCM" value={text(observation)} />
+    </ViewCard>
+  );
+}
+
 function PaymentAccountFields({
   contaPagamento,
   dadosContaCliente,
@@ -1356,36 +1405,6 @@ function ScopeDetails({
                   )}
                 />
               </Grid>
-
-              <div className="grid gap-3">
-                {(importacao.ncms ?? [])
-                  .filter((ncm) => ncm.codigo)
-                  .map((ncm, index) => (
-                    <Card key={index} className="gap-3 bg-muted/20 p-3">
-                      <Grid>
-                        <Field
-                          label={
-                            index === 0 ? "NCM principal" : "NCM " + (index + 1)
-                          }
-                          value={text(ncm.codigo)}
-                        />
-                        <Field
-                          label="Possui benefício"
-                          value={text(ncm.possuiBeneficio)}
-                        />
-                        <HighlightField
-                          label="Descrição do benefício"
-                          value={text(ncm.descricaoBeneficio)}
-                        />
-                      </Grid>
-                    </Card>
-                  ))}
-              </div>
-
-              <HighlightField
-                label="Observação sobre NCM"
-                value={text(importacao.observacaoNcms)}
-              />
             </ViewCard>
           ) : null}
 
@@ -1435,36 +1454,6 @@ function ScopeDetails({
                   )}
                 />
               </Grid>
-
-              <div className="grid gap-3">
-                {(exportacao.ncms ?? [])
-                  .filter((ncm) => ncm.codigo)
-                  .map((ncm, index) => (
-                    <Card key={index} className="gap-3 bg-muted/20 p-3">
-                      <Grid>
-                        <Field
-                          label={
-                            index === 0 ? "NCM principal" : "NCM " + (index + 1)
-                          }
-                          value={text(ncm.codigo)}
-                        />
-                        <Field
-                          label="Possui benefício"
-                          value={text(ncm.possuiBeneficio)}
-                        />
-                        <HighlightField
-                          label="Descrição do benefício"
-                          value={text(ncm.descricaoBeneficio)}
-                        />
-                      </Grid>
-                    </Card>
-                  ))}
-              </div>
-
-              <HighlightField
-                label="Observação sobre NCM"
-                value={text(exportacao.observacaoNcms)}
-              />
             </ViewCard>
           ) : null}
         </div>
@@ -1473,76 +1462,91 @@ function ScopeDetails({
     {
       id: "tributos",
       label: "Tributos",
-      content:
-        showImport && importacao ? (
-          <ViewCard title="Tributos da importação">
-            <FederalTaxesView impostosFederais={importacao.impostosFederais} />
-            <AfrmmView afrmm={importacao.afrmm} />
+      content: (
+        <div className="grid gap-4">
+          {showImport && importacao ? (
+            <NcmView
+              title="NCMs da importação"
+              ncms={importacao.ncms}
+              observation={importacao.observacaoNcms}
+            />
+          ) : null}
 
-            <Separator className="my-2" />
-            <h5 className="text-sm font-semibold">ICMS</h5>
-            <Grid>
-              <PaymentAccountFields
-                subject="do ICMS"
-                contaPagamento={importacao.icms?.contaPagamento}
-                dadosContaCliente={importacao.icms?.dadosContaCliente}
+          {showExport && exportacao ? (
+            <NcmView
+              title="NCMs da exportação"
+              ncms={exportacao.ncms}
+              observation={exportacao.observacaoNcms}
+            />
+          ) : null}
+
+          {showImport && importacao ? (
+            <ViewCard title="Tributos da importação">
+              <FederalTaxesView
+                impostosFederais={importacao.impostosFederais}
               />
-              <TaxRegimeStatus
-                label="Regime geral"
-                regime={importacao.icms?.regime}
-                description={text(importacao.icms?.observacao)}
-              />
-              {importacao.icms?.regime !== "BENEFICIO" ? (
-                <HighlightField
-                  label="Observações ICMS"
-                  value={text(importacao.icms?.observacao)}
+              <AfrmmView afrmm={importacao.afrmm} />
+
+              <Separator className="my-2" />
+              <h5 className="text-sm font-semibold">ICMS</h5>
+              <Grid>
+                <PaymentAccountFields
+                  subject="do ICMS"
+                  contaPagamento={importacao.icms?.contaPagamento}
+                  dadosContaCliente={importacao.icms?.dadosContaCliente}
                 />
-              ) : null}
-            </Grid>
+                <TaxRegimeStatus
+                  label="Regime geral"
+                  regime={importacao.icms?.regime}
+                  description={text(importacao.icms?.observacao)}
+                />
+                {importacao.icms?.regime !== "BENEFICIO" ? (
+                  <HighlightField
+                    label="Observações ICMS"
+                    value={text(importacao.icms?.observacao)}
+                  />
+                ) : null}
+              </Grid>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              {Object.entries(importacao.icms?.porDestinacao ?? {})
-                .filter(
-                  ([destinacao, detalhe]) =>
-                    detalhe &&
-                    includesIcmsDestination(
-                      importacao.destinacao,
-                      importacao.subtipoConsumo,
-                      destinacao,
-                    ),
-                )
-                .map(([destinacao, detalhe]) => (
-                  <Card key={destinacao} className="gap-3 p-3">
-                    <h6 className="text-sm font-semibold">
-                      {icmsDestinationLabel(destinacao)}
-                    </h6>
-                    <div className="grid gap-3">
-                      <TaxRegimeStatus
-                        regime={detalhe?.regime}
-                        showDescription={false}
-                      />
-                      <Grid>
-                        <Field
-                          label="Alíquota base"
-                          value={text(detalhe?.recolhida)}
+              <div className="grid gap-3 md:grid-cols-2">
+                {Object.entries(importacao.icms?.porDestinacao ?? {})
+                  .filter(
+                    ([destinacao, detalhe]) =>
+                      detalhe &&
+                      includesIcmsDestination(
+                        importacao.destinacao,
+                        importacao.subtipoConsumo,
+                        destinacao,
+                      ),
+                  )
+                  .map(([destinacao, detalhe]) => (
+                    <Card key={destinacao} className="gap-3 p-3">
+                      <h6 className="text-sm font-semibold">
+                        {icmsDestinationLabel(destinacao)}
+                      </h6>
+                      <div className="grid gap-3">
+                        <TaxRegimeStatus
+                          regime={detalhe?.regime}
+                          showDescription={false}
                         />
-                        <Field
-                          label="Alíquota efetiva"
-                          value={text(detalhe?.efetiva)}
-                        />
-                      </Grid>
-                    </div>
-                  </Card>
-                ))}
-            </div>
-          </ViewCard>
-        ) : (
-          <ViewCard title="Tributos da importação">
-            <EmptyState>
-              Este escopo não possui operação de importação cadastrada.
-            </EmptyState>
-          </ViewCard>
-        ),
+                        <Grid>
+                          <Field
+                            label="Alíquota base"
+                            value={text(detalhe?.recolhida)}
+                          />
+                          <Field
+                            label="Alíquota efetiva"
+                            value={text(detalhe?.efetiva)}
+                          />
+                        </Grid>
+                      </div>
+                    </Card>
+                  ))}
+              </div>
+            </ViewCard>
+          ) : null}
+        </div>
+      ),
     },
     {
       id: "comercial-casco",
