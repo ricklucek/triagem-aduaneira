@@ -69,13 +69,18 @@ export const ContaBancariaSchema = z.object({
 });
 
 export const ContatoSchema = z.object({
-  nome: z.string().trim().min(1, "Nome é obrigatório"),
-  cargoDepartamento: z
+  nome: z.string().trim().optional().default(""),
+  cargoDepartamento: z.string().trim().optional().default(""),
+  email: z
     .string()
     .trim()
-    .min(1, "Cargo/Departamento é obrigatório"),
-  email: z.string().trim().email("E-mail inválido"),
-  telefone: z.string().trim().min(1, "Telefone é obrigatório"),
+    .refine(
+      (value) => value === "" || z.email().safeParse(value).success,
+      "E-mail inválido. Informe um endereço válido ou deixe em branco.",
+    )
+    .optional()
+    .default(""),
+  telefone: z.string().trim().optional().default(""),
 });
 
 export const NcmItemSchema = z.object({
@@ -693,7 +698,7 @@ export const EscopoSchema = z
         "RADAR_ILIMITADO",
       ]),
     }),
-    contatos: z.array(ContatoSchema).min(1, "Informe ao menos um contato"),
+    contatos: z.array(ContatoSchema).default([]),
     operacao: z.object({
       tipos: z
         .array(TipoOperacaoSchema)
