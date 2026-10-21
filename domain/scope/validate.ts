@@ -1,7 +1,6 @@
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import {
   ContaBancariaSchema,
-  ContatoSchema,
   EscopoSchema,
   ExportacaoSchema,
   ImportacaoSchema,
@@ -50,14 +49,7 @@ export function validarEtapa(
       }
 
       case "CONTATOS":
-        if (data.contatos.length === 0) {
-          return {
-            ok: false,
-            errors: { contatos: "Informe ao menos um contato" },
-          };
-        }
-
-        data.contatos.forEach((contato) => ContatoSchema.parse(contato));
+        z.object({ contatos: EscopoSchema.shape.contatos }).parse(data);
         return { ok: true, errors: {} };
 
       case "OPERACAO":

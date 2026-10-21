@@ -406,7 +406,7 @@ export default function ScopeWizard({
 
       case "CONTATOS":
         return (
-          <StepContatos form={form} errors={scopedErrors} onChange={setForm} />
+          <StepContatos form={form} errors={errors} onChange={setForm} />
         );
 
       case "OPERACAO":

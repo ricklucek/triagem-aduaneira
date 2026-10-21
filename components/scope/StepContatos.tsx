@@ -7,7 +7,6 @@ import {
   DangerButton,
   Grid,
   PrimaryButton,
-  Section,
   Stack,
   Toolbar,
 } from "@/components/ui/form-layout";
@@ -47,6 +46,10 @@ export default function StepContatos({ form, errors, onChange }: Props) {
 
   return (
     <main className="gap-5 flex flex-col">
+      <p className="text-sm text-muted-foreground">
+        Todos os campos são opcionais. Deixe em branco o que não tiver
+        disponível.
+      </p>
       <Toolbar
         right={
           <PrimaryButton type="button" onClick={addContato}>
@@ -61,24 +64,20 @@ export default function StepContatos({ form, errors, onChange }: Props) {
             <Toolbar
               left={<strong>Contato {index + 1}</strong>}
               right={
-                form.contatos.length > 1 ? (
-                  <DangerButton
-                    type="button"
-                    onClick={() => removeContato(index)}
-                  >
-                    Remover
-                  </DangerButton>
-                ) : null
+                <DangerButton
+                  type="button"
+                  onClick={() => removeContato(index)}
+                >
+                  Remover
+                </DangerButton>
               }
             />
 
             <Grid columns={2}>
-              <Field
-                label="Nome"
-                required
-                error={errors[`contatos.${index}.nome`]}
-              >
+              <Field label="Nome" error={errors[`contatos.${index}.nome`]}>
                 <TextInput
+                  name={`contatos.${index}.nome`}
+                  invalid={Boolean(errors[`contatos.${index}.nome`])}
                   value={contato.nome}
                   onChange={(e) =>
                     updateContato(index, { nome: e.target.value })
@@ -88,10 +87,13 @@ export default function StepContatos({ form, errors, onChange }: Props) {
 
               <Field
                 label="Cargo/Departamento"
-                required
                 error={errors[`contatos.${index}.cargoDepartamento`]}
               >
                 <TextInput
+                  name={`contatos.${index}.cargoDepartamento`}
+                  invalid={Boolean(
+                    errors[`contatos.${index}.cargoDepartamento`],
+                  )}
                   value={contato.cargoDepartamento}
                   onChange={(e) =>
                     updateContato(index, { cargoDepartamento: e.target.value })
@@ -101,10 +103,13 @@ export default function StepContatos({ form, errors, onChange }: Props) {
 
               <Field
                 label="E-mail"
-                required
+                hint="Se não tiver um e-mail válido, deixe em branco."
                 error={errors[`contatos.${index}.email`]}
               >
                 <TextInput
+                  type="email"
+                  name={`contatos.${index}.email`}
+                  invalid={Boolean(errors[`contatos.${index}.email`])}
                   value={contato.email}
                   onChange={(e) =>
                     updateContato(index, { email: e.target.value })
@@ -114,10 +119,11 @@ export default function StepContatos({ form, errors, onChange }: Props) {
 
               <Field
                 label="Telefone"
-                required
                 error={errors[`contatos.${index}.telefone`]}
               >
                 <TextInput
+                  name={`contatos.${index}.telefone`}
+                  invalid={Boolean(errors[`contatos.${index}.telefone`])}
                   value={contato.telefone}
                   onChange={(e) =>
                     updateContato(index, { telefone: e.target.value })
@@ -129,29 +135,15 @@ export default function StepContatos({ form, errors, onChange }: Props) {
         ))}
       </Stack>
 
-      {errors ? (
+      {form.contatos.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Nenhum contato adicionado.
+        </p>
+      ) : null}
+
+      {errors["contatos"] ? (
         <div className="text-sm font-medium text-destructive">
           {errors["contatos"]}
-        </div>
-      ) : null}
-      {errors ? (
-        <div className="text-sm font-medium text-destructive">
-          {errors["nome"]}
-        </div>
-      ) : null}
-      {errors ? (
-        <div className="text-sm font-medium text-destructive">
-          {errors["cargoDepartamento"]}
-        </div>
-      ) : null}
-      {errors ? (
-        <div className="text-sm font-medium text-destructive">
-          {errors["email"]}
-        </div>
-      ) : null}
-      {errors ? (
-        <div className="text-sm font-medium text-destructive">
-          {errors["telefone"]}
         </div>
       ) : null}
     </main>
