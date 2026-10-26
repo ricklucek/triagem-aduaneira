@@ -26,6 +26,7 @@ import type {
   SaveScopeDraftPayload,
   ScopeApiClient,
   ScopeDetailResponse,
+  ScopeActivityResponse,
   ScopeSummaryApi,
   ScopeVersionsResponse,
   CreateScopeTemplatePayload,
@@ -178,6 +179,16 @@ export const scopeApi: ScopeApiClient = {
 
   async deleteScope(id: string): Promise<void> {
     await http.delete<void>(API_ROUTES.scopes.delete(id));
+  },
+
+  async deactivateScope(id: string): Promise<ScopeActivityResponse> {
+    const { data } = await http.post<ScopeActivityResponse>(API_ROUTES.scopes.deactivate(id));
+    return data;
+  },
+
+  async reactivateScope(id: string): Promise<ScopeActivityResponse> {
+    const { data } = await http.post<ScopeActivityResponse>(API_ROUTES.scopes.reactivate(id));
+    return data;
   },
 
   async listScopeVersions(id: string): Promise<ScopeVersionsResponse> {
