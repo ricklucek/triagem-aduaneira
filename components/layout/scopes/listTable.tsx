@@ -7,7 +7,7 @@ import {
     SecondaryButton,
     Toolbar,
 } from "@/components/ui/form-layout";
-import { Checkbox, TextInput } from "@/components/ui/form-fields";
+import { Checkbox, Select, TextInput } from "@/components/ui/form-fields";
 
 import { useScopes } from "@/lib/api/hooks/use-scope-api";
 import { formatCNPJ, isCNPJ } from "@/utils/format";
@@ -27,8 +27,11 @@ import { toast } from "@/components/ui/toast";
 import { hasRole } from "@/lib/auth/guard";
 import { format } from 'date-fns';
 import { ptBR } from "date-fns/locale";
-import { ScopeSummary } from "@/data/scope/ScopeRepo";
+import { ScopeSummary, type ScopeActivity } from "@/data/scope/ScopeRepo";
 import BulkEdit from "@/components/scope/operations/BulkEdit";
+import { useAuthSession } from "@/lib/auth/session-storage";
+import { scopeActivityFilters } from "@/domain/scope/activity";
+import ScopeActivityDialog, { type ScopeActivityTarget } from "@/components/scope/ScopeActivityDialog";
 
 type ListTableProps = {
     onSelectScope: (scope: ScopeSummary) => void;
@@ -36,6 +39,11 @@ type ListTableProps = {
 };
 
 const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
+    const session = useAuthSession();
+    const isAdmin = session?.user.role === "admin";
+    const [activity, setActivity] = useState<ScopeActivity>("active");
+    const effectiveActivity = isAdmin ? activity : "active";
+    const [activityTarget, setActivityTarget] = useState<ScopeActivityTarget | null>(null);
     const [includeDrafts, setIncludeDrafts] = useState(false);
     const [q, setQ] = useState("");
     const [page, setPage] = useState(1);
@@ -48,13 +56,12 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
 
     const params = useMemo(
         () => ({
-            status: includeDrafts ? undefined : "published" as const,
-            include_drafts: includeDrafts || undefined,
+            ...scopeActivityFilters(effectiveActivity, includeDrafts),
             q: isCNPJ(q) ? q.replace(/\D/g, '') : q || undefined,
             limit: pageSize,
             offset: (page - 1) * pageSize,
         }),
-        [includeDrafts, page, q],
+        [effectiveActivity, includeDrafts, page, q],
     );
 
     const { data, error, isLoading, mutate } = useScopes(params);
@@ -90,6 +97,19 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                 </div>
 
                 <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                    {isAdmin ? (
+                        <label className="shrink-0 text-sm">
+                            <span className="sr-only">Situação dos escopos</span>
+                            <Select value={effectiveActivity} onChange={(event) => {
+                                setActivity(event.target.value as ScopeActivity);
+                                setPage(1);
+                            }}>
+                                <option value="active">Ativos</option>
+                                <option value="inactive">Inativos</option>
+                                <option value="all">Todos</option>
+                            </Select>
+                        </label>
+                    ) : null}
                     <TextInput
                         placeholder="Buscar por razão social, nome resumido ou CNPJ"
                         value={q}
@@ -99,7 +119,7 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                         }}
                         className="rounded-md bg-background pl-10"
                     />
-                    <div className="shrink-0">
+                    {effectiveActivity === "active" ? <div className="shrink-0">
                         <Checkbox
                             checked={includeDrafts}
                             onChange={(checked) => {
@@ -108,7 +128,7 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                             }}
                             label="Incluir rascunhos"
                         />
-                    </div>
+                    </div> : null}
                 </div>
             </div>
 
@@ -136,7 +156,7 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                                         ? "Rascunho"
                                         : x.status === "published"
                                             ? "Publicado"
-                                            : "Arquivado"}
+                                            : "Inativo"}
                                 </Badge>
                             </div>
 
@@ -200,7 +220,7 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                                                 Visualizar
                                             </Link>
 
-                                            {hasRole(["comercial", "admin"]) && (
+                                            {x.status !== "archived" && hasRole(["comercial", "admin"]) && (
                                                 <Link
                                                     className="popover-menu-item cursor-pointer items-center justify-center flex"
                                                     href={`/scope/${x.id}?step=SOBRE_EMPRESA`}
@@ -209,7 +229,15 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                                                 </Link>
                                             )}
 
-                                            {hasRole(["comercial", "admin"]) && (
+                                            {isAdmin ? (
+                                                <Button variant="outline" onClick={() => setActivityTarget({
+                                                    id: x.id, label: x.nome_resumido || x.razao_social || x.id, status: x.status,
+                                                })}>
+                                                    {x.status === "archived" ? "Reativar" : "Inativar"}
+                                                </Button>
+                                            ) : null}
+
+                                            {x.status !== "archived" && hasRole(["comercial", "admin"]) && (
                                                 <Button
                                                     type="button"
                                                     variant="destructive"
@@ -237,6 +265,13 @@ const ListTable = ({ onSelectScope, selectedScopeId }: ListTableProps) => {
                 })}
 
             <div className="h-4" />
+
+            <ScopeActivityDialog
+                key={activityTarget?.id ?? "closed"}
+                target={activityTarget}
+                onClose={() => setActivityTarget(null)}
+                onSuccess={async () => { await mutate(); setPage(1); }}
+            />
 
             <Toolbar
                 left={

@@ -1,16 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import ScopeWizard from "@/components/scope/ScopeWizard";
 import { EscopoForm } from "@/domain/scope/types";
-import { Card, PageShell, Stack } from "@/components/ui/form-layout";
+import { Card, Stack } from "@/components/ui/form-layout";
 import { useScope, useScopeMetadata } from "@/lib/api/hooks/use-scope-api";
 import { scopeApi } from "@/lib/api/services/scopes";
 import { Badge } from "@/components/ui/badge";
 import { formatCNPJ } from "@/utils/format";
 import General from "@/components/scope/General";
-import { escopoFormDefault } from "@/domain/scope/defaults";
+import type { ScopeResponsible } from "@/lib/api/types/scope-metadata";
 
 export default function ScopeDetailPage() {
   const { scopeId } = useParams<{ scopeId: string }>();
@@ -26,22 +27,9 @@ export default function ScopeDetailPage() {
 
   const loading = loadingScope || loadingMetadata;
 
-  const draft = scopeResponse?.draft
-    ? scopeResponse.draft
-    : null;
-
-  const [form, setForm] = useState<EscopoForm>(
-    () => draft ?? escopoFormDefault,
-  );
+  const draft = scopeResponse?.draft ? scopeResponse.draft : null;
 
   const statusCode = scopeResponse?.status ?? "draft";
-
-  const status =
-    statusCode === "draft"
-      ? "Rascunho"
-      : statusCode === "published"
-        ? "Publicado"
-        : "Arquivado";
 
   const responsaveis = metadataResponse?.responsaveis ?? [];
 
@@ -58,15 +46,56 @@ export default function ScopeDetailPage() {
     await mutate();
   }, [scopeId, mutate]);
 
-  useEffect(() => {
-    if (draft) {
-      setForm(draft)
-    }
-  }, [draft])
-
   if (loading) return <div style={{ padding: 24 }}>Carregando escopo...</div>;
   if (scopeError || !draft)
     return <div style={{ padding: 24 }}>Escopo não encontrado.</div>;
+
+  if (statusCode === "archived")
+    return (
+      <div className="p-6">
+        <Card>
+          <Badge variant="secondary">Inativo</Badge>
+          <p>
+            Este escopo está inativo e disponível somente para consulta.
+            Reative-o na lista de escopos para editar.
+          </p>
+          <Link className="underline" href={`/scope/view/${scopeId}`}>
+            Consultar escopo
+          </Link>
+          <Link className="underline" href="/scope/list">
+            Voltar à lista de escopos
+          </Link>
+        </Card>
+      </div>
+    );
+
+  return (
+    <ScopeEditor
+      key={scopeId}
+      draft={draft}
+      statusCode={statusCode}
+      responsaveis={responsaveis}
+      onSave={handleSave}
+      onPublish={handlePublish}
+    />
+  );
+}
+
+function ScopeEditor({
+  draft,
+  statusCode,
+  responsaveis,
+  onSave,
+  onPublish,
+}: {
+  draft: EscopoForm;
+  statusCode: "draft" | "published";
+  responsaveis: ScopeResponsible[];
+  onSave: (next: EscopoForm) => Promise<void>;
+  onPublish: () => Promise<void>;
+}) {
+  const [form, setForm] = useState(draft);
+  const status = statusCode === "draft" ? "Rascunho" : "Publicado";
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -76,8 +105,8 @@ export default function ScopeDetailPage() {
             form={form}
             setForm={setForm}
             responsaveis={responsaveis}
-            onSave={handleSave}
-            onPublish={handlePublish}
+            onSave={onSave}
+            onPublish={onPublish}
             title={""}
             subtitle="Edite, valide e publique o escopo."
             status={status}
@@ -92,10 +121,7 @@ export default function ScopeDetailPage() {
             <p className="text-sm">{`${draft.sobreEmpresa.razaoSocial || "-"} • ${formatCNPJ(draft.sobreEmpresa.cnpj) || "-"}`}</p>
           </Card>
 
-          <General
-            form={form}
-            onChange={setForm}
-          />
+          <General form={form} onChange={setForm} />
         </Stack>
       </div>
     </div>
