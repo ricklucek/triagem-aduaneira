@@ -1,7 +1,5 @@
 import { EscopoForm } from "@/domain/scope/types";
 
-export type ScopeActivity = "active" | "inactive" | "all";
-
 export type ScopeSummary = {
   id: string;
   client_id?: string | null;
@@ -25,7 +23,6 @@ export type ScopeVersion = {
 };
 
 export type ListScopesParams = {
-  activity?: ScopeActivity;
   status?: "draft" | "published" | "archived";
   include_drafts?: boolean;
   cnpj?: string;

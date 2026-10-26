@@ -118,7 +118,7 @@ export default function ClientScopes({ clientId }: { clientId: string }) {
                                                     ? "Rascunho"
                                                     : r.status === "published"
                                                         ? "Publicado"
-                                                        : "Inativo"}
+                                                        : "Arquivado"}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>{formatISO(r.updated_at ?? '')}</TableCell>

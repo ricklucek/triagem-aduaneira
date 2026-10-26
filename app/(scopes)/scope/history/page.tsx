@@ -68,8 +68,6 @@ const actionLabels: Record<string, string> = {
   "scope.created": "Escopo criado",
   "scope.updated": "Escopo atualizado",
   "scope.published": "Escopo publicado",
-  "scope.deactivated": "Escopo inativado",
-  "scope.reactivated": "Escopo reativado",
   "scope.deleted": "Escopo excluído",
   "scope.bulk_updated": "Alteração em massa",
   "scope.reversed": "Reversão de escopo",
@@ -83,9 +81,6 @@ const actionLabels: Record<string, string> = {
 
 const fieldLabels: Record<string, string> = {
   status: "Status",
-  archivedFromStatus: "Estado antes da inativação",
-  archivedAt: "Data da inativação",
-  archivedById: "Responsável pela inativação",
   draft: "Rascunho",
   publishedSnapshot: "Versão publicada",
   responsibleUserId: "Responsável comercial",

@@ -17,18 +17,11 @@ export interface ScopeDetailResponse {
     email: string;
   };
   status: ScopeStatus;
-  archived_from_status?: "draft" | "published" | null;
-  archived_at?: string | null;
-  archived_by_id?: string | null;
 }
 
 export interface CreateScopeResponse {
   id: string;
 }
-
-export type ScopeActivityResponse = Pick<ScopeDetailResponse,
-  "id" | "status" | "archived_from_status" | "archived_at" | "archived_by_id"
->;
 
 export interface CreateScopeOptions {
   templateId?: string | number;
@@ -250,8 +243,6 @@ export interface ScopeApiClient {
   saveScope(payload: SaveScopeDraftPayload): Promise<void>;
   publishScope(id: string): Promise<PublishResult>;
   deleteScope(id: string): Promise<void>;
-  deactivateScope(id: string): Promise<ScopeActivityResponse>;
-  reactivateScope(id: string): Promise<ScopeActivityResponse>;
   listScopeVersions(id: string): Promise<ScopeVersionsResponse>;
   getMetadata(): Promise<ScopeMetadataResponse>;
   bulkReassignResponsible(

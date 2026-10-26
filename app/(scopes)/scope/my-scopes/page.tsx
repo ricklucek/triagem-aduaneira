@@ -29,15 +29,11 @@ import { format } from 'date-fns';
 import { ptBR } from "date-fns/locale";
 import { useCurrentUser } from "@/lib/api/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
-import ScopeActivityDialog, { type ScopeActivityTarget } from "@/components/scope/ScopeActivityDialog";
-import { useAuthSession } from "@/lib/auth/session-storage";
 
 export default function MyScopesPage() {
-  const session = useAuthSession();
-  const [activityTarget, setActivityTarget] = useState<ScopeActivityTarget | null>(null);
   const { data: userData } = useCurrentUser();
 
-  const { data: userAssignments, isLoading: isCountingUserAssignments, mutate: refreshCounts } = useCountUserAssignments();
+  const { data: userAssignments, isLoading: isCountingUserAssignments } = useCountUserAssignments();
 
   const countCreatedByMe = userAssignments?.find(x => x.type === "created_by_id")?.count ?? 0;
   const countMeAsAnalist = userAssignments?.find(x => x.type === "assigned_user_id")?.count ?? 0;
@@ -171,7 +167,7 @@ export default function MyScopesPage() {
                       ? "Rascunho"
                       : x.status === "published"
                         ? "Publicado"
-                      : "Inativo"}
+                        : "Arquivado"}
                   </Badge>
                 </div>
 
@@ -209,7 +205,7 @@ export default function MyScopesPage() {
                         Visualizar
                       </Link>
 
-                      {x.status !== "archived" && hasRole(["comercial", "admin"]) && (
+                      {hasRole(["comercial", "admin"]) && (
                         <Link
                           className="popover-menu-item cursor-pointer items-center justify-center flex"
                           href={`/scope/${x.id}?step=SOBRE_EMPRESA`}
@@ -218,15 +214,7 @@ export default function MyScopesPage() {
                         </Link>
                       )}
 
-                      {session?.user.role === "admin" ? (
-                        <Button variant="outline" onClick={() => setActivityTarget({
-                          id: x.id, label: x.nome_resumido || x.razao_social || x.id, status: x.status,
-                        })}>
-                          {x.status === "archived" ? "Reativar" : "Inativar"}
-                        </Button>
-                      ) : null}
-
-                      {x.status !== "archived" && hasRole(["comercial", "admin"]) && (
+                      {hasRole(["comercial", "admin"]) && (
                         <Button
                           type="button"
                           variant="destructive"
@@ -249,13 +237,6 @@ export default function MyScopesPage() {
         })}
 
       <div className="h-4" />
-
-      <ScopeActivityDialog
-        key={activityTarget?.id ?? "closed"}
-        target={activityTarget}
-        onClose={() => setActivityTarget(null)}
-        onSuccess={async () => { await mutate(); await refreshCounts(); setPage(1); }}
-      />
 
       <Toolbar
         left={
