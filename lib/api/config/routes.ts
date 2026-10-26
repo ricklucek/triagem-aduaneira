@@ -19,6 +19,8 @@ export const API_ROUTES = {
     detail: (scopeId: string) => `/scopes/${scopeId}`,
     saveScope: (scopeId: string) => `/scopes/${scopeId}`,
     publish: (scopeId: string) => `/scopes/${scopeId}/publish`,
+    deactivate: (scopeId: string) => `/scopes/${scopeId}/deactivate`,
+    reactivate: (scopeId: string) => `/scopes/${scopeId}/reactivate`,
     versions: (scopeId: string) => `/scopes/${scopeId}/versions`,
     delete: (scopeId: string) => `/scopes/${scopeId}`,
     bulkReassignResponsible: "/scopes/bulk/reassign-responsible",
