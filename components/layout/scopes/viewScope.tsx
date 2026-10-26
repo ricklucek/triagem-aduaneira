@@ -1784,7 +1784,6 @@ export default function ViewScope({ id }: { id: string }) {
   );
 
   const createdBy = scopeResponse?.created_by;
-  const inactive = scopeResponse?.status === "archived";
 
   async function exportScope(format: "pdf" | "excel") {
     const root = document.getElementById("scope-view-layout");
@@ -1850,15 +1849,6 @@ export default function ViewScope({ id }: { id: string }) {
             <h1 className="text-xl font-semibold tracking-tight">
               Visualização do Escopo
             </h1>
-            {inactive ? (
-              <div className="mt-3 space-y-2">
-                <Badge variant="secondary">Inativo</Badge>
-                <p className="text-sm text-muted-foreground">
-                  Escopo inativo, disponível somente para consulta e download.
-                  {scopeResponse?.archived_at ? ` Inativado em ${new Date(scopeResponse.archived_at).toLocaleString("pt-BR")}.` : ""}
-                </p>
-              </div>
-            ) : null}
             <p className="text-sm text-muted-foreground">
               Documento em modo leitura para acompanhamento operacional.
             </p>
@@ -1898,9 +1888,9 @@ export default function ViewScope({ id }: { id: string }) {
             <Button variant="outline" onClick={() => router.back()}>
               Voltar
             </Button>
-            {!inactive ? <Button asChild variant="outline">
+            <Button asChild variant="outline">
               <Link href={`/scope/${id}?step=SOBRE_EMPRESA`}>Editar</Link>
-            </Button> : null}
+            </Button>
           </div>
         </div>
         {exportError ? (
